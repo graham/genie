@@ -1,0 +1,85 @@
+<html>
+
+<script type="text/javascript" charset="utf-8" src='mootools.js'> </script>
+<script type="text/javascript" charset="utf-8" src='jsninja.js'></script>
+
+<style type="text/css" media="screen">
+    .jst-target, .jst-data {
+        visibility: hidden;
+    }
+    .jst-rendered {
+        visibility: display;
+    }
+</style>
+
+<script type="text/plain" charset="utf-8" class='jst-template' id='username-box'>
+    Hello world, my name is {{ name }} and I am {{ age }} years old.
+    {# ignore me #}
+    
+    {% if (age > 90) %}
+        You are old.
+    {% else %}
+        You are not over 90, in fact you are {{age}}.
+        {% if (age >= 10) %}
+            You are over 10.0
+        {% end %}
+    {% end %}
+    
+    <BR><BR>
+
+    Age + 100 = {{ 100 + age }}
+    
+    <Br>
+    
+    {!
+        [1,2,3].each( function(obj) {
+            print("Number: " + obj + "<br>");
+        });
+    !}
+
+</script>
+
+<body>
+    <div class='jst-data'>
+        {
+            "site":"http://www.grahamalot.com",
+            "username":"Graham Abbott (graham@bellumlabs.com)"
+        }
+    </div>
+    
+    <div class='jst-data'>
+        {
+            "site":"http://www.google.com",
+            "password":"awesome"
+        }
+    </div>
+    
+    <div class='jst-target username-box' id='test'>
+        { 
+            "name": "graham", 
+            "age": 26
+        }
+    </div>
+    <hr>
+    <div class='jst-target username-box' id='test2'>
+        {
+            "name":"bob",
+            "age":100
+        }
+    </div>
+    <div class='jst-target username-box' id='test2'>
+        {
+            "name":"bob",
+            "age":100
+        }
+    </div>
+    <hr>
+</body>
+
+
+<script type="text/javascript" charset="utf-8">
+    var r = new jsninja.WebRenderer(document);
+    r.run_moo();
+</script>
+
+</html>
