@@ -4,7 +4,7 @@
 <script type="text/javascript" charset="utf-8" src='jsninja.js'></script>
 
 <style type="text/css" media="screen">
-    .jst-target, .jst-data {
+    .jst-target, .jst-target-url, .jst-data {
         visibility: hidden;
     }
     .jst-rendered {
@@ -15,7 +15,13 @@
 <script type="text/plain" charset="utf-8" class='jst-template' id='username-box'>
     Hello world, my name is {{ name }} and I am {{ age }} years old.
     {# ignore me #}
-    
+
+    {% if (age > 10) %}
+        You are older than ten.
+    {% else %}
+        You are younger than ten.
+    {% end %}
+        
     {% if (age > 90) %}
         You are old.
     {% else %}
@@ -26,9 +32,15 @@
     {% end %}
     
     <BR><BR>
+    
+    {% for i    in [1  ,2    ,3] %}
+        i is equal {{ i }}<br>
+    {% end %}
 
     Age + 100 = {{ 100 + age }}
     
+    <br>
+    You are from the site {{site}}.
     <Br>
     
     {!
@@ -36,10 +48,39 @@
             print("Number: " + obj + "<br>");
         });
     !}
+    
+    {!
+        var data = [1,2, "Graham", "Clay", 293912.103291];
+    !}
+    
+    {% for blarg in data %}
+        This entry is equal to {{ blarg }}.<br>
+    {% end %}
+    
+    {! var count = 0; !}
+    
+    {% while(count < 10) %}
+        Count is currently {{count}}. <br>
+        {! count += 1; !}
+    {% end %}
 
+    <br>
+    boo!
+</script>
+
+<script type="text/javascript" charset="utf-8">
+    var redo = function() {
+        update_dom_dict('test', {'name':'robin hood'});
+        r.reload();
+        setTimeout( function() {
+            r.run_moo();
+        }, 1000);
+    }
 </script>
 
 <body>
+    <a href='#' onclick="redo(); return false;">Test</a>
+    
     <div class='jst-data'>
         {
             "site":"http://www.grahamalot.com",
@@ -61,25 +102,13 @@
         }
     </div>
     <hr>
-    <div class='jst-target username-box' id='test2'>
-        {
-            "name":"bob",
-            "age":100
-        }
-    </div>
-    <div class='jst-target username-box' id='test2'>
-        {
-            "name":"bob",
-            "age":100
-        }
-    </div>
-    <hr>
 </body>
 
 
 <script type="text/javascript" charset="utf-8">
-    var r = new jsninja.WebRenderer(document);
+    var r = new jsninja.WebRenderer();
     r.run_moo();
 </script>
+
 
 </html>
