@@ -12,9 +12,15 @@
     }
 </style>
 
+<script type="text/plain" charset="utf-8" class='jst-template' id='small-test'>
+    This is a partial template. {{text}}
+</script>
+
 <script type="text/plain" charset="utf-8" class='jst-template' id='username-box'>
     {% for review in reviews %}
         The review text is {{ review.text }}, here is a <a href="{{review.source_url}}">Link</a> to the site.<br>
+        {{ partial('small-test', review) }}<BR>
+        <hr>
     {% end %}
 </script>
 
@@ -28,12 +34,18 @@
     <hr>
     <div class='jst-target-url username-box2' id='test'>http://dl.dropbox.com/u/6279503/json/test.json</div>    
     <hr>
+    
+    <div class='jst-target small-test' id='test'>
+        { }
+    </div>
+    
+    <div id='jsninja_error_log'></div>
 </body>
 
 
 <script type="text/javascript" charset="utf-8">
     var r = new jsninja.WebRenderer();
-    r.run_moo();
+    r.run();
 </script>
 
 

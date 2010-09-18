@@ -15,6 +15,12 @@
 <script type="text/plain" charset="utf-8" class='jst-template' id='username-box'>
     Hello world, my name is {{ name }} and I am {{ age }} years old.
     {# ignore me #}
+    
+    {!
+        var rand = function() {
+            return Math.round(Math.random() * 1000, 0) % 100;
+        }
+    !}
 
     {% if (age > 10) %}
         You are older than ten.
@@ -45,9 +51,11 @@
     
     {!
         [1,2,3].each( function(obj) {
-            print("Number: " + obj + "<br>");
+            write("Number: " + obj + "<br>");
         });
     !}
+    
+    {@ slurp @}
     
     {!
         var data = [1,2, "Graham", "Clay", 293912.103291];
@@ -60,12 +68,15 @@
     {! var count = 0; !}
     
     {% while(count < 10) %}
-        Count is currently {{count}}. <br>
+        Count is currently {{count}}. {{ rand() }}<br>
         {! count += 1; !}
     {% end %}
 
     <br>
-    boo!
+    boo!<br>
+    My favorite number today is
+    {! var number = rand(); !}
+    {{ number }}
 </script>
 
 <script type="text/javascript" charset="utf-8">
@@ -73,7 +84,7 @@
         update_dom_dict('test', {'name':'robin hood'});
         r.reload();
         setTimeout( function() {
-            r.run_moo();
+            r.run();
         }, 1000);
     }
 </script>
@@ -102,12 +113,15 @@
         }
     </div>
     <hr>
+    
+    <div id='jsninja_error_log'></div>
+    
 </body>
 
 
 <script type="text/javascript" charset="utf-8">
     var r = new jsninja.WebRenderer();
-    r.run_moo();
+    r.run();
 </script>
 
 

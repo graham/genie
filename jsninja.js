@@ -13,10 +13,18 @@ try {
         var jsw = function() {}
     }
     
+    var global_environment = new Environment();
 } catch (e) {
     // we are not in node.js
     if (debug) {
-        var jsw = function(key, d) { document.write("<div><pre>Log: (" + key + "): " + d + "</pre></div>"); }
+        var jsw = function(key, d) { 
+            var d = "<pre>Log: (" + key + "): " + d + "</pre>";
+            var div = document.createElement('div');
+            var container = document.getElementById('jsninja_error_log');
+
+            div.innerHTML = d;
+            container.appendChild(div);
+        }
     } else {
         var jsw = function() {}
     }
@@ -24,6 +32,14 @@ try {
 
 String.prototype.trim = function() {
     return this.replace(/^\s+|\s+$/g, "").replace(/^[\n|\r]+|[\n|\r]+$/g, "");
+}
+
+String.prototype.triml = function() {
+    return this.replace(/^\s+/g, "").replace(/^[\n|\r]+/g, "");
+}
+
+String.prototype.trimr = function() {
+    return this.replace(/\s+$/g, "").replace(/[\n|\r]+$/g, "");    
 }
 
 var pad = function(count) {
@@ -66,6 +82,9 @@ var jsninja_target_classname_url_json = 'jst-target-url-json';
 var jsninja_target_rendered_classname = 'jst-rendered';
 
 var Environment = function() {
+    this.default_data = {};
+    this.template_dict = {};
+
     this.begin = '{';
     this.end = '}';
     
@@ -74,29 +93,72 @@ var Environment = function() {
         "#":"comment",
         "%":"condition",
         "!":"exec",
-        "@":"ignore"
+        "@":"special"
     }
     
-    this.default_data = {};
+    this.specials = {
+        'slurp': function(template) {
+            var index = template.blocks.length - 1;
+            var last_text = null;
+            while( index > 0 ) {
+                if (template.blocks[index][0] == 'text') {
+                    last_text = index;
+                    break;
+                }
+            }
+            if (last_text != null) {
+                template.blocks[index][1] = template.blocks[index][1].trimr();
+            }
+            template.next_slurp = 1;
+        }
+    }
 }
 
+Environment.prototype.render_template = function(name, variables) {
+    try {
+        var t = this.template_dict[name];
+        jsw('t', t);
+        try {
+            return t.render(variables);
+        } catch (e) {
+            return e;
+        }
+    } catch (e) {
+        alert("here: " + e);
+    }
+}
+
+
 var Template = function(string) {
+    this.orig_string = string;
     this.string = string;
     this.environment = null;
     this.blocks = [];
+    this.final_func = null;
+
+    this.next_slurp = 0;
 }
 
 Template.prototype.find_next_block = function() {
     var start = this.string.search(this.environment.begin);
     
     if (start == -1) {
+        if (this.next_slurp) {
+            this.blocks.push( ['text', this.string.triml()]);
+        } else {
+            this.blocks.push( ['text', this.string]);
+        }
         return -1;
     }
     
     var before_block = this.string.substring(0, start);
     var after_block = this.string.substring(start+1);
     
-    this.blocks.push( ['text', before_block]);
+    if (this.next_slurp) {
+        this.blocks.push( ['text', before_block.triml()] );
+    } else {
+        this.blocks.push( ['text', before_block] );
+    }
     var start_char = after_block[0];
     var type = this.environment.lookup[start_char];
 
@@ -111,16 +173,17 @@ Template.prototype.find_next_block = function() {
     end += 1;
 
     var block = after_block.substring(1, end-1);
-    this.blocks.push( [type, block] );
+    if (type == 'special') {
+        this.environment.specials[block.trim()](this);
+    } else {
+        this.blocks.push( [type, block] );
+    }
     this.string = after_block.substring(end+1);
         
     return end;
 }
 
 Template.prototype.compile = function() {
-    if (this.environment == null) {
-        this.environment = new Environment();
-    }
     this.working_string = ""+this.string;
 
     var last = 0;
@@ -139,7 +202,7 @@ Template.prototype.compile = function() {
         
         if (type == 'text') {
             f_code.push( pad(depth) );
-            f_code.push("print(" + JSON.stringify(data) + ");\n" );
+            f_code.push("write(" + JSON.stringify(data) + ");\n" );
         } else if ( type == 'condition') {
             data = data.trim();
             if (data.substring(0,2) == 'if' || data.substring(0, 5) == 'while') {
@@ -185,83 +248,90 @@ Template.prototype.compile = function() {
             }
         } else if ( type == 'variable') {
             f_code.push( pad(depth) );
-            f_code.push( "print( " + data + " );\n" );
+            f_code.push( "write( " + data + " );\n" );
         } else if ( type == 'exec') {
             f_code.push(data);
         }
     });
     
     this.f_code = f_code;
-    this.f_code_render = " " + this.f_code.join(' ');
+    this.f_code_render = "(function(preamble) { eval(preamble); " + this.f_code.join(' ') + "})";
 }
+
+
 
 Template.prototype.render = function(variables, missing_value_cb) {
-    if (this.blocks.length == 0) {
+    if (this.final_func == null) {
+        var start_build_time = new Date();
         this.compile();
 
-        var s = [];
-        try {
-            var data = JSON.parse(variables);
-        } catch (e) {
-            var data = variables;
-        }
+        var ____output = [];
+        var partial = function(name, d) {
+            return environment.render_template(name, d);
+        };
+        var write = function(ddd) { ____output.push(ddd); };
 
-        s.push('(function() {\n');
-        s.push(' var ____output = [];\n');
-        s.push(' var print = function(data) { ____output.push(data); };\n');
-        
-        for( i in data ) {
-            if (typeof data[i] == 'object') {
-                s.push(" var " + i + " = JSON.parse(" + JSON.stringify(data[i]) + ");\n");
-            } else {
-                s.push(" var " + i + " = " + JSON.stringify(data[i]) + ";\n");
+        var compiled_code = eval(this.f_code_render);
+        var environment = this.environment;
+
+        var encased_template = function(tvars) {
+            ____output = [];
+            try {
+                var template_vars = JSON.parse(tvars);
+            } catch (e) {
+                var template_vars = tvars;
             }
+            
+            var ss = [];
+
+            for( i in template_vars ) {
+                if (typeof template_vars[i] == 'object') {
+                    ss.push(" var " + i + " = JSON.parse(" + JSON.stringify(template_vars[i]) + ");\n");
+                } else {
+                    ss.push(" var " + i + " = " + JSON.stringify(template_vars[i]) + ";\n");
+                }
+            }
+
+            for( i in environment.default_data ) {
+                ss.push(" var " + i + " = " + JSON.stringify(environment.default_data[i]) + ";\n");
+            }
+            
+            compiled_code(ss.join(''));
+            return ____output.join('');
         }
 
-        for( i in this.environment.default_data ) {
-            s.push(" var " + i + " = " + JSON.stringify(this.environment.default_data[i]) + ";\n");
-        }
-        
-        s.push( '\n')
-        s.push( this.f_code_render );
-        s.push("\n\n return ____output.join('');\n})()");
-
-        this.compiled_code = s;
-        jsw('code', s.join(''));
+        this.final_func = encased_template;
+        jsw('build ' + this.key, new Date().getMilliseconds() - start_build_time.getMilliseconds());
     }
-
-    return eval(this.compiled_code.join(''));
+    
+    var start_render = new Date();
+    var result = this.final_func(variables);
+    jsw('render ' + this.key, new Date().getMilliseconds() - start_render.getMilliseconds());
+    return result;
 }
 
-
-    
 Template.prototype.describe = function() {
-    return { blocks: this.blocks };
+    return JSON.stringify({ blocks: this.blocks });
 }
 
 var WebRenderer = function() {
-    this.template_dict = {};
     this.environment = new Environment();
 }
 
 WebRenderer.prototype.create_template = function(key, value) {
     var t = new Template(value);
+    t.key = key;
     t.environment = this.environment;
-    this.template_dict[key] = t;
+    this.environment.template_dict[key] = t;
 }
 
-WebRenderer.prototype.render_template = function(name, variables) {
-    var t = this.template_dict[name];
-    try {
-        return t.render(variables, this.get_default_value);
-    } catch (e) {
-        return e;
-    }
-}
-
-WebRenderer.prototype.run_moo = function() {
+WebRenderer.prototype.run = function() {
+    var errors = document.createElement("div");
+    errors.innerHTML = 'Errors';
+    errors.id = 'jsninja_error_log';
+    
     var self = this;
-    var datas = $$("." + jsninja_data_classname)
+    var datas = $$("." + jsninja_data_classname);
     var defaults = {};
     
     // This will require a lib of some kind.
@@ -279,7 +349,7 @@ WebRenderer.prototype.run_moo = function() {
     this.environment.default_data = defaults;
     
     var templates = $$("." + jsninja_template_classname);
-    var template_dict = this.template_dict;
+    var template_dict = this.environment.template_dict;
     
     templates.forEach( function(obj) {
         self.create_template( obj.id, obj.innerHTML );
@@ -293,7 +363,7 @@ WebRenderer.prototype.run_moo = function() {
         var class_names = [];
         classes.forEach( function( name ) {
             if (name != jsninja_target_classname) {
-                var tr = self.render_template(name, data);
+                var tr = self.environment.render_template(name, data);
                 obj.innerHTML = tr;
                 class_names.push(name);
             }
@@ -316,7 +386,7 @@ WebRenderer.prototype.run_moo = function() {
                         var class_names = [];
                         classes.forEach( function( name ) {
                             if (name != jsninja_target_classname_url) {
-                                var tr = self.render_template(name, data);
+                                var tr = self.environment.render_template(name, data);
                                 obj.innerHTML = tr;
                                 class_names.push(name);
                             }
@@ -335,7 +405,6 @@ WebRenderer.prototype.run_moo = function() {
         })();
     });    
 
-
     var targets = $$("." + jsninja_target_classname_url_json);
     
     targets.forEach( function( obj ) {
@@ -350,11 +419,10 @@ WebRenderer.prototype.run_moo = function() {
                     url: url,
                     onSuccess: function(responseText, responseXML) {
                         var data = JSON.parse(responseText);
-                        jsw('decode', data);
                         var class_names = [];
                         classes.forEach( function( name ) {
                             if (name != jsninja_target_classname_url_json) {
-                                var tr = self.render_template(name, data);
+                                var tr = self.environment.render_template(name, data);
                                 obj.innerHTML = tr;
                                 class_names.push(name);
                             }
@@ -377,7 +445,6 @@ WebRenderer.prototype.run_moo = function() {
 }
 
 WebRenderer.prototype.reload = function() {
-    this.template_dict = {};
     this.environment = new Environment();
 }
 
@@ -391,9 +458,11 @@ var update_dom_dict = function(id, da) {
 try {
     exports.Template = Template;
     exports.WebRenderer = WebRenderer;
+    exports.Environment = Environment;
 } catch (e) {
     var jsninja = {};
     jsninja.Template = Template;
     jsninja.WebRenderer = WebRenderer;
+    jsninja.Environment = Environment;
 }
 
