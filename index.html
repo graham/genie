@@ -1,5 +1,9 @@
 <html>
 
+<script type="text/javascript" charset="utf-8">
+    var jsninja_debug = 1;
+</script>
+
 <script type="text/javascript" charset="utf-8" src='mootools.js'> </script>
 <script type="text/javascript" charset="utf-8" src='jsninja.js'></script>
 
@@ -60,6 +64,8 @@
     {!
         var data = [1,2, "Graham", "Clay", 293912.103291];
     !}
+    
+    {% if 10 == 10 %} HERE ! {% end %}
     
     {% for blarg in data %}
         This entry is equal to {{ blarg }}.<br>

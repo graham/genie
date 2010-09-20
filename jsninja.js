@@ -1,5 +1,9 @@
 // Template object.
-var debug = 1;
+try {
+    var test = jsninja_debug;
+} catch (e) {
+    var jsninja_debug = 0;
+}
 
 try {
     exports.test = function() {
@@ -7,16 +11,15 @@ try {
     }
     
     var sys = require('sys');
-    if (debug) {
+    if (jsninja_debug) {
         var jsw = function(key, d) { sys.puts("Log: (" + key + "): " + d); }
     } else {
         var jsw = function() {}
     }
     
-    var global_environment = new Environment();
 } catch (e) {
     // we are not in node.js
-    if (debug) {
+    if (jsninja_debug) {
         var jsw = function(key, d) { 
             var d = "<pre>Log: (" + key + "): " + d + "</pre>";
             var div = document.createElement('div');
@@ -206,8 +209,16 @@ Template.prototype.compile = function() {
         } else if ( type == 'condition') {
             data = data.trim();
             if (data.substring(0,2) == 'if' || data.substring(0, 5) == 'while') {
+                var sp = filter(function(item) { 
+                    if (item == '' || item == '(' || item == ')') { 
+                        return false; 
+                    } else { 
+                        return true; 
+                    } 
+                }, data.split(' '));
+                                
                 f_code.push( "\n " + pad(depth) );
-                f_code.push(data + " {\n");
+                f_code.push(sp[0] + "(" + sp.slice(1).join(' ') + ")" + " {\n");
                 depth += 1;
             } else if (data.substring(0, 3) == 'for') {
                 var sp = filter(function(item) { 
@@ -256,6 +267,7 @@ Template.prototype.compile = function() {
     
     this.f_code = f_code;
     this.f_code_render = "(function(preamble) { eval(preamble); " + this.f_code.join(' ') + "})";
+    jsw("code", this.f_code_render);
 }
 
 
@@ -283,18 +295,23 @@ Template.prototype.render = function(variables, missing_value_cb) {
             }
             
             var ss = [];
-
-            for( i in template_vars ) {
-                if (typeof template_vars[i] == 'object') {
-                    ss.push(" var " + i + " = JSON.parse(" + JSON.stringify(template_vars[i]) + ");\n");
-                } else {
-                    ss.push(" var " + i + " = " + JSON.stringify(template_vars[i]) + ";\n");
+            if (template_vars.__proto__.isPrototypeOf({})) {
+                for( i in template_vars ) {
+                    if (typeof template_vars[i] == 'object') {
+                        ss.push(" var " + i + " = JSON.parse(" + JSON.stringify(template_vars[i]) + ");\n");
+                    } else {
+                        ss.push(" var " + i + " = " + JSON.stringify(template_vars[i]) + ";\n");
+                    }
                 }
+            } else {
+                ss.push(" var _data =  JSON.parse(" + JSON.stringify(template_vars) + ");\n");
             }
 
             for( i in environment.default_data ) {
                 ss.push(" var " + i + " = " + JSON.stringify(environment.default_data[i]) + ";\n");
             }
+            
+            jsw('data', ss.join(' '));
             
             compiled_code(ss.join(''));
             return ____output.join('');
@@ -418,6 +435,7 @@ WebRenderer.prototype.run = function() {
                 {
                     url: url,
                     onSuccess: function(responseText, responseXML) {
+                        alert(responseText);
                         var data = JSON.parse(responseText);
                         var class_names = [];
                         classes.forEach( function( name ) {
