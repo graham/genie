@@ -9,28 +9,9 @@ try {
     exports.test = function() {
         //pass
     }
-    
     var sys = require('sys');
-    if (jsninja_debug) {
-        var jsw = function(key, d) { sys.puts("Log: (" + key + "): " + d); }
-    } else {
-        var jsw = function() {}
-    }
-    
 } catch (e) {
     // we are not in node.js
-    if (jsninja_debug) {
-        var jsw = function(key, d) { 
-            var d = "<pre>Log: (" + key + "): " + d + "</pre>";
-            var div = document.createElement('div');
-            var container = document.getElementById('jsninja_error_log');
-
-            div.innerHTML = d;
-            container.appendChild(div);
-        }
-    } else {
-        var jsw = function() {}
-    }
 }
 
 String.prototype.trim = function() {
@@ -69,10 +50,10 @@ var jsninja_errors = [];
 
 var dump_errors = function() {
     if ( jsninja_errors.length == 0) {
-        jsw("No Errors!", "");
+        console.log("No Errors!");
     } else {
         jsninja_errors.forEach( function(obj) {
-            jsw('error', obj);
+            console.log('error' + "," + obj);
         });
     }
 }
@@ -120,7 +101,7 @@ var Environment = function() {
 Environment.prototype.render_template = function(name, variables) {
     try {
         var t = this.template_dict[name];
-        jsw('t', t);
+        console.log('t' + "," + t);
         try {
             return t.render(variables);
         } catch (e) {
@@ -196,7 +177,7 @@ Template.prototype.compile = function() {
         last = this.find_next_block();
     }
     
-    var f_code = [];
+    var f_code = ["\n"];
     var in_func = 0;
     
     this.blocks.forEach( function(obj) {
@@ -208,37 +189,35 @@ Template.prototype.compile = function() {
             f_code.push("write(" + JSON.stringify(data) + ");\n" );
         } else if ( type == 'condition') {
             data = data.trim();
-            if (data.substring(0,2) == 'if' || data.substring(0, 5) == 'while') {
-                var sp = filter(function(item) { 
-                    if (item == '' || item == '(' || item == ')') { 
-                        return false; 
-                    } else { 
-                        return true; 
-                    } 
-                }, data.split(' '));
+            if (data.substring(0,2) == 'if') {
+                var d = data.substring(2).trim();
+                var bulk = d;
+                if (d[0] == '(') {
+                    bulk = d.substring(1, d.length-2);
+                }
                                 
                 f_code.push( "\n " + pad(depth) );
-                f_code.push(sp[0] + "(" + sp.slice(1).join(' ') + ")" + " {\n");
+                f_code.push("if (" + bulk + ")" + " {\n");
+                depth += 1;
+            } else if (data.substring(0, 5) == 'while') {
+                var d = data.substring(5).trim();
+                var bulk = d;
+                if (d[0] == '(') {
+                    bulk = d.substring(1, d.length-2);
+                }
+                                
+                f_code.push( "\n " + pad(depth) );
+                f_code.push("while (" + bulk + ")" + " {\n");
                 depth += 1;
             } else if (data.substring(0, 3) == 'for') {
-                var sp = filter(function(item) { 
-                    if (item == '' || item == '(' || item == ')') { 
-                        return false; 
-                    } else { 
-                        return true; 
-                    } 
-                }, data.split(' '));
-                var rest = sp.slice(3).join(' ').trim();
-                
-                if (rest[rest.length-1] == ')') {
-                    rest = rest.substring(0, rest.length-1);
+                var d = data.substring(3).trim();
+                var bulk = d;
+                if (d[0] == '(') {
+                    bulk = d.substring(1, d.length-2);
                 }
                 
-                var value_name = sp[1].trim();
-                
-                if (value_name[0] == '(') {
-                    value_name = value_name.substring(1);
-                }
+                var value_name = bulk.substring(0, bulk.indexOf('in'));
+                var rest = bulk.substring(bulk.indexOf('in') + 2);
                 
                 f_code.push( "\n" + rest + ".forEach( function(" + value_name +") {" );
                 f_code.push( "\n " + pad(depth) );
@@ -267,7 +246,6 @@ Template.prototype.compile = function() {
     
     this.f_code = f_code;
     this.f_code_render = "(function(preamble) { eval(preamble); " + this.f_code.join(' ') + "})";
-    jsw("code", this.f_code_render);
 }
 
 
@@ -278,13 +256,15 @@ Template.prototype.render = function(variables, missing_value_cb) {
         this.compile();
 
         var ____output = [];
-        var partial = function(name, d) {
-            return environment.render_template(name, d);
-        };
+        var partial = function(name, d) { return environment.render_template(name, d); };
         var write = function(ddd) { ____output.push(ddd); };
+
+        console.log(this.f_code_render);
 
         var compiled_code = eval(this.f_code_render);
         var environment = this.environment;
+
+        console.log('here' + "," + 'now');
 
         var encased_template = function(tvars) {
             ____output = [];
@@ -304,26 +284,26 @@ Template.prototype.render = function(variables, missing_value_cb) {
                     }
                 }
             } else {
-                ss.push(" var _data =  JSON.parse(" + JSON.stringify(template_vars) + ");\n");
+                ss.push(" var _data = JSON.parse(" + JSON.stringify(template_vars) + ");\n");
             }
 
             for( i in environment.default_data ) {
                 ss.push(" var " + i + " = " + JSON.stringify(environment.default_data[i]) + ";\n");
             }
             
-            jsw('data', ss.join(' '));
+            console.log('data' + "," + ss.join(' '));
             
             compiled_code(ss.join(''));
             return ____output.join('');
         }
 
         this.final_func = encased_template;
-        jsw('build ' + this.key, new Date().getMilliseconds() - start_build_time.getMilliseconds());
+        console.log('build ' + this.key + "," + new Date().getMilliseconds() - start_build_time.getMilliseconds());
     }
     
     var start_render = new Date();
     var result = this.final_func(variables);
-    jsw('render ' + this.key, new Date().getMilliseconds() - start_render.getMilliseconds());
+    console.log('render ' + this.key + "," + new Date().getMilliseconds() - start_render.getMilliseconds());
     return result;
 }
 
