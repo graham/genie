@@ -4,7 +4,7 @@
     var jsninja_debug = 1;
 </script>
 
-<script type="text/javascript" charset="utf-8" src='mootools.js'> </script>
+<script type="text/javascript" charset="utf-8" src='js/mootools.js'> </script>
 <script type="text/javascript" charset="utf-8" src='jsninja.js'></script>
 
 <style type="text/css" media="screen">
@@ -17,7 +17,7 @@
 </style>
 
 <script type="text/plain" charset="utf-8" class='jst-template' id='username-box'>
-    Hello world, my name is {{ name }} and I am {{ age }} years old.
+    Hello world, my name is {{ v.name }} and I am {{ v.age }} years old.
     {# ignore me #}
     
     {!
@@ -26,17 +26,17 @@
         }
     !}
 
-    {% if (age > 10) %}
+    {% if (v.age > 10) %}
         You are older than ten.
     {% else %}
         You are younger than ten.
     {% end %}
         
-    {% if (age > 90) %}
+    {% if (v.age > 90) %}
         You are old.
     {% else %}
-        You are not over 90, in fact you are {{age}}.
-        {% if (age >= 10) %}
+        You are not over 90, in fact you are {{v.age}}.
+        {% if (v.age >= 10) %}
             You are over 10.0
         {% end %}
     {% end %}
@@ -47,10 +47,10 @@
         i is equal {{ i }}<br>
     {% end %}
 
-    Age + 100 = {{ 100 + age }}
+    Age + 100 = {{ 100 + v.age }}
     
     <br>
-    You are from the site {{site}}.
+    You are from the site {{v.site}}.
     <Br>
     
     {!
@@ -131,7 +131,7 @@
 
 
 <script type="text/javascript" charset="utf-8">
-    var r = new jsninja.WebRenderer();
+    var r = new jsninja.Environment();
     r.run();
 </script>
 
