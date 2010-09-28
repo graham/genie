@@ -14,6 +14,11 @@ try {
     // we are not in node.js
 }
 
+
+/* Lib features I need */
+
+var main_environment = new Environment();
+
 String.prototype.trim = function() {
     return this.replace(/^\s+|\s+$/g, "").replace(/^[\n|\r]+|[\n|\r]+$/g, "");
 }
@@ -37,26 +42,15 @@ var pad = function(count) {
 }
 
 var filter = function(fun, list) {
-    new_list = [];
+    var new_list = [];
     list.forEach( function(item) {
-        if (fun(item) != false) {
+        if (fun(item)  != false) {
             new_list.push(item);
         }
     });
     return new_list;
 }
 
-var jsninja_errors = [];
-
-var dump_errors = function() {
-    if ( jsninja_errors.length == 0) {
-        console.log("No Errors!");
-    } else {
-        jsninja_errors.forEach( function(obj) {
-            console.log('error' + "," + obj);
-        });
-    }
-}
 
 var jsninja_template_classname = 'jst-template';
 var jsninja_data_classname = 'jst-data';
@@ -67,6 +61,7 @@ var jsninja_target_rendered_classname = 'jst-rendered';
 
 var Environment = function() {
     this.default_data = {};
+    this.object_dict = {};
     this.template_dict = {};
 
     this.begin = '{';
@@ -96,7 +91,7 @@ var Environment = function() {
             template.next_slurp = 1;
         }
     }
-}
+    
 
 Environment.prototype.render_template = function(name, variables) {
     try {
@@ -112,6 +107,138 @@ Environment.prototype.render_template = function(name, variables) {
     }
 }
 
+Environment.prototype.get_template = function(name) {
+    return this.template_dict[name];
+}
+
+Environment.prototype.create_template = function(name, data) {
+    var t = new Template(value);
+    t.key = key;
+    t.environment = this;
+    this.template_dict[key] = t;
+}
+
+Environment.prototype.run = function() {
+    var datas = $$("." + jsninja_data_classname);
+    var defaults = {};
+    var env = this;
+    
+    // This will require a lib of some kind.
+    datas.forEach( function(obj) {
+        try {
+            var d = JSON.parse(obj.innerHTML);
+            for( key in d ) {
+                defaults[key] = d[key];
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    });
+
+    this.default_data = defaults;
+    
+    var templates = $$("." + jsninja_template_classname);
+    var template_dict = this.template_dict;
+    
+    templates.forEach( function(obj) {
+        env.create_template( obj.id, obj.innerHTML );
+    });
+    
+    var targets = $$("." + jsninja_target_classname);
+    
+    targets.forEach( function( obj ) {
+        var classes = obj.className.split(' ');
+        var data = obj.innerHTML;
+        var class_names = [];
+        classes.forEach( function( name ) {
+            if (name != jsninja_target_classname) {
+                var tr = env.render_template(name, data);
+                obj.innerHTML = tr;
+                class_names.push(name);
+            }
+        });
+        obj.className = class_names.join(' ') + " " + jsninja_target_rendered_classname;
+    });
+    
+    var targets = $$("." + jsninja_target_classname_url);
+    
+    targets.forEach( function( obj ) {
+        (function() {
+            var classes = obj.className.split(' ');
+            var url = obj.innerHTML;
+
+            var myRequest = new Request(
+                {
+                    url: url,
+                    onSuccess: function(responseText, responseXML) {
+                        var data = JSON.parse(responseText);
+                        var class_names = [];
+                        classes.forEach( function( name ) {
+                            if (name != jsninja_target_classname_url) {
+                                var tr = env.render_template(name, data);
+                                obj.innerHTML = tr;
+                                class_names.push(name);
+                            }
+                        });
+                        obj.className = class_names.join(' ') + " " + jsninja_target_rendered_classname;
+                    },
+                    onFailure: function(obj) {
+                        alert("Failure: " + obj);
+                    }, 
+                    onException: function(headerName, value) {
+                        alert("Exception: " + value);
+                    }
+                }
+            );
+            myRequest.get();
+        })();
+    });
+
+    var targets = $$("." + jsninja_target_classname_url_json);
+    
+    targets.forEach( function( obj ) {
+        (function() {
+            var classes = obj.className.split(' ');
+            var header = JSON.parse(obj.innerHTML);
+            obj.innerHTML = header['loading'];
+            var url = header['url'];
+
+            var myRequest = new Request(
+                {
+                    url: url,
+                    onSuccess: function(responseText, responseXML) {
+                        alert(responseText);
+                        var data = JSON.parse(responseText);
+                        var class_names = [];
+                        classes.forEach( function( name ) {
+                            if (name != jsninja_target_classname_url_json) {
+                                var tr = env.render_template(name, data);
+                                obj.innerHTML = tr;
+                                class_names.push(name);
+                            }
+                        });
+                        obj.className = class_names.join(' ') + " " + jsninja_target_rendered_classname;
+                    },
+                    onFailure: function(obj) {
+                        alert("Failure: " + obj);
+                    }, 
+                    onException: function(headerName, value) {
+                        alert("Exception: " + value);
+                    }
+                }
+            );
+            myRequest.get();
+        })();
+    });
+}
+
+Environment.prototype.register_object = function(name, obj) {
+    this.object_dict[name] = obj;
+}
+
+Environment.prototype.get_object = function(name) {
+    return this.object_dict[name];
+}
 
 var Template = function(string) {
     this.orig_string = string;
@@ -119,12 +246,14 @@ var Template = function(string) {
     this.environment = null;
     this.blocks = [];
     this.final_func = null;
+    this.parent_container = null;
 
     this.next_slurp = 0;
 }
 
 Template.prototype.find_next_block = function() {
     var start = this.string.search(this.environment.begin);
+    var next_char = start+1;
     
     if (start == -1) {
         if (this.next_slurp) {
@@ -219,7 +348,9 @@ Template.prototype.compile = function() {
                 var value_name = bulk.substring(0, bulk.indexOf('in'));
                 var rest = bulk.substring(bulk.indexOf('in') + 2);
                 
+                f_code.push( "\n" + "var _index = -1;")
                 f_code.push( "\n" + rest + ".forEach( function(" + value_name +") {" );
+                f_code.push( "\n" + " _index += 1;")
                 f_code.push( "\n " + pad(depth) );
                 in_func += 1;
                 depth += 1;
@@ -245,29 +376,25 @@ Template.prototype.compile = function() {
     });
     
     this.f_code = f_code;
-    this.f_code_render = "(function(preamble) { eval(preamble); " + this.f_code.join(' ') + "})";
+    this.f_code_render = "(function(preamble, parent_template, parent_container) { eval(preamble); " + this.f_code.join(' ') + "})";
 }
 
-
-
-Template.prototype.render = function(variables, missing_value_cb) {
+Template.prototype.render = function(variables) {
     if (this.final_func == null) {
-        var start_build_time = new Date();
         this.compile();
 
         var ____output = [];
         var partial = function(name, d) { return environment.render_template(name, d); };
         var write = function(ddd) { ____output.push(ddd); };
-
+        var _env = this.environment;
+        var _template = this;
         console.log(this.f_code_render);
 
         var compiled_code = eval(this.f_code_render);
-        var environment = this.environment;
-
-        console.log('here' + "," + 'now');
 
         var encased_template = function(tvars) {
             ____output = [];
+
             try {
                 var template_vars = JSON.parse(tvars);
             } catch (e) {
@@ -291,176 +418,95 @@ Template.prototype.render = function(variables, missing_value_cb) {
                 ss.push(" var " + i + " = " + JSON.stringify(environment.default_data[i]) + ";\n");
             }
             
-            console.log('data' + "," + ss.join(' '));
-            
-            compiled_code(ss.join(''));
+            compiled_code(ss.join(''), parent_template, parent_container);
             return ____output.join('');
         }
 
         this.final_func = encased_template;
-        console.log('build ' + this.key + "," + new Date().getMilliseconds() - start_build_time.getMilliseconds());
     }
     
-    var start_render = new Date();
     var result = this.final_func(variables);
-    console.log('render ' + this.key + "," + new Date().getMilliseconds() - start_render.getMilliseconds());
     return result;
 }
 
-Template.prototype.describe = function() {
-    return JSON.stringify({ blocks: this.blocks });
+var PersistentTemplate = function(target_search, template) {
+    this.target_search = target_search;
+    this.template = template;
+    this.current_data = {};
 }
 
-var WebRenderer = function() {
-    this.environment = new Environment();
+PersistentTemplate.prototype.update = function(data) {
+    for(key in data) {
+        this.current_data[key] = data[key];
+    }
 }
 
-WebRenderer.prototype.create_template = function(key, value) {
-    var t = new Template(value);
-    t.key = key;
-    t.environment = this.environment;
-    this.environment.template_dict[key] = t;
+PersistentTemplate.prototype.clear = function() {
+    this.current_data = {};
 }
 
-WebRenderer.prototype.run = function() {
-    var errors = document.createElement("div");
-    errors.innerHTML = 'Errors';
-    errors.id = 'jsninja_error_log';
-    
-    var self = this;
-    var datas = $$("." + jsninja_data_classname);
-    var defaults = {};
-    
-    // This will require a lib of some kind.
-    datas.forEach( function(obj) {
-        try {
-            var d = JSON.parse(obj.innerHTML);
-            for( key in d ) {
-                defaults[key] = d[key];
+PersistentTemplate.prototype.render = function() {
+    $(this.target_search).innerHTML = this.template.render(this.current_data);
+}
+
+var StateTemplate = function(target_div, state_template_dict) {
+    this.target_div = target_div;
+    this.state_template_dict = state_template_dict;
+    this.current_data = {};
+}
+
+StateTemplate.prototype.update = function(data) {
+    for(key in data) {
+        this.current_data[key] = data[key];
+    }
+}
+
+StateTemplate.prototype.clear = function() {
+    this.current_data = {};
+}
+
+StateTemplate.prototype.change_state = function(new_state, new_vars) {
+    this.parent_container = this.target_div;
+    var template = this.state_template_dict[new_state];
+    this.on_state_change(this.target_div, template.render(this.current_data));
+}
+
+StateTemplate.prototype.on_state_change = function(target, new_state_data) {
+    target.innerHTML = new_state_data;
+}
+
+StateTemplate.prototype.load_url = function(url, func) {
+    var template = this;
+    var myRequest = new Request(
+        {
+            url: url,
+            onSuccess: function(responseText, responseXML) {
+                func(this, responseText, responseXML);
+            },
+            onFailure: function(obj) {
+                func(this, obj.responseText, '');
+            }, 
+            onException: function(headerName, value) {
+                alert("Exception: " + value);
             }
-        } catch (e) {
-            jsninja_errors.push( [obj, e] )
         }
-    });
-
-    this.environment.default_data = defaults;
-    
-    var templates = $$("." + jsninja_template_classname);
-    var template_dict = this.environment.template_dict;
-    
-    templates.forEach( function(obj) {
-        self.create_template( obj.id, obj.innerHTML );
-    });
-    
-    var targets = $$("." + jsninja_target_classname);
-    
-    targets.forEach( function( obj ) {
-        var classes = obj.className.split(' ');
-        var data = obj.innerHTML;
-        var class_names = [];
-        classes.forEach( function( name ) {
-            if (name != jsninja_target_classname) {
-                var tr = self.environment.render_template(name, data);
-                obj.innerHTML = tr;
-                class_names.push(name);
-            }
-        });
-        obj.className = class_names.join(' ') + " " + jsninja_target_rendered_classname;
-    });
-    
-    var targets = $$("." + jsninja_target_classname_url);
-    
-    targets.forEach( function( obj ) {
-        (function() {
-            var classes = obj.className.split(' ');
-            var url = obj.innerHTML;
-
-            var myRequest = new Request(
-                {
-                    url: url,
-                    onSuccess: function(responseText, responseXML) {
-                        var data = JSON.parse(responseText);
-                        var class_names = [];
-                        classes.forEach( function( name ) {
-                            if (name != jsninja_target_classname_url) {
-                                var tr = self.environment.render_template(name, data);
-                                obj.innerHTML = tr;
-                                class_names.push(name);
-                            }
-                        });
-                        obj.className = class_names.join(' ') + " " + jsninja_target_rendered_classname;
-                    },
-                    onFailure: function(obj) {
-                        alert("Failure: " + obj);
-                    }, 
-                    onException: function(headerName, value) {
-                        alert("Exception: " + value);
-                    }
-                }
-            );
-            myRequest.get();
-        })();
-    });    
-
-    var targets = $$("." + jsninja_target_classname_url_json);
-    
-    targets.forEach( function( obj ) {
-        (function() {
-            var classes = obj.className.split(' ');
-            var header = JSON.parse(obj.innerHTML);
-            obj.innerHTML = header['loading'];
-            var url = header['url'];
-
-            var myRequest = new Request(
-                {
-                    url: url,
-                    onSuccess: function(responseText, responseXML) {
-                        alert(responseText);
-                        var data = JSON.parse(responseText);
-                        var class_names = [];
-                        classes.forEach( function( name ) {
-                            if (name != jsninja_target_classname_url_json) {
-                                var tr = self.environment.render_template(name, data);
-                                obj.innerHTML = tr;
-                                class_names.push(name);
-                            }
-                        });
-                        obj.className = class_names.join(' ') + " " + jsninja_target_rendered_classname;
-                    },
-                    onFailure: function(obj) {
-                        alert("Failure: " + obj);
-                    }, 
-                    onException: function(headerName, value) {
-                        alert("Exception: " + value);
-                    }
-                }
-            );
-            myRequest.get();
-        })();
-    });
-
-    dump_errors();
-}
-
-WebRenderer.prototype.reload = function() {
-    this.environment = new Environment();
-}
-
-var update_dom_dict = function(id, da) {
-    var d = $(id);
-    var data = JSON.parse(d.innerHTML);
-    data.update(da);
-    d.innerHTML = JSON.stringify(data);
+    );
+    myRequest.get();
 }
 
 try {
     exports.Template = Template;
-    exports.WebRenderer = WebRenderer;
     exports.Environment = Environment;
+    exports.PersistentTemplate = PersistentTemplate;
+    exports.StateTemplate = StateTemplate;
+    exports.env = main_environment;
 } catch (e) {
     var jsninja = {};
     jsninja.Template = Template;
-    jsninja.WebRenderer = WebRenderer;
     jsninja.Environment = Environment;
+    jsninja.PersistentTemplate = PersistentTemplate;
+    jsninja.StateTemplate = StateTemplate;
+    jsninja.env = main_environment;
 }
 
+console.log('loaded jsninja');
