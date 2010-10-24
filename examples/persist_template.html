@@ -1,0 +1,46 @@
+<html>
+
+<script type="text/javascript" charset="utf-8" src='mootools.js'> </script>
+<script type="text/javascript" charset="utf-8" src='genie.js'></script>
+
+<style type="text/css" media="screen">
+    .jst-target, .jst-target-url, .jst-data {
+        visibility: hidden;
+    }
+    .jst-rendered {
+        visibility: display;
+    }
+</style>
+
+<script type="text/plain" charset="utf-8" class='jst-template' id='mybox'>
+    The current count is {{count}}.
+</script>
+
+<body>
+    
+    <a href='#' onclick='increment(); return false;'>Increment</a>
+    
+    <div id='my_target'>Load</div>
+    
+    <div id='genie_error_log'></div>
+    
+</body>
+
+
+<script type="text/javascript" charset="utf-8">
+    var r = new genie.WebRenderer();
+    r.run();
+    var test = new genie.PersistentTemplate('my_target', r.environment.get_template('mybox'));
+    test.update({'count':10});
+    test.render();
+    
+    var increment = function() {
+        var current = test.current_data['count'];
+        test.update({'count':current += 1});
+        test.render();
+    }
+    
+</script>
+
+
+</html>

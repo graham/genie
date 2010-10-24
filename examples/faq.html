@@ -1,0 +1,96 @@
+<html>
+    <head>
+        <script type="text/javascript" charset="utf-8">
+            var genie_debug = 1;
+        </script>
+        <script type="text/javascript" charset="utf-8" src='js/mootools.js'>  </script>
+        <script type="text/javascript" charset="utf-8" src='genie.js'>  </script>
+        <script type="text/javascript" charset="utf-8">
+            var env = genie.env;
+        </script>
+                
+        <script type="text/plain" charset="utf-8" class='jst-template' id='list_all'>
+            List
+          <ul>
+          {% for q in v.questions %}
+          <li><a href='#' onclick='env.get_obj("test").change_state("view", {"article":{{_index}}});'>{{_index}} - {{ q.title }}</a></li>
+          
+          {% end %}
+          </ul>
+        </script>
+        
+        <script type="text/plain" charset="utf-8" class='jst-template' id='done'>
+            All Done, <a href='#' onclick='env.get_obj("test").change_state("list_all");'>Start Over</a>
+        </script>
+        <script type="text/plain" charset="utf-8" class='jst-template' id='searching'>
+            Searching...
+        </script>
+        <script type="text/plain" charset="utf-8" class='jst-template' id='search_results'>
+        Search
+            <ul>
+            {% for q in v.questions %}
+               <li><a href='#' onclick='env.get_obj("test").change_state("view");'>{{ q.title }}</a></li>
+            {% end %}
+            </ul>
+        </script>
+        <script type="text/plain" charset="utf-8" class='jst-template' id='view'>
+            {{ v.article }}
+            {! var question = v.questions[v.article]; !}
+            {{ question.title }}
+        </script>
+    </head>
+
+    
+    
+    <body>
+        
+        <script type="text/javascript" charset="utf-8">
+            var content = '';
+            var test = null;
+        
+            window.addEvent('domready', function() {
+                var env = genie.env;
+                env.run();
+                
+                
+                test = new genie.StateTemplate($('my_target'), {
+                    'list_all':env.get_template('list_all'),
+                    'searching':env.get_template('searching'),
+                    'view':env.get_template('view'),
+                    'done':env.get_template('done')
+                });
+                
+                test.load_url('./data/faq.json', function(template, responseText) {
+                    test.update(JSON.parse(responseText));
+                    test.update({'article':0});
+                    test.change_state('list_all');
+                });
+                
+                env.set_obj('test', test);
+            });
+            
+            var query = function() {
+                test.update({'query':$('text').value});
+                test.change_state('searching');
+                
+                setTimeout( function() {
+                    test.change_state('list_all');
+                }, 200);
+            }
+        </script>
+        
+        <div id='searchbar'>
+            <form onsubmit='query(); return false;'>
+                <input type=textfield onchange='query();' id='text'>
+            </form>
+        </div>
+            
+        
+        <div id='my_target'>
+            Loading...
+        </div>
+
+    </body>
+    
+
+</html>
