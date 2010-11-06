@@ -34,11 +34,12 @@ var pad = function(count) {
 
 var filter = function(fun, list) {
     var new_list = [];
-    list.forEach( function(item) {
+    for( var c = 0; c < list.length; c++ ) {
+        var item = list[c];
         if (fun(item)  != false) {
             new_list.push(item);
         }
-    });
+    }
     return new_list;
 }
 
@@ -114,7 +115,7 @@ Template.prototype.find_next_block = function() {
 
 Template.prototype.compile = function() {
     this.working_string = ""+this.string;
-
+    var counter_count = 0;
     var last = 0;
     var depth = 0;
     
@@ -124,8 +125,10 @@ Template.prototype.compile = function() {
     
     var f_code = ["\n"];
     var in_func = [];
-    
-    this.blocks.forEach( function(obj) {
+
+    for( var c = 0; c < this.blocks.length; c++ ) {
+        var obj = this.blocks[c];
+
         var type = obj[0];
         var data = obj[1];
         
@@ -163,14 +166,16 @@ Template.prototype.compile = function() {
                     bulk = d.substring(1, d.length-2);
                 }
                 
-                var value_name = bulk.substring(0, bulk.indexOf('in'));
-                var rest = bulk.substring(bulk.indexOf('in') + 2);
+                var value_name = bulk.substring(0, bulk.indexOf(' in '));
+                var rest = bulk.substring(bulk.indexOf(' in ') + 4);
                 
-                f_code.push( "\n" + "var _index = -1;")
-                f_code.push( "\n" + rest + ".forEach( function(" + value_name +") {" );
-                f_code.push( "\n" + " _index += 1;")
+                var cvar = '_count_' + counter_count;
+                counter_count += 1;
+                f_code.push( "\n for( var " + cvar + " = 0; " + cvar + " < " + rest + ".length; " + cvar + "++ ) {" );
+                f_code.push( "\n   var " + value_name + " = " + rest + "[" + cvar + "];");
+                //f_code.push( "\n" + rest + ".forEach( function(" + value_name +") {" );
                 f_code.push( "\n " + pad(depth) );
-                in_func.push('})');
+                in_func.push('}');
                 depth += 1;
             } else if (data == 'end') {
                 depth -= 1;
@@ -186,7 +191,7 @@ Template.prototype.compile = function() {
         } else if ( type == 'exec') {
             f_code.push(data);
         }
-    });
+    }
     
     this.f_code = f_code;
     this.f_code_render = "(function(parent, v, defaults) { " + this.f_code.join(' ') + "})";
@@ -202,7 +207,6 @@ Template.prototype.render = function(variables) {
         var write = function(ddd) { ____output.push(ddd); };
         var _template = this;
         
-        console.log(this.f_code_render);
         var compiled_code = eval(this.f_code_render);
 
         var encased_template = function(tvars) {
@@ -240,7 +244,7 @@ PersistentTemplate.prototype.clear = function() {
 }
 
 PersistentTemplate.prototype.render = function() {
-    $(this.target_search).innerHTML = this.template.render(this.current_data);
+    document.getElementById(this.target_search).innerHTML = this.template.render(this.current_data);
 }
 
 var StateTemplate = function(target_div, state_template_dict) {
@@ -326,7 +330,6 @@ var Environment = function() {
 Environment.prototype.render_template = function(name, variables) {
     try {
         var t = this.template_dict[name];
-        console.log('t' + "," + t);
         try {
             return t.render(variables);
         } catch (e) {
@@ -355,12 +358,13 @@ Environment.prototype.render = function(name_of_template, target_element, di) {
 }
 
 Environment.prototype.run = function() {
-    var datas = $$("." + genie_data_classname);
+    var datas = document.getElementsByClassName(genie_data_classname);
     var defaults = {};
     var env = this;
     
     // This will require a lib of some kind.
-    datas.forEach( function(obj) {
+    for( var c = 0; c < datas.length; c++ ) {
+        var obj = datas[c];
         try {
             var d = JSON.parse(obj.innerHTML);
             for( key in d ) {
@@ -369,36 +373,41 @@ Environment.prototype.run = function() {
         } catch (e) {
             console.log(e);
         }
-    });
+    }
 
     this.default_data = defaults;
     
-    var templates = $$("." + genie_template_classname);
+    var templates = document.getElementsByClassName(genie_template_classname);
     var template_dict = this.template_dict;
     
-    templates.forEach( function(obj) {
+    for( var c = 0; c < templates.length; c++ ) {
+        var obj = templates[c];
         env.create_template( obj.id, obj.innerHTML );
-    });
+    }
     
-    var targets = $$("." + genie_target_classname);
+    var targets = document.getElementsByClassName(genie_target_classname);
     
-    targets.forEach( function( obj ) {
+    for( var c = 0; c < targets.length; c++ ) {
+        var obj = targets[c];
         var classes = obj.className.split(' ');
         var data = obj.innerHTML;
         var class_names = [];
-        classes.forEach( function( name ) {
+        for( var cc = 0; cc < classes.length; cc++ ) {
+            var name = classes[cc];
             if (name != genie_target_classname) {
                 var tr = env.render_template(name, data);
                 obj.innerHTML = tr;
                 class_names.push(name);
             }
-        });
+        }
         obj.className = class_names.join(' ') + " " + genie_target_rendered_classname;
-    });
+    }
     
-    var targets = $$("." + genie_target_classname_url);
+    var targets = document.getElementsByClassName(genie_target_classname_url);
     
-    targets.forEach( function( obj ) {
+    for( var c = 0; c < targets.length; c++ ) {
+        var obj = targets[c];
+
         (function() {
             var classes = obj.className.split(' ');
             var url = obj.innerHTML;
@@ -409,13 +418,14 @@ Environment.prototype.run = function() {
                     onSuccess: function(responseText, responseXML) {
                         var data = JSON.parse(responseText);
                         var class_names = [];
-                        classes.forEach( function( name ) {
+                        for( var cc = 0; cc < classes.length; cc++ ) {
+                            var name = classes[c];
                             if (name != genie_target_classname_url) {
                                 var tr = env.render_template(name, data);
                                 obj.innerHTML = tr;
                                 class_names.push(name);
                             }
-                        });
+                        }
                         obj.className = class_names.join(' ') + " " + genie_target_rendered_classname;
                     },
                     onFailure: function(obj) {
@@ -428,11 +438,12 @@ Environment.prototype.run = function() {
             );
             myRequest.get();
         })();
-    });
+    }
 
-    var targets = $$("." + genie_target_classname_url_json);
+    var targets = document.getElementsByClassName(genie_target_classname_url_json);
     
-    targets.forEach( function( obj ) {
+    for( var c = 0; c < targets.length; c++ ) {
+        var obj = targets[c];
         (function() {
             var classes = obj.className.split(' ');
             var header = JSON.parse(obj.innerHTML);
@@ -445,13 +456,14 @@ Environment.prototype.run = function() {
                     onSuccess: function(responseText, responseXML) {
                         var data = JSON.parse(responseText);
                         var class_names = [];
-                        classes.forEach( function( name ) {
+                        for( var cc = 0; cc < classes.length; cc++ ) {
+                            var name = classes[cc];
                             if (name != genie_target_classname_url_json) {
                                 var tr = env.render_template(name, data);
                                 obj.innerHTML = tr;
                                 class_names.push(name);
                             }
-                        });
+                        }
                         obj.className = class_names.join(' ') + " " + genie_target_rendered_classname;
                     },
                     onFailure: function(obj) {
@@ -464,11 +476,12 @@ Environment.prototype.run = function() {
             );
             myRequest.get();
         })();
-    });
+    }
 }
 
 Environment.prototype.load_external_templates = function(templates) {
-    templates.forEach( function(file) {
+    for( var c = 0; c < templates.length; c++ ) {
+        var file = templates[c];
         var myRequest = new Request(
             {
                 url: file,
@@ -493,8 +506,7 @@ Environment.prototype.load_external_templates = function(templates) {
             }
         );
         myRequest.get();
-    });
-    
+    }
 }
 
 Environment.prototype.set_obj = function(name, obj) {

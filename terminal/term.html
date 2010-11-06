@@ -1,0 +1,38 @@
+<html>
+<script type="text/javascript" charset="utf-8" src='../js/mootools.js'> </script>
+<script type="text/javascript" charset="utf-8" src='../genie.js'></script>
+<script type="text/javascript" charset="utf-8" src='../terminal.js'></script>
+
+<script type="text/javascript" charset="utf-8">
+    var term = null;
+    var term2 = null;
+    window.addEvent('domready', function() {
+        term = new EditorEmacs( $('myterm') );
+    });
+    
+    $(window).addEvent('keydown', function(event){
+        term.keydown(event.event);
+        event.stop();
+    });
+
+</script>
+
+<style type="text/css" media="screen">
+    * {
+        margin: 0px;
+        padding: 0px;
+    }
+
+    body {
+      background: #111;
+      color: #BFBFBF;
+      font: 12px Monaco, "Lucida Console", "Courier New", Courier;
+      padding: 5px;
+    }
+
+</style>
+
+<body>
+	<div id='myterm'></div>
+</body>
+</html>

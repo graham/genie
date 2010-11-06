@@ -4,9 +4,17 @@
     var genie_debug = 1;
 </script>
 
+<script type="text/javascript" charset="utf-8" src='../js/mootools.js'> </script>
 <script type="text/javascript" charset="utf-8" src='../genie.js'></script>
 
 <style type="text/css" media="screen">
+    * {
+        font-family: 'Helvetica Neue', Helvetica, Arial;
+        font-weight: 300;
+        flood-opacity: 1;
+        flood-color: black;
+    }
+
     .jst-target, .jst-target-url, .jst-data {
         visibility: hidden;
     }
@@ -52,11 +60,11 @@
     You are from the site {{v.site}}.
     <Br>
     
-    // {!
-    //     [1,2,3].each( function(obj) {
-    //         write("Number: " + obj + "<br>");
-    //     });
-    // !}
+    {!
+        [1,2,3].each( function(obj) {
+            write("Number: " + obj + "<br>");
+        });
+    !}
     
     {@ slurp @}
     
