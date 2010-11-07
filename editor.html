@@ -1,0 +1,58 @@
+<html>
+<script type="text/javascript" charset="utf-8" src='js/mootools.js'> </script>
+<script type="text/javascript" charset="utf-8" src='genie.js'></script>
+<script type="text/javascript" charset="utf-8" src='editor.js'></script>
+
+<script type="text/javascript" charset="utf-8">
+    var term = new EditorEmacs($('myterm'));
+    var term2 = new Shell($('myterm'));
+    var current = 0;
+    
+    var current_term = null;
+    
+    function g_switch_modes() {
+        if (current % 2 == 0) {
+            current_term = term2;
+        } else {
+            current_term = term;
+        }
+        $('myterm').innerHTML = '';
+        current_term.initialize( $('myterm') );
+        current++;
+        current_term.refresh();
+    }
+    
+    window.addEvent('domready', function() {
+        g_switch_modes();
+    });
+    
+    $(window).addEvent('keydown', function(event){
+        current_term.keydown(event.event);
+        event.event.stopPropagation();
+        event.stop();
+    });
+
+</script>
+
+<style type="text/css" media="screen">
+    * {
+        margin: 0px;
+        padding: 0px;
+    }
+
+    body {
+      background: #111;
+      color: #BFBFBF;
+      font: 12px Monaco, "Lucida Console", "Courier New", Courier;
+      padding: 5px;
+    }
+    .genie-terminal-current-line {
+        background-color: #222;
+    }
+
+</style>
+
+<body>
+    <div id='myterm'></div>
+</body>
+</html>

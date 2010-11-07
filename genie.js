@@ -172,7 +172,8 @@ Template.prototype.compile = function() {
                 var cvar = '_count_' + counter_count;
                 counter_count += 1;
                 f_code.push( "\n for( var " + cvar + " = 0; " + cvar + " < " + rest + ".length; " + cvar + "++ ) {" );
-                f_code.push( "\n   var " + value_name + " = " + rest + "[" + cvar + "];");
+                f_code.push( "\n   var " + value_name + " = " + rest + "[" + cvar + "]; var index=" + cvar + ";");
+                f_code.push( "\n   var rindex = (" + rest + ".length" + " - index) - 1");
                 //f_code.push( "\n" + rest + ".forEach( function(" + value_name +") {" );
                 f_code.push( "\n " + pad(depth) );
                 in_func.push('}');
@@ -333,7 +334,7 @@ Environment.prototype.render_template = function(name, variables) {
         try {
             return t.render(variables);
         } catch (e) {
-            return e;
+            return 'I dont think i know of a template named: ' + name + '---' + e;
         }
     } catch (e) {
         console.log("here: " + e);
