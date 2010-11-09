@@ -65,8 +65,56 @@
 <script type="text/javascript" charset="utf-8">
     var env = new genie.Environment();
     
-    function test_basic() {
+    function test_basic1() {
         var result = env.quick_render('my name is {{v.name}}', {'name':'Graham'});
+        if (result == 'my name is Graham') {
+            return [true, result];
+        } else {
+            return [false, result];
+        }
+    }
+    function test_basic2() {
+        var result = env.quick_render('my name is {% if true %}{{v.name}}{% end %}', {'name':'Graham'});
+        if (result == 'my name is Graham') {
+            return [true, result];
+        } else {
+            return [false, result];
+        }
+    }
+    function test_basic3() {
+        var result = env.quick_render('my name is {% if (true) %}{{v.name}}{% end %}', {'name':'Graham'});
+        if (result == 'my name is Graham') {
+            return [true, result];
+        } else {
+            return [false, result];
+        }
+    }
+    function test_basic4() {
+        var result = env.quick_render('my name is {% if(true) %}{{v.name}}{% end %}', {'name':'Graham'});
+        if (result == 'my name is Graham') {
+            return [true, result];
+        } else {
+            return [false, result];
+        }
+    }
+    function test_basic5() {
+        var result = env.quick_render('my name is {%if(true)%}{{v.name}}{%end%}', {'name':'Graham'});
+        if (result == 'my name is Graham') {
+            return [true, result];
+        } else {
+            return [false, result];
+        }
+    }
+    function test_basic6() {
+        var result = env.quick_render('my name is {%if true %}{{v.name}}{%end%}', {'name':'Graham'});
+        if (result == 'my name is Graham') {
+            return [true, result];
+        } else {
+            return [false, result];
+        }
+    }
+    function test_basic7() {
+        var result = env.quick_render('my name is {%if true%}{{v.name}}{%end%}', {'name':'Graham'});
         if (result == 'my name is Graham') {
             return [true, result];
         } else {
@@ -93,7 +141,13 @@
     }
 
     var tests = [
-        [test_basic, "Basic inline variable test."],
+        [test_basic1, "Basic inline variable test 1."],
+        [test_basic2, "Basic inline variable test 2."],
+        [test_basic3, "Basic inline variable test 3."],
+        [test_basic4, "Basic inline variable test 4."],
+        [test_basic5, "Basic inline variable test 5."],
+        [test_basic6, "Basic inline variable test 6."],
+        [test_basic7, "Basic inline variable test 7."],
         [test_conditions, "testing of conditaionals"],
         [test_loops, 'test basic for loop'],
     ];
