@@ -141,7 +141,7 @@ Template.prototype.compile = function() {
                 var d = data.substring(2).trim();
                 var bulk = d;
                 if (d[0] == '(') {
-                    bulk = d.substring(1, d.length-2);
+                    bulk = d.substring(1, d.length-1);
                 }
                                 
                 f_code.push( "\n " + pad(depth) );
@@ -195,6 +195,7 @@ Template.prototype.compile = function() {
     }
     
     this.f_code = f_code;
+    console.log("This is the code for template: " + this.key + "\n" + f_code.join(' ') + "\n");
     this.f_code_render = "(function(parent, v, defaults) { " + this.f_code.join(' ') + "})";
 }
 
@@ -225,7 +226,7 @@ Template.prototype.render = function(variables) {
     }
     
     var result = this.final_func(variables);
-    return result;
+    return result.trim();
 }
 
 var PersistentTemplate = function(target_search, template) {
@@ -351,6 +352,13 @@ Environment.prototype.create_template = function(name, data) {
     t.environment = this;
     this.template_dict[name] = t;
     return t;
+}
+
+Environment.prototype.quick_render = function(template_text, vars) {
+    var t = new Template(template_text);
+    t.key = 'anon';
+    t.environment = this;
+    return t.render(vars);
 }
 
 Environment.prototype.render = function(name_of_template, target_element, di) {

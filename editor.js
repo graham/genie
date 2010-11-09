@@ -309,7 +309,11 @@ Shell.prototype.initialize = function(root) {
     Terminal.prototype.initialize.call(this, root);
 
     this.commands = {};
+    this.commands['clear'] = function(term) { term.prev_buf.innerHTML = ''; term.lines = ['']; term.refresh(); }
     this.commands['alert'] = function(term, arglist, raw) { term.emit("<div style='font-size: 20px; color: red;'>" + raw + "</div>"); }
+    this.commands['clip'] = function(term, arglist, raw) { 
+        term.emit('<center><object width="560" height="304" type="application/x-shockwave-flash" data="http://movieclips.com/e/i4ajc/" style="background: #000000; display: block; overflow: hidden;"> <param name="movie" value="http://movieclips.com/e/i4ajc/" /><param name="allowfullscreen" value="true" /> <param name="bgcolor" value="#000000" /> <param name="wmode" value="transparent" /> <param name="allowscriptaccess" value="always" /> <embed src="http://movieclips.com/e/i4ajc/" type="application/x-shockwave-flash" allowfullscreen="true" movie="http://movieclips.com/e/i4ajc/" wmode="transparent" allowscriptaccess="always" ></embed> </object> <a href="http://movieclips.com//i4ajc-wall-street-movie-greed-is-good/" style="margin: 0; padding: 1px 0 0 0; width: 560px; height: 15px; background: #000000; -moz-border-radius-bottomleft: 4px; -webkit-border-bottom-left-radius: 4px; border-bottom-left-radius: 4px; -moz-border-radius-bottomright: 4px; -webkit-border-bottom-right-radius: 4px; border-bottom-right-radius: 4px; font-family: Helvetica Neue, Helvetica, Arial, Sans-serif; font-weight: normal; font-size: 10px; color: #cccccc; text-decoration: none; text-align: center; line-height: normal; display: block;" onmouseover="this.style.background=#00aeff,this.style.color=#ffffff;" onmouseout="this.style.background=#000000,this.style.color=#cccccc;">Movie Videos & Movie Scenes at MOVIECLIPS.com</a></center>');
+    }
     
     this.keys_dict['13'] = function(term) { term.command_newline(); }
     this.modified_dict['control-u'] = function(term) { term.lines[term.current_line] = ''; }
