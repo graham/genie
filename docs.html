@@ -20,13 +20,13 @@
         flood-opacity: 1;
         flood-color: black;
         
-        font-size: 24px;
+        font-size: 28px;
         font-weight: 600;
         padding-bottom: 10px;
     }
     .subtitle {
         font-family: 'Helvetica Neue', Helvetica, Arial;
-        font-weight: 300;
+        font-weight: 400;
         flood-opacity: 1;
         flood-color: black;
         
@@ -94,7 +94,7 @@
     </div>
     
     <div class='content'>
-        <p>If you are saying to yourself, <blockquote>"This doesn't help me, I already have a great template language on my server"</blockquote>Well, you're right, Genie isn't for you. It isn't for sites that render things on the server, it's for a new kind of web application. One that is a little more flexible than you might think.</p>
+        If you are saying to yourself, <blockquote>"This doesn't help me, I already have a great template language on my server"</blockquote>Well, you're right, Genie isn't for you. It isn't for sites that render things on the server, it's for a new kind of web application. One that is a little more flexible than you might think.
         <p>Initially this seems like a odd idea, I know, but when you think about it, it can really open up some really interesting possibilities. If you stop thinking of your website as a series of pages, and start seeing it as a bunch of pieces of data, you can start to see how this can help you.
         </p>
         
@@ -175,8 +175,8 @@
             var env = new genie.Environment();<br>
             env.create_template('greeting', "Hello, {{ v.name }}");<br>
             env.create_template('say', 'The proper way to greet someone is "{{ partial("greeting", {name:"Graham"}) }}".');
-            
-            $('result_example3').innerHTML = env.render_template('say');
+            <br><br>
+            $('result_example3').innerHTML = env.render_template('say', {});
         </div>
         Result: <div id='result_example3' class='example'></div>
         <input type=button onclick='run_example(".example3");' value='Try It!'><br><br>
@@ -231,8 +231,12 @@
         <p>However, your development will closely mirror how MVC works in Desktop environments (like Cocoa on Mac OS X). It means that you can develop APIs along side your web application, and it means that Developers and Designers can work in tandem rather than at odds.</p>
     </div>
     
-    <div class='title'>More Soon...</div>
+    <div class='subtitle'>
+      
+    </div>
     
+    <div class='title'>More Soon...</div>
+
     <div class='subtitle'>
         Try It
     </div>
@@ -240,8 +244,6 @@
         Genie is available right now, here: <a href='https://github.com/graham/genie'>https://github.com/graham/genie</a>
     </div>
     
-    <br><br><hr><br><br>
-
 </body>
 
 

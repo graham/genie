@@ -1,0 +1,1 @@
+{"templates": ["templates/hello_world.html", "templates/list_articles.html", "templates/search_result.html", "templates/view_article.html"], "html_files": ["articles/about.html", "articles/docs.html"]}

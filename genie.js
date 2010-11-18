@@ -1,14 +1,5 @@
 /* Lib features I need */
 
-Object.prototype.keys = function ()
-{
-  var keys = [];
-  for(i in this) if (this.hasOwnProperty(i)) {
-      keys.push(i);
-  }
-  return keys;
-}
-
 String.prototype.trim = function() {
     return this.replace(/^\s+|\s+$/g, "").replace(/^[\n|\r]+|[\n|\r]+$/g, "");
 }
@@ -194,9 +185,16 @@ Template.prototype.compile = function() {
         }
     }
     
+    //var header = " for(var __local_keys__ = 0; __local_keys__ < v.keys().length; __local_keys__++) {";
+    //header +=    "\n   try { alert('var ' + v.keys()[__local_keys__] + ' = JSON.parse(\'' + JSON.stringify(v[v.keys()[__local_keys__]]) + '\');') } ";
+    //header +=    "\n   catch(e) { console.log('error for key ' + v.keys()[__local_keys__] + ' -> ' + JSON.stringify(v[v.keys()[__local_keys__]]) + ' : ' + e); }";
+    //header +=    "\n }";
+    var header = '';
+     
     this.f_code = f_code;
+    
     console.log("This is the code for template: " + this.key + "\n" + f_code.join(' ') + "\n");
-    this.f_code_render = "(function(parent, v, defaults) { " + this.f_code.join(' ') + "})";
+    this.f_code_render = "(function(parent, v, defaults) { " + header + this.f_code.join(' ') + "})";
 }
 
 Template.prototype.render = function(variables) {
@@ -276,25 +274,6 @@ StateTemplate.prototype.on_state_change = function(target, new_state_data) {
     target.innerHTML = new_state_data;
 }
 
-StateTemplate.prototype.load_url = function(url, func) {
-    var template = this;
-    var myRequest = new Request(
-        {
-            url: url,
-            onSuccess: function(responseText, responseXML) {
-                func(this, responseText, responseXML);
-            },
-            onFailure: function(obj) {
-                func(this, obj.responseText, '');
-            }, 
-            onException: function(headerName, value) {
-                console.log("Exception: " + value);
-            }
-        }
-    );
-    myRequest.get();
-}
-
 var Environment = function() {
     this.default_data = {};
     this.object_dict = {};
@@ -362,8 +341,13 @@ Environment.prototype.quick_render = function(template_text, vars) {
 }
 
 Environment.prototype.render = function(name_of_template, target_element, di) {
-    var template = this.get_template(name_of_template);
-    target_element.innerHTML = template.render(di);
+    var t = this.get_template(name_of_template);
+    if (t !== undefined) {
+        target_element.innerHTML = t.render(di);
+    } else {
+        target_element.innerHTML = 'Template ' + name_of_template + ' could not be found.';
+    }
+    
 }
 
 Environment.prototype.run = function() {
@@ -410,111 +394,6 @@ Environment.prototype.run = function() {
             }
         }
         obj.className = class_names.join(' ') + " " + genie_target_rendered_classname;
-    }
-    
-    var targets = document.getElementsByClassName(genie_target_classname_url);
-    
-    for( var c = 0; c < targets.length; c++ ) {
-        var obj = targets[c];
-
-        (function() {
-            var classes = obj.className.split(' ');
-            var url = obj.innerHTML;
-
-            var myRequest = new Request(
-                {
-                    url: url,
-                    onSuccess: function(responseText, responseXML) {
-                        var data = JSON.parse(responseText);
-                        var class_names = [];
-                        for( var cc = 0; cc < classes.length; cc++ ) {
-                            var name = classes[c];
-                            if (name != genie_target_classname_url) {
-                                var tr = env.render_template(name, data);
-                                obj.innerHTML = tr;
-                                class_names.push(name);
-                            }
-                        }
-                        obj.className = class_names.join(' ') + " " + genie_target_rendered_classname;
-                    },
-                    onFailure: function(obj) {
-                        console.log("Failure: " + obj);
-                    }, 
-                    onException: function(headerName, value) {
-                        console.log("Exception: " + value);
-                    }
-                }
-            );
-            myRequest.get();
-        })();
-    }
-
-    var targets = document.getElementsByClassName(genie_target_classname_url_json);
-    
-    for( var c = 0; c < targets.length; c++ ) {
-        var obj = targets[c];
-        (function() {
-            var classes = obj.className.split(' ');
-            var header = JSON.parse(obj.innerHTML);
-            obj.innerHTML = header['loading'];
-            var url = header['url'];
-
-            var myRequest = new Request(
-                {
-                    url: url,
-                    onSuccess: function(responseText, responseXML) {
-                        var data = JSON.parse(responseText);
-                        var class_names = [];
-                        for( var cc = 0; cc < classes.length; cc++ ) {
-                            var name = classes[cc];
-                            if (name != genie_target_classname_url_json) {
-                                var tr = env.render_template(name, data);
-                                obj.innerHTML = tr;
-                                class_names.push(name);
-                            }
-                        }
-                        obj.className = class_names.join(' ') + " " + genie_target_rendered_classname;
-                    },
-                    onFailure: function(obj) {
-                        console.log("Failure: " + obj);
-                    }, 
-                    onException: function(headerName, value) {
-                        console.log("Exception: " + value);
-                    }
-                }
-            );
-            myRequest.get();
-        })();
-    }
-}
-
-Environment.prototype.load_external_templates = function(templates) {
-    for( var c = 0; c < templates.length; c++ ) {
-        var file = templates[c];
-        var myRequest = new Request(
-            {
-                url: file,
-                async: false,
-                onSuccess: function(responseText, responseXML) {
-                    var template = responseText;
-                    var template_name = file.split('/');
-                    template_name = template_name[template_name.length-1];
-                    template_name = template_name.split('.')[0];
-                    genie.env.create_template( template_name, template );
-                },
-                onFailure: function(obj) {
-                    var template = obj.responseText;
-                    var template_name = file.split('/');
-                    template_name = template_name[template_name.length-1];
-                    template_name = template_name.split('.')[0];
-                    genie.env.create_template( template_name, template );
-                }, 
-                onException: function(headerName, value) {
-                    console.log("Exception: " + value);
-                }
-            }
-        );
-        myRequest.get();
     }
 }
 

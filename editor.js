@@ -4,12 +4,14 @@ var Terminal = function(root) {
     this.reset();
     if (root) {
         this.initialize(root);
+        this.refresh();
     }
 }
 
 Terminal.prototype.initialize = function(root) {
     this.root = root;
     console.log("Initializeing " + this);
+    this.env = new genie.Environment();
     
     this.keys_dict = {"48": "0", "49": "1", "50": "2", "51": "3", "52": "4", "53": "5", "54": "6", "55": "7", 
                       "56": "8",  "57": "9", "65": "a", "66": "b", "67": "c", "68": "d", "69": "e", 
@@ -102,9 +104,6 @@ Terminal.prototype.initialize = function(root) {
 
     this.history = [];
     this.command_stack = [];
-    this.prompt = '';
-    
-    this.refresh();
     this.log("Testing Log");
 }
 
@@ -133,14 +132,15 @@ Terminal.prototype.refresh = function() {
     if (this.cursor_location < 0) {
         this.cursor_location = 0;
     }
-    
     this.buffer.innerHTML = this.env.render_template('genie-buffer-template', {'lines':this.lines, 'current_line':this.current_line, 'cursor_loc':this.cursor_location, 'prompt':this.prompt});
+    this.focus();
 }
 
 Terminal.prototype.reset = function() {
     this.lines = [''];
     this.current_line = 0;
     this.cursor_location = 0;
+    this.prompt = '';
 }
 
 Terminal.prototype.focus = function() {
@@ -216,7 +216,7 @@ Terminal.prototype.keydown = function(event) {
         }
     }
 
-    this.refresh_line();
+    this.refresh();
     event.stopPropagation();
 }
 
@@ -297,6 +297,7 @@ var Shell = function(root) {
     this.reset();
     if (root) {
         this.initialize(root);
+        this.refresh();
     }
 }
 Shell.prototype = new Terminal();
@@ -348,10 +349,25 @@ Shell.prototype.eval_input = function(data) {
     }
 }
 
+Shell.prototype.emit_lines = function(lines) {
+    if (lines.length == 1) {
+        this.prompt += lines[lines.length-1];
+        this.refresh_line();
+    } else {
+        for(var i = 0; i < lines.length-1; i++) {
+            this.emit(lines[i]);
+        }
+        this.prompt = lines[lines.length-1];
+    }
+}
+
 Shell.prototype.emit = function(data) {
+    this.history.push(data);
+    
     var d = document.createElement('div');
     d.innerHTML = this.env.render_template('genie-terminal-line-template', {'line':data});
     this.prev_buf.appendChild( d );
+    this.focus();
 }
 
 Shell.prototype.jemit = function(data) {
@@ -362,7 +378,7 @@ Shell.prototype.trim = function(min) {
     if (min == undefined) {
         min = 10;
     }
-    while( this.prev_buf.children.length > 5 ) {
+    while( this.prev_buf.children.length > 10 ) {
         this.prev_buf.removeChild( this.prev_buf.children[0] );
     }
 }
@@ -372,6 +388,7 @@ var EditorEmacs = function(root) {
     this.reset();
     if (root) {
         this.initialize(root);
+        this.refresh();
     }
 }
 EditorEmacs.prototype = new Terminal();
@@ -447,4 +464,79 @@ EditorEmacs.prototype.reset = function() {
     this.lines = ['/* Lib features I need */', '', 'Object.prototype.keys = function ()', '{', '  var keys = [];', '  for(i in this) if (this.hasOwnProperty(i)) {', '      keys.push(i);', '  }', '  return keys;', '}'];
     this.current_line = 0;
     this.cursor_location = 0;
+    this.prompt = '';
+}
+
+var WebSocketConnection = function(root) {
+    console.log("create websocket connection");
+    this.reset();
+    var ws = null;
+    if (root) {
+        this.initialize(root);
+        this.refresh();
+    }
+    
+    if ("WebSocket" in window) {
+        var term = this;
+        ws = new WebSocket("ws://localhost:9001/");
+
+        if (!ws) {
+            term.emit("Connection Failed.");
+            return;
+        }
+        
+        ws.onopen = function() {
+            term.emit("connection successful.");
+        };
+
+        ws.onmessage = function(event) {
+            var msg = event.data;
+            term.emit_lines(msg.split('\n'));
+        };
+
+        ws.onclose = function() {
+            term.emit("This connection has been closed.");
+        };
+        this.ws = ws;
+    } else {
+        this.lines = ['Sorry but your browser does not support websockets'];
+    }
+    
+}
+WebSocketConnection.prototype = new Shell();
+WebSocketConnection.prototype.initialize = function(root) {
+    console.log("WebSocketConnection init");
+    this.prev_buf = document.createElement('div');
+    root.appendChild(this.prev_buf);
+    
+    Terminal.prototype.initialize.call(this, root);
+
+    this.keys_dict['13'] = function(term) { term.command_newline(); }
+    this.keys_dict['9'] = function(term) { term.command_tabin(); }    
+    this.modified_dict['control-u'] = function(term) { term.lines[term.current_line] = ''; }
+    this.modified_dict['control-t'] = function(term) { term.trim(); }
+    
+    this.genie_terminal_line_template = "<div class='genie-terminal-line'>{{v.line}}</div>";
+    this.env.create_template('genie-terminal-line-template', this.genie_terminal_line_template);
+}
+
+WebSocketConnection.prototype.command_tabin = function() {
+    this.lines[this.current_line] += '--';
+    this.cursor_location = this.lines[this.current_line].length;
+}
+
+WebSocketConnection.prototype.command_newline = function() {
+    var d = this.get_current_line();
+    this.emit( this.prompt + d );
+    this.prompt = '';
+    this.eval_input(d);
+    this.lines = [''];
+    this.refresh_line();
+    this.focus();
+}
+
+WebSocketConnection.prototype.eval_input = function(data) {
+    if (this.ws !== undefined) {
+        this.ws.send(data);
+    }
 }

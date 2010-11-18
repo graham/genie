@@ -140,6 +140,15 @@
         }
     }
 
+    function test_crazy() {
+        var result = env.quick_render("This is a test {{ v.newa[2].woot }}", {'newa':[1,2,{'woot':'hahaahhaahahahah'}]});
+        if (result == "This is a test hahaahhaahahahah") {
+            return [true, result];
+        } else {
+            return [false, result];
+        }
+    }
+
     var tests = [
         [test_basic1, "Basic inline variable test 1."],
         [test_basic2, "Basic inline variable test 2."],
@@ -149,6 +158,7 @@
         [test_basic6, "Basic inline variable test 6."],
         [test_basic7, "Basic inline variable test 7."],
         [test_conditions, "testing of conditaionals"],
+        [test_crazy, "crazy nested test."],
         [test_loops, 'test basic for loop'],
     ];
     
