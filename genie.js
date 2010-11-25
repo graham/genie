@@ -50,6 +50,7 @@ var Template = function(string) {
     this.parent_container = null;
 
     this.next_slurp = 0;
+    this.arg_list = [];
 }
 
 Template.prototype.find_next_block = function() {
@@ -308,17 +309,13 @@ var Environment = function() {
     }
 }    
 
-Environment.prototype.render_template = function(name, variables) {
-    try {
-        var t = this.template_dict[name];
-        try {
-            return t.render(variables);
-        } catch (e) {
-            return 'I dont think i know of a template named: ' + name + '---' + e;
-        }
-    } catch (e) {
-        console.log("here: " + e);
+
+Environment.prototype.template_list = function() {
+    l = []; 
+    for( var i in this.template_dict ) {
+        l.push(i);
     }
+    return l;
 }
 
 Environment.prototype.get_template = function(name) {
@@ -333,14 +330,14 @@ Environment.prototype.create_template = function(name, data) {
     return t;
 }
 
-Environment.prototype.quick_render = function(template_text, vars) {
+Environment.prototype.render_quick = function(template_text, vars) {
     var t = new Template(template_text);
     t.key = 'anon';
     t.environment = this;
     return t.render(vars);
 }
 
-Environment.prototype.render = function(name_of_template, target_element, di) {
+Environment.prototype.render_to = function(target_element, name_of_template, di) {
     var t = this.get_template(name_of_template);
     if (t !== undefined) {
         target_element.innerHTML = t.render(di);
@@ -350,6 +347,18 @@ Environment.prototype.render = function(name_of_template, target_element, di) {
     
 }
 
+Environment.prototype.render = function(name, variables) {
+    try {
+        var t = this.template_dict[name];
+        try {
+            return t.render(variables);
+        } catch (e) {
+            return 'I dont think i know of a template named: ' + name + '---' + e;
+        }
+    } catch (e) {
+        console.log("here: " + e);
+    }
+}
 Environment.prototype.run = function() {
     var datas = document.getElementsByClassName(genie_data_classname);
     var defaults = {};
