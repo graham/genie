@@ -1,4 +1,5 @@
 /* Lib features I need */
+/* testing */
 
 String.prototype.trim = function() {
     return this.replace(/^\s+|\s+$/g, "").replace(/^[\n|\r]+|[\n|\r]+$/g, "");
