@@ -66,7 +66,7 @@
     var env = new genie.Environment();
     
     function test_basic1() {
-        var result = env.quick_render('my name is {{v.name}}', {'name':'Graham'});
+        var result = env.render_quick('my name is {{v.name}}', {'name':'Graham'});
         if (result == 'my name is Graham') {
             return [true, result];
         } else {
@@ -74,7 +74,7 @@
         }
     }
     function test_basic2() {
-        var result = env.quick_render('my name is {% if true %}{{v.name}}{% end %}', {'name':'Graham'});
+        var result = env.render_quick('my name is {% if true %}{{v.name}}{% end %}', {'name':'Graham'});
         if (result == 'my name is Graham') {
             return [true, result];
         } else {
@@ -82,7 +82,7 @@
         }
     }
     function test_basic3() {
-        var result = env.quick_render('my name is {% if (true) %}{{v.name}}{% end %}', {'name':'Graham'});
+        var result = env.render_quick('my name is {% if (true) %}{{v.name}}{% end %}', {'name':'Graham'});
         if (result == 'my name is Graham') {
             return [true, result];
         } else {
@@ -90,7 +90,7 @@
         }
     }
     function test_basic4() {
-        var result = env.quick_render('my name is {% if(true) %}{{v.name}}{% end %}', {'name':'Graham'});
+        var result = env.render_quick('my name is {% if(true) %}{{v.name}}{% end %}', {'name':'Graham'});
         if (result == 'my name is Graham') {
             return [true, result];
         } else {
@@ -98,7 +98,7 @@
         }
     }
     function test_basic5() {
-        var result = env.quick_render('my name is {%if(true)%}{{v.name}}{%end%}', {'name':'Graham'});
+        var result = env.render_quick('my name is {%if(true)%}{{v.name}}{%end%}', {'name':'Graham'});
         if (result == 'my name is Graham') {
             return [true, result];
         } else {
@@ -106,7 +106,7 @@
         }
     }
     function test_basic6() {
-        var result = env.quick_render('my name is {%if true %}{{v.name}}{%end%}', {'name':'Graham'});
+        var result = env.render_quick('my name is {%if true %}{{v.name}}{%end%}', {'name':'Graham'});
         if (result == 'my name is Graham') {
             return [true, result];
         } else {
@@ -114,7 +114,7 @@
         }
     }
     function test_basic7() {
-        var result = env.quick_render('my name is {%if true%}{{v.name}}{%end%}', {'name':'Graham'});
+        var result = env.render_quick('my name is {%if true%}{{v.name}}{%end%}', {'name':'Graham'});
         if (result == 'my name is Graham') {
             return [true, result];
         } else {
@@ -123,7 +123,7 @@
     }
     
     function test_conditions() {
-        var result = env.quick_render($('conditional-template').innerHTML, {'lines':[1,2,3], 'lorem':'ipsum'});
+        var result = env.render_quick($('conditional-template').innerHTML, {'lines':[1,2,3], 'lorem':'ipsum'});
         if (result == 'Hello\n    \n    \n        World') {
             return [true, result];
         } else {
@@ -132,7 +132,7 @@
     }
     
     function test_loops() {
-        var result = env.quick_render("{% for i in [1,2,3] %}{{i}},{% end %}", {});
+        var result = env.render_quick("{% for i in [1,2,3] %}{{i}},{% end %}", {});
         if (result == "1,2,3,") {
             return [true, result];
         } else {
@@ -141,7 +141,7 @@
     }
 
     function test_crazy() {
-        var result = env.quick_render("This is a test {{ v.newa[2].woot }}", {'newa':[1,2,{'woot':'hahaahhaahahahah'}]});
+        var result = env.render_quick("This is a test {{ v.newa[2].woot }}", {'newa':[1,2,{'woot':'hahaahhaahahahah'}]});
         if (result == "This is a test hahaahhaahahahah") {
             return [true, result];
         } else {
@@ -172,11 +172,11 @@
             
             if (success[0]) {
                 var d = document.createElement('div');
-                d.innerHTML = env.render_template('result-template', {'klass':'success', 'title':test_name, 'result':success[1]});
+                d.innerHTML = env.render('result-template', {'klass':'success', 'title':test_name, 'result':success[1]});
                 results.appendChild(d);
             } else {
                 var d = document.createElement('div');
-                d.innerHTML = env.render_template('result-template', {'klass':'failure', 'title':test_name, 'result':success[1]});
+                d.innerHTML = env.render('result-template', {'klass':'failure', 'title':test_name, 'result':success[1]});
                 results.appendChild(d);                
             }
         }

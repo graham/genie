@@ -205,7 +205,7 @@ Template.prototype.render = function(variables) {
 
         var _env = this.environment;
         var ____output = [];
-        var partial = function(name, d) { return _env.render_template(name, d); };
+        var partial = function(name, d) { return _env.render(name, d); };
         var write = function(ddd) { ____output.push(ddd); };
         var _template = this;
         
@@ -398,7 +398,7 @@ Environment.prototype.run = function() {
         for( var cc = 0; cc < classes.length; cc++ ) {
             var name = classes[cc];
             if (name != genie_target_classname) {
-                var tr = env.render_template(name, data);
+                var tr = env.render(name, data);
                 obj.innerHTML = tr;
                 class_names.push(name);
             }

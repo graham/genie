@@ -130,7 +130,7 @@
         Now we render the template:
         
         <div class='code example1'>
-            var result = env.quick_render(t, {name:'Genie'});<br>
+            var result = env.render_quick(t, {name:'Genie'});<br>
             $('result_example1').innerHTML = result;
         </div>
         
@@ -158,7 +158,7 @@
             env.render('saved', $('result_example2'), {place:'World'});<br>
             <br>
             // or put the data in yourself.<br>
-            $('result_example2').innerHTML = env.render_template('saved', {place:'World'});<br>
+            $('result_example2').innerHTML = env.render('saved', {place:'World'});<br>
         </div>
         
         Result: <div id='result_example2' class='example'></div>
@@ -176,7 +176,7 @@
             env.create_template('greeting', "Hello, {{ v.name }}");<br>
             env.create_template('say', 'The proper way to greet someone is "{{ partial("greeting", {name:"Graham"}) }}".');
             <br><br>
-            $('result_example3').innerHTML = env.render_template('say', {});
+            $('result_example3').innerHTML = env.render('say', {});
         </div>
         Result: <div id='result_example3' class='example'></div>
         <input type=button onclick='run_example(".example3");' value='Try It!'><br><br>
@@ -206,7 +206,7 @@
         <div class='code example4'>
             var env = new genie.Environment();<br>
             env.create_template('account', $('mytemplate').innerHTML);<br>
-             $('result_example4').innerHTML = env.render_template('account', {'account_balance':-100.0});
+             $('result_example4').innerHTML = env.render('account', {'account_balance':-100.0});
         </div>
         Result: <div id='result_example4' class='example'></div>
         <input type=button onclick='run_example(".example4");' value='Try It!'><br><br>

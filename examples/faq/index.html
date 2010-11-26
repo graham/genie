@@ -59,7 +59,7 @@
 
     function show_home() {
         console.log(env.template_dict);
-        $('genie-lamp').innerHTML = env.render_template("templates/list_articles.html", {'articles':document_data['html_files']});
+        $('genie-lamp').innerHTML = env.render("templates/list_articles.html", {'articles':document_data['html_files']});
     }
     
     function show_article( file_name ) {
@@ -71,7 +71,7 @@
                     'title':$(d).getChildren('.title')[0].innerHTML,
                     'content':$(d).getChildren('.content')[0].innerHTML
                 };
-            var content = env.render_template("templates/view_article.html", {'article':article});
+            var content = env.render("templates/view_article.html", {'article':article});
             $('genie-lamp').innerHTML = content;
         });
     }

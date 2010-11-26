@@ -132,7 +132,7 @@ Terminal.prototype.refresh = function() {
     if (this.cursor_location < 0) {
         this.cursor_location = 0;
     }
-    this.buffer.innerHTML = this.env.render_template('genie-buffer-template', {'lines':this.lines, 'current_line':this.current_line, 'cursor_loc':this.cursor_location, 'prompt':this.prompt});
+    this.buffer.innerHTML = this.env.render('genie-buffer-template', {'lines':this.lines, 'current_line':this.current_line, 'cursor_loc':this.cursor_location, 'prompt':this.prompt});
     this.focus();
 }
 
@@ -365,7 +365,7 @@ Shell.prototype.emit = function(data) {
     this.history.push(data);
     
     var d = document.createElement('div');
-    d.innerHTML = this.env.render_template('genie-terminal-line-template', {'line':data});
+    d.innerHTML = this.env.render('genie-terminal-line-template', {'line':data});
     this.prev_buf.appendChild( d );
     this.focus();
 }
