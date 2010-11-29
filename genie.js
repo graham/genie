@@ -415,6 +415,7 @@ Environment.prototype.get_obj = function(name) {
     return this.object_dict[name];
 }
 
+
 var main_environment = new Environment();
 
 try {

@@ -164,3 +164,5 @@ if (exports === undefined) {
 exports.Eventable = Eventable;
 exports.Collector = Collector;
 exports.Messageable = Messageable;
+
+// Adding this test.

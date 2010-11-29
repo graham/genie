@@ -1,0 +1,77 @@
+<html>
+
+<script type="text/javascript" charset="utf-8">
+    var genie_debug = 1;
+</script>
+
+<script type="text/javascript" charset="utf-8" src='../../js/mootools.js'> </script>
+<script type="text/javascript" charset="utf-8" src='../../genie.js'></script>
+<script type="text/javascript" charset="utf-8" src='../../ables.js'></script>
+<link rel="stylesheet" href="style.css" type="text/css" media="screen" title="no title" charset="utf-8">
+
+<body>
+    <div class='title'>Index</div>
+    <div id='genie-lamp'></div>
+</body>
+
+<script type="text/javascript" charset="utf-8">
+    var document_data = [];
+    var env = null;
+
+    function load_file(filename, callback) {
+        new Request({
+            url:filename,
+            onSuccess: function(data) {
+                callback(filename, data);
+            },
+            onFailure: function(data) {
+                callback(filename, data.responseText);
+            }
+        }).send();
+    }
+
+    window.addEvent('domready', function() {
+        env = new genie.Environment();
+        var col = new ables.Collector();
+
+        load_file('data.txt', function(url, data) {
+            document_data = JSON.parse(data);
+            for(var i = 0; i < document_data['templates'].length; i++) {
+                var filename = document_data['templates'][i];
+                col.add(filename);
+                load_file(filename, function(fname, inner_d) {
+                    var template = env.create_template(fname, inner_d);
+                    col.ping(fname);
+                });
+            }
+            col.ping('data.txt');
+        });
+        col.wait(function() {
+            load_complete();
+        }, 200);
+    });
+
+    function load_complete() {
+        console.log('load_complete');
+        var files = document_data['html_files'];
+        for( var i=0; i < files.length; i++ ) {
+            console.log(files[i]);
+            new Request({
+                url:files[i][1],
+                onSuccess: function(data) {
+                    console.log('loaded');
+                    var d = document.createElement('div');
+                    d.innerHTML = env.render('templates/view_entry.html', {
+                        'title':files[i][1],
+                        'modified':files[i][0],
+                        'content':data
+                    });
+                    $('genie-lamp').appendChild(d);
+                }
+            }).send();
+        }
+    }
+</script>
+
+
+</html>

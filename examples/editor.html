@@ -1,12 +1,15 @@
 <html>
-<script type="text/javascript" charset="utf-8" src='js/mootools.js'> </script>
-<script type="text/javascript" charset="utf-8" src='genie.js'></script>
-<script type="text/javascript" charset="utf-8" src='editor.js'></script>
+<script type="text/javascript" charset="utf-8" src='../js/mootools.js'> </script>
+<script type="text/javascript" charset="utf-8" src='../genie.js'></script>
+<script type="text/javascript" charset="utf-8" src='../terminal.js'></script>
+<script type="text/javascript" charset="utf-8" src='../editor.js'></script>
+<script type="text/javascript" charset="utf-8" src='../shell.js'></script>
+<script type="text/javascript" charset="utf-8" src='../ws_connection.js'></script>
 
 <script type="text/javascript" charset="utf-8">
-    var term = new EditorEmacs($('myterm'));
+    var term = new WebSocketConnection($('myterm'));
     var term2 = new Shell($('myterm'));
-    var term3 = new WebSocketConnection($('myterm'));
+    var term3 = new EditorEmacs($('myterm'));
     var current = 0;
     
     var current_term = null;
@@ -21,6 +24,7 @@
         }
         $('myterm').innerHTML = '';
         current_term.initialize( $('myterm') );
+        current_term.modified_dict['control-x control-m'] = function(term) { g_switch_modes(); };
         current++;
         current_term.refresh();
     }
@@ -39,6 +43,7 @@
 
 <style type="text/css" media="screen">
     * {
+        background-color:#444;
         margin: 0px;
         padding: 0px;
     }
@@ -46,16 +51,23 @@
     body {
       background: #111;
       color: #BFBFBF;
-      font: 12px Monaco, "Lucida Console", "Courier New", Courier;
+      font: 10px Monaco;
       padding: 5px;
     }
     .genie-terminal-current-line {
         background-color: #222;
     }
+    
+    #encase {
+        width: 200px;
+        height: 200px;
+    }
 
 </style>
 
 <body>
+    <div id='encase'>
     <div id='myterm'></div>
+    </div>
 </body>
 </html>

@@ -1,0 +1,61 @@
+<html>
+<script type="text/javascript" charset="utf-8" src='../js/mootools.js'> </script>
+<script type="text/javascript" charset="utf-8" src='../genie.js'></script>
+<script type="text/javascript" charset="utf-8" src='../terminal.js'></script>
+<script type="text/javascript" charset="utf-8" src='../editor.js'></script>
+
+<script type="text/javascript" charset="utf-8">
+    var term = new EditorEmacs();
+    
+    function start_edit() {
+        term.in_place_edit( $('here') );
+        term.modified_dict['control-x control-s'] = function(the) {
+            $('here').innerHTML = the.lines.join('\n');
+            $(window).removeEvents('keydown');
+        }
+
+        $(window).addEvent('keydown', function(event){
+            term.keydown(event.event);
+            event.event.stopPropagation();
+            event.stop();
+        });        
+    }
+
+</script>
+
+<style type="text/css" media="screen">
+
+    .genie-terminal-current-line {
+        background-color: #bbb;
+    }
+
+
+</style>
+
+<body>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam quam augue, ultrices sed tristique non, pharetra quis nibh. Phasellus fermentum dapibus nisl sed sagittis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam eleifend velit nec dolor commodo ut consectetur nisl aliquam. Integer sed sapien ut est accumsan aliquam nec nec erat. Suspendisse vitae lectus diam. Aliquam erat volutpat. In nisl nisl, adipiscing non fringilla et, dignissim quis est. Cras a venenatis nisi. Donec adipiscing massa ut nunc ullamcorper rutrum. Nam ullamcorper justo at tellus fermentum faucibus aliquam orci aliquam. Sed porttitor nunc et justo faucibus ornare. Nulla volutpat felis in urna lobortis adipiscing. Nullam adipiscing velit fringilla erat ornare sit amet hendrerit massa ultricies. Suspendisse commodo lacinia sapien, at gravida nunc volutpat a.
+    
+    <br>
+    <div id='here' style='width: 400px; height: 200px; margin-left: auto; margin-right: auto;'>
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+Nullam quam augue, ultrices sed tristique non, pharetra quis nibh.
+Phasellus fermentum dapibus nisl sed sagittis.
+Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+    </div>
+    <input type=button value='edit' onclick='start_edit();'>
+    
+    <div>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        Nullam quam augue, ultrices sed tristique non, pharetra quis nibh.
+        Phasellus fermentum dapibus nisl sed sagittis.
+        Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
+    </div>
+    <div>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam quam augue, ultrices sed tristique non, pharetra quis nibh. Phasellus fermentum dapibus nisl sed sagittis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam eleifend velit nec dolor commodo ut consectetur nisl aliquam. Integer sed sapien ut est accumsan aliquam nec nec erat. Suspendisse vitae lectus diam. Aliquam erat volutpat. In nisl nisl, adipiscing non fringilla et, dignissim quis est. Cras a venenatis nisi. Donec adipiscing massa ut nunc ullamcorper rutrum. Nam ullamcorper justo at tellus fermentum faucibus aliquam orci aliquam. Sed porttitor nunc et justo faucibus ornare. Nulla volutpat felis in urna lobortis adipiscing. Nullam adipiscing velit fringilla erat ornare sit amet hendrerit massa ultricies. Suspendisse commodo lacinia sapien, at gravida nunc volutpat a.
+    </div>
+    <div>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam quam augue, ultrices sed tristique non, pharetra quis nibh. Phasellus fermentum dapibus nisl sed sagittis. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam eleifend velit nec dolor commodo ut consectetur nisl aliquam. Integer sed sapien ut est accumsan aliquam nec nec erat. Suspendisse vitae lectus diam. Aliquam erat volutpat. In nisl nisl, adipiscing non fringilla et, dignissim quis est. Cras a venenatis nisi. Donec adipiscing massa ut nunc ullamcorper rutrum. Nam ullamcorper justo at tellus fermentum faucibus aliquam orci aliquam. Sed porttitor nunc et justo faucibus ornare. Nulla volutpat felis in urna lobortis adipiscing. Nullam adipiscing velit fringilla erat ornare sit amet hendrerit massa ultricies. Suspendisse commodo lacinia sapien, at gravida nunc volutpat a.
+    </div>
+
+</body>
+</html>
