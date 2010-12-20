@@ -148,6 +148,15 @@
             return [false, result];
         }
     }
+    
+    function test_ford() {
+        var result = env.render_quick("{% ford i in asdf %}{{i}}-{{asdf[i]}},{% end %}", {'asdf':{'one':1, 'two':2}});
+        if (result == "one-1,two-2,") {
+            return [true, result];
+        } else {
+            return [false, result];
+        }
+    }
 
     var tests = [
         [test_basic1, "Basic inline variable test 1."],
@@ -159,7 +168,8 @@
         [test_basic7, "Basic inline variable test 7."],
         [test_conditions, "testing of conditaionals"],
         [test_crazy, "crazy nested test."],
-        [test_loops, 'test basic for loop'],
+        [test_ford, 'test basic for loop2'],
+        [test_loops, 'test basic for loop']
     ];
     
     window.addEvent('domready', function() {

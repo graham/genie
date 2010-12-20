@@ -4,8 +4,8 @@
     var genie_debug = 1;
 </script>
 
-<script type="text/javascript" charset="utf-8" src='js/mootools.js'> </script>
-<script type="text/javascript" charset="utf-8" src='genie.js'></script>
+<script type="text/javascript" charset="utf-8" src='../js/mootools.js'> </script>
+<script type="text/javascript" charset="utf-8" src='../genie.js'></script>
 
 <style type="text/css" media="screen">    
     body {
@@ -232,11 +232,137 @@
     </div>
     
     <div class='subtitle'>
-      
+        Ok, now lets have some fun.
     </div>
     
-    <div class='title'>More Soon...</div>
+    <div class='content'>
+        <p>Lets get into some more complex features of Genie. We've seen some conditionals in the previous example, lets go over the syntax for those.</p>
+            
+        <div class='subtitle'>
+            {% if %}
+        </div>
+        
+        <p>{% if %} works just like you think it would, conditions must be enclosed in () parens just like in javascript. Check out the example below, assuming x = 100.</p>
+        
+        <div class='code'>
+            {% if (10 == 100) %}<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;This will never happen.<br>
+            {% end %}
+            <br><br>
+            {# Comment #}
+            <br><br>
+            {% if (10 == 10) %}<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;This will always happen.<br>
+            {% end %}
+            <br><br>
+            {# You can also have else clauses and else if clauses #}<br><br>
+            {% if (x > 10) %}<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;X is greater than 10.<br>
+            {% else if (x > 100) %}<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;Wow, X is greater than 100.<br>
+            {% else if (x > 1000.0) %}<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;Wow, x is really big.<br>
+            {% else %}<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;Well at least x isnt a million<br>
+            {% end %}
+            
+        </div>
+        
+        <script type='text/plain' id='mytemplate2'>
+            {! var x = 100.0; !}
+            {% if (10 == 100) %}
+                This will never happen.
+            {% end %}
 
+            {% if 10 == 10 %}
+                This will always happen.
+            {% end %}
+
+            {% if (x > 10) %}
+                X is greater than 10.
+            {% else if (x > 100) %}
+                Wow, X is greater than 100.
+            {% else if (x > 1000.0) %}
+                Wow, x is really big.
+            {% else %}
+                Well at least x isnt a million
+            {% end %}
+        </script>
+        
+        
+        <div class='code example5' style='display:none;'>
+            var env = new genie.Environment();<br>
+            env.create_template('ifs', $('mytemplate2').innerHTML);<br>
+             $('result_example5').innerHTML = env.render('ifs', {'x':100.0});
+        </div>
+        Result: <div id='result_example5' class='example'></div>
+        <input type=button onclick='run_example(".example5");' value='Try It!'><br><br>
+        
+        <p>So that's an if statement, you can always have nested ifs within ifs, but things can get a little tricky so I'd recommend indenting cleanly so you can tell where you are.</p>
+            
+        <div class='subtitle'>{% for %}</div>
+        
+        <p>Likely the most used part of any language, {% for %} uses a style similar to python: for <b>value</b> in <b>list</b>. It does not however do any unpacking of lists for you (like python or some other languages), so you'll have to make sure you take this into account.</p>
+            
+        <div class='code'>
+            {% for i in [1,2,3,4,5] %}<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;The number is {{ i }}.&lt;br&gt;<br>
+            {% end %}
+        </div>
+        
+        <script type='text/plain' id='example6'>
+            {% for i in [1,2,3,4,5] %}
+                The number is {{ i }}.<br>
+            {% end %}
+        </script>    
+        
+        <div class='code example6' style='display:none;'>
+            var env = new genie.Environment();<br>
+            env.create_template('ifs', $('example6').innerHTML);<br>
+             $('result_example6').innerHTML = env.render('ifs', {'x':100.0});
+        </div>
+        Result: <div id='result_example6' class='example'></div>
+        <input type=button onclick='run_example(".example6");' value='Try It!'><br><br>
+
+        <div class='subtitle'>Arbitrary Javascript</div>
+        
+        <p>While some schools of thought go for a more strict MVC I think this should really be more of a guideline, mostly because sometimes you really just need to do something in your template. So you can always just drop into Javascript when you need to, using the {! !} tags.</p>
+        
+        <div class='code'>
+            {! <br>
+&nbsp;&nbsp;&nbsp;&nbsp;var i = Math.round(Math.random() * 1000, 0) % 100; <br>
+&nbsp;&nbsp;&nbsp;&nbsp;var cen = function(value) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return '&lt;center&gt;' + value + "&lt;/center&gt;";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+            !}<br><br>
+            
+            Hey, isn't this cool.<br>
+            {{ cen(1) }}<br>
+            {{ cen(2) }}<br>
+        </div>
+    </div>
+    
+    <script type='text/plain' id='example7'>
+        {!
+            var i = Math.round(Math.random() * 1000, 0) % 100; 
+            var cen = function(value) {
+                return '<center>' + value + "</center>";
+            };;
+        !}
+
+        Hey, isnt this cool.
+        {{ cen(1) }}
+        {{ cen(2) }}
+    </script>
+    
+    <div class='code example7' style='display:none;'>
+        var env = new genie.Environment();<br>
+        env.create_template('ifs', $('example7').innerHTML);<br>
+         $('result_example7').innerHTML = env.render('ifs', {'x':100.0});
+    </div>
+    Result: <div id='result_example7' class='example'></div>
+    <input type=button onclick='run_example(".example7");' value='Try It!'><br><br>
+    
     <div class='subtitle'>
         Try It
     </div>

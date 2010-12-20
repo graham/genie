@@ -13,7 +13,6 @@ String.prototype.trimr = function() {
     return this.replace(/\s+$/g, "").replace(/[\n|\r]+$/g, "");    
 }
 
-
 var pad = function(count) {
     var index = 0;
     var pad = "";
@@ -152,6 +151,23 @@ Template.prototype.compile = function() {
                 f_code.push("while (" + bulk + ")" + " {\n");
                 depth += 1;
                 in_func.push('}');
+            } else if (data.substring(0, 4) == 'ford') {
+                var d = data.substring(4).trim();
+                var bulk = d;
+                if (d[0] == '(') {
+                    bulk = d.substring(1, d.length-2);
+                }
+                
+                var value_name = bulk.substring(0, bulk.indexOf(' in '));
+                var rest = bulk.substring(bulk.indexOf(' in ') + 4);
+                
+                var cvar = '_count_' + counter_count;
+                counter_count += 1;
+                f_code.push( "\n for( var " + cvar + " in " + rest + " ) {" );
+                //f_code.push( "\n" + rest + ".forEach( function(" + value_name +") {" );
+                f_code.push( "\n " + pad(depth) );
+                in_func.push('}');
+                depth += 1;                
             } else if (data.substring(0, 3) == 'for') {
                 var d = data.substring(3).trim();
                 var bulk = d;
@@ -192,10 +208,10 @@ Template.prototype.compile = function() {
     //header +=    "\n   catch(e) { console.log('error for key ' + v.keys()[__local_keys__] + ' -> ' + JSON.stringify(v[v.keys()[__local_keys__]]) + ' : ' + e); }";
     //header +=    "\n }";
     var header = '';
+    
+    console.log(f_code.join('\n'));
      
     this.f_code = f_code;
-    
-    console.log("This is the code for template: " + this.key + "\n" + f_code.join(' ') + "\n");
     this.f_code_render = "(function(parent, v, defaults) { " + header + this.f_code.join(' ') + "})";
 }
 
@@ -223,6 +239,7 @@ Template.prototype.render = function(variables) {
             return ____output.join('');
         }
         this.final_func = encased_template;
+        console.log(this.final_func);
     }
     
     var result = this.final_func(variables);
@@ -345,7 +362,6 @@ Environment.prototype.render_to = function(target_element, name_of_template, di)
     } else {
         target_element.innerHTML = 'Template ' + name_of_template + ' could not be found.';
     }
-    
 }
 
 Environment.prototype.render = function(name, variables) {
@@ -354,12 +370,13 @@ Environment.prototype.render = function(name, variables) {
         try {
             return t.render(variables);
         } catch (e) {
-            return 'I dont think i know of a template named: ' + name + '---' + e;
+            return e;
         }
     } catch (e) {
         console.log("here: " + e);
     }
 }
+
 Environment.prototype.run = function() {
     var datas = document.getElementsByClassName(genie_data_classname);
     var defaults = {};

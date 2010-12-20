@@ -5,7 +5,7 @@ if (exports === undefined) {
 } else {
     var sys = require('sys');
     log = function(data) {
-	sys.print(data + '\n');
+    sys.print(data + '\n');
     }
 }
 
@@ -16,73 +16,73 @@ var Eventable = function() {
 
 Eventable.prototype.listen = function(event_type, object) {
     if (this.listeners[event_type] === undefined) {
-	this.listeners[event_type] = [];
-	this.listeners[event_type].push(object);
+    this.listeners[event_type] = [];
+    this.listeners[event_type].push(object);
     } else {
-	this.listeners[event_type].push(object);
+    this.listeners[event_type].push(object);
     }
 };
 
 Eventable.prototype.unlisten = function(event_type, object) {
     if (this.listeners[event_type] === undefined) {
-	// pass
+    // pass
     } else {
-	if (object === undefined) {
-	    this.listeners[event_type] = undefined;
-	} else {
-	    this.listeners[event_type].filter( function(item, index) {
-		    if (item === object) {
-			return false;
-		    } else { 
-			return true;
-		    }
-		});
-	}
+    if (object === undefined) {
+        this.listeners[event_type] = undefined;
+    } else {
+        this.listeners[event_type].filter( function(item, index) {
+            if (item === object) {
+            return false;
+            } else { 
+            return true;
+            }
+        });
+    }
     }
 };
 
 Eventable.prototype.remove_listener = function(object) {
     for( var key in this.listeners ) {
-	this.listeners[key] = this.listeners[key].filter( function(item, index) {
-		if (item === object) {
-		    return false;
-		} else {
-		    return true;
-		}
-	    });
+    this.listeners[key] = this.listeners[key].filter( function(item, index) {
+        if (item === object) {
+            return false;
+        } else {
+            return true;
+        }
+        });
     }
 }
 
 Eventable.prototype.fire = function(event_type, event) {
     if (this.listeners[event_type] === undefined) {
-	// pass nobody is listening.
+    // pass nobody is listening.
     } else {
-	var results_l = [];
-	for( var i=0; i < this.listeners[event_type].length; i++ ) {
-	    var listener = this.listeners[event_type][i];
-	    if (typeof listener === "function") {
-		try {
-		    result = listener(event_type, event);
-		    results_l.push(result);
-		} catch (e) {
-		    log('Event handle failed, removing ' + event_type + ' : ' + listener + ' *** ' + e);
-		    results_l.push(false);
-		}
-	    } else if (typeof listener === "object") {
-		try {
-		    result = listener.on_event(event_type, event);
-		    results_l.push(result);
-		} catch (e) {
-		    log('Event handle failed, removing ' + event_type + ' : ' + listener + ' *** ' + e);
-		    results_l.push(false);
-		}
-	    }
-	}
+    var results_l = [];
+    for( var i=0; i < this.listeners[event_type].length; i++ ) {
+        var listener = this.listeners[event_type][i];
+        if (typeof listener === "function") {
+        try {
+            result = listener(event_type, event);
+            results_l.push(result);
+        } catch (e) {
+            log('Event handle failed, removing ' + event_type + ' : ' + listener + ' *** ' + e);
+            results_l.push(false);
+        }
+        } else if (typeof listener === "object") {
+        try {
+            result = listener.on_event(event_type, event);
+            results_l.push(result);
+        } catch (e) {
+            log('Event handle failed, removing ' + event_type + ' : ' + listener + ' *** ' + e);
+            results_l.push(false);
+        }
+        }
+    }
 
-	// or
-	this.listeners[event_type] = this.listeners[event_type].filter( function(item, index) {
-		return results_l[index];
-	    });
+    // or
+    this.listeners[event_type] = this.listeners[event_type].filter( function(item, index) {
+        return results_l[index];
+        });
     }
 };
 
@@ -97,38 +97,38 @@ Collector.prototype.add = function(id) {
 
 Collector.prototype.ping = function(id) {
     if (this.waiting_for.indexOf(id) != -1) {
-	this.waiting_for = this.waiting_for.filter( function(item, index) {
-		if (item == id) {
-		    return false;
-		} else {
-		    return true;
-		}
-	    });
-	this.finished.push(id);
+    this.waiting_for = this.waiting_for.filter( function(item, index) {
+        if (item == id) {
+            return false;
+        } else {
+            return true;
+        }
+        });
+    this.finished.push(id);
     }
 };
 
 Collector.prototype.is_complete = function(callback, waitfor) {
     if (this.waiting_for.length == 0) {
-	callback(true);
+    callback(true);
     } else {
-	var coll = this;
-	setTimeout( function() {
-		coll.is_complete(callback, waitfor);
-	    }, waitfor);
+    var coll = this;
+    setTimeout( function() {
+        coll.is_complete(callback, waitfor);
+        }, waitfor);
     }
 }
 
 Collector.prototype.wait = function(callback, waitfor) {
     var wait_ms = 1000;
     if (waitfor !== undefined) {
-	wait_ms = waitfor;
+    wait_ms = waitfor;
     }
 
     var coll = this;
     setTimeout(function() {
-	    coll.is_complete(callback, waitfor);
-	}, wait_ms);
+        coll.is_complete(callback, waitfor);
+    }, wait_ms);
 };
 
 
@@ -142,20 +142,20 @@ Messageable.prototype.send = function(object) {
 
 Messageable.prototype.poll = function() {
     if (this.mailbox.length > 0) {
-	return true;
+    return true;
     } else {
-	return false;
+    return false;
     }
 };
 
 Messageable.prototype.receive = function(object) {
     if (this.poll()) {
-	return this.mailbox.shift();
+    return this.mailbox.shift();
     } else {
-	return undefined;
+    return undefined;
     }
 }
-	
+    
 if (exports === undefined) {
     var ables = {};
     var exports = ables;
@@ -166,3 +166,8 @@ exports.Collector = Collector;
 exports.Messageable = Messageable;
 
 // Adding this test.
+
+Resourceable = function(resource_name, callback) {
+    this.cache = {};
+    this.
+}
