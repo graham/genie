@@ -198,6 +198,8 @@ Template.prototype.compile = function() {
         } else if ( type == 'variable') {
             f_code.push( pad(depth) );
             f_code.push( "write( " + data + " );\n" );
+	} else if ( type == 'bindable') {
+	    f_code.push( "write( \"<span class='genie_value_update_" + data.trim() + "'>\" + " + this.environment.bindable_dict[data.trim()] + " + \"</span>\" );\n" );
         } else if ( type == 'exec') {
             f_code.push(data);
         }
@@ -297,6 +299,7 @@ var Environment = function() {
     this.default_data = {};
     this.object_dict = {};
     this.template_dict = {};
+    this.bindable_dict = {};
 
     this.begin = '{';
     this.end = '}';
@@ -306,7 +309,8 @@ var Environment = function() {
         "#":"comment",
         "%":"condition",
         "!":"exec",
-        "@":"special"
+        "@":"special",
+	"&":"bindable",
     }
     
     this.specials = {
@@ -334,6 +338,16 @@ Environment.prototype.template_list = function() {
         l.push(i);
     }
     return l;
+}
+
+Environment.prototype.set_bindable = function(key, value) {
+    this.bindable_dict[key] = value;
+
+    var targets = document.getElementsByClassName('genie_value_update_' + key);
+    for( var i = 0; i < targets.length; i++ ) {
+	var obj = targets[i];
+	obj.innerHTML = value;
+    }
 }
 
 Environment.prototype.get_template = function(name) {
