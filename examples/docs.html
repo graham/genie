@@ -363,6 +363,27 @@
     Result: <div id='result_example7' class='example'></div>
     <input type=button onclick='run_example(".example7");' value='Try It!'><br><br>
 
+    <div class='title'>Things they are a changing</div>
+    <div class='content'>
+	<p>They sure are, things on pages change all the time, in fact that's one of the hardest parts about building pages these days, is that things change. Don't worry, genie can help with that too.</p>
+	<p>So, if you want to simply place a value in you can do so with {{ value }} as you have seen before. However, if you'd like the value the value to be replaceable you can use the {& value &} tags.
+	</p>
+	<p>Once you do this you can replace the value (and all values of that name) at any time with a simple call to the environment object: env.set_bindable('value', 1337);</p>
+	<p>Lets try out an example:</p>
+        <div class='code'>
+	  &lt;script type='text/plain' id='mytemplate'&gt;<br>
+	  &nbsp;&nbsp;&nbsp;&nbsp;Hello, the value is {& value &} and it's still {& value &} but it started as {{ value }}.<br>
+	  &lt;/script&gt;
+        </div>
+	
+	<div class='code'>
+	  var env = new genie.Environment();<br>
+	  env.create_template('temp', document.getElementById('mytemplate').innerHTML);<br>
+	  env.render_to('target', 'temp', {'value':100});
+	</div>
+
+    </div>
+
     <div class='subtitle'>
         Try It
     </div>

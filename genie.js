@@ -197,12 +197,17 @@ Template.prototype.compile = function() {
                 f_code.push( pad(depth-1) );
                 f_code.push( "} " + data + " {\n");
             }
-        } else if ( type == 'variable') {
+        } else if (type == 'variable') {
             f_code.push( pad(depth) );
             f_code.push( "write( " + data + " );\n" );
-	} else if ( type == 'bindable') {
-	    f_code.push( "write( \"<span class='genie_" + this.environment.id + "_value_update_" + data.trim() + "'>\" + " + this.environment.bindable_dict[data.trim()] + " + \"</span>\" );\n" );
-        } else if ( type == 'exec') {
+	} else if (type == 'bindable') {
+	    var value = this.environment.bindable_dict[data.trim()];
+	    if (value === undefined) {
+		value = '';
+	    }
+
+	    f_code.push( "write( \"<span class='genie_" + this.environment.id + "_value_update_" + data.trim() + "'>\" + " + value + " + \"</span>\" );\n" );
+        } else if (type == 'exec') {
             f_code.push(data);
         }
     }
