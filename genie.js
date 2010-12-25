@@ -1,6 +1,8 @@
 /* Lib features I need */
 /* testing */
 
+var genie_environ_count = 0;
+
 String.prototype.trim = function() {
     return this.replace(/^\s+|\s+$/g, "").replace(/^[\n|\r]+|[\n|\r]+$/g, "");
 }
@@ -199,7 +201,7 @@ Template.prototype.compile = function() {
             f_code.push( pad(depth) );
             f_code.push( "write( " + data + " );\n" );
 	} else if ( type == 'bindable') {
-	    f_code.push( "write( \"<span class='genie_value_update_" + data.trim() + "'>\" + " + this.environment.bindable_dict[data.trim()] + " + \"</span>\" );\n" );
+	    f_code.push( "write( \"<span class='genie_" + this.environment.id + "_value_update_" + data.trim() + "'>\" + " + this.environment.bindable_dict[data.trim()] + " + \"</span>\" );\n" );
         } else if ( type == 'exec') {
             f_code.push(data);
         }
@@ -296,6 +298,8 @@ StateTemplate.prototype.on_state_change = function(target, new_state_data) {
 }
 
 var Environment = function() {
+    this.id = genie_environ_count + 1;
+    genie_environ_count += 1;
     this.default_data = {};
     this.object_dict = {};
     this.template_dict = {};
@@ -343,7 +347,7 @@ Environment.prototype.template_list = function() {
 Environment.prototype.set_bindable = function(key, value) {
     this.bindable_dict[key] = value;
 
-    var targets = document.getElementsByClassName('genie_value_update_' + key);
+    var targets = document.getElementsByClassName('genie_' + this.id + '_value_update_' + key);
     for( var i = 0; i < targets.length; i++ ) {
 	var obj = targets[i];
 	obj.innerHTML = value;
