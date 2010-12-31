@@ -165,11 +165,13 @@ Template.prototype.compile = function() {
                 
                 var cvar = '_count_' + counter_count;
                 counter_count += 1;
-                f_code.push( "\n for( var " + cvar + " in " + rest + " ) {" );
+                f_code.push( "\n for( var " + value_name + " in " + rest + " ) {" );
                 //f_code.push( "\n" + rest + ".forEach( function(" + value_name +") {" );
                 f_code.push( "\n " + pad(depth) );
                 in_func.push('}');
                 depth += 1;                
+		//	    } else if (data.substring(0, 7) == 'foreach') {
+		//console.log("dont support foreach yet");
             } else if (data.substring(0, 3) == 'for') {
                 var d = data.substring(3).trim();
                 var bulk = d;
@@ -393,6 +395,7 @@ Environment.prototype.render = function(name, variables) {
         try {
             return t.render(variables);
         } catch (e) {
+	    console.log(e);
             return e;
         }
     } catch (e) {
