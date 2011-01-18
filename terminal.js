@@ -1,4 +1,5 @@
 var Terminal = function(root) {
+    this.env = new genie.Environment();
     this.reset();
     if (root) {
         this.initialize(root);
@@ -9,7 +10,6 @@ var Terminal = function(root) {
 Terminal.prototype.initialize = function(root) {
     this.root = root;
     console.log("Initializeing " + this);
-    this.env = new genie.Environment();
     
     this.keys_dict = {"48": "0", "49": "1", "50": "2", "51": "3", "52": "4", "53": "5", "54": "6", "55": "7", 
                       "56": "8",  "57": "9", "65": "a", "66": "b", "67": "c", "68": "d", "69": "e", 
@@ -17,18 +17,11 @@ Terminal.prototype.initialize = function(root) {
                       "78": "n", "79": "o", "80": "p", "81": "q", "82": "r", "83": "s", "84": "t", "85": "u", "86": 
                       "v", "87": "w", "88": "x", "89": "y", "90": "z", "186": ";", "187": "=", "188": ",", 
                       "189": "-", "190": ".", "191": "/", "192": "`", "219": "[", "220": "\\", "221": "]", "222": "'",
-                      "229": "q"
+                      "229": "q", "9":"tab", "27":"esc", 
+                      "32":"space", "8":"backspace", "13":"enter", '229':'q',
+		      '37':'left', '38':'up', '39':'right', '40':'down',
+		      
                       };
-
-    this.key_names =  { "48": "0", "49": "1", "50": "2", "51": "3", "52": "4", "53": "5", "54": "6", "55": "7", 
-                        "56": "8",  "57": "9", "65": "a", "66": "b", "67": "c", "68": "d", "69": "e", 
-                        "70": "f", "71": "g", "72": "h", "73": "i", "74": "j", "75": "k", "76": "l", "77": "m", 
-                        "78": "n", "79": "o", "80": "p", "81": "q", "82": "r", "83": "s", "84": "t", "85": "u", "86": 
-                        "v", "87": "w", "88": "x", "89": "y", "90": "z", "186": ";", "187": "=", "188": ",", 
-                        "189": "-", "190": ".", "191": "/", "192": "`", "219": "[", "220": "\\", "221": "]", "222": "quote", 
-                        "32":"space", "8":"backspace", "13":"enter", '229':'q',
-                        '37':'left', '38':'up', '39':'right', '40':'down'
-                       };
 
     this.modified_dict = {
         "shift-1":"!", "shift-2":"@", 'shift-3':'#', 'shift-4':'$', 'shift-5':'%',
@@ -54,16 +47,17 @@ Terminal.prototype.initialize = function(root) {
 
     this.genie_buffer_template = "{% for line in v.lines %}<div class='genie-terminal-line{% if v.current_line == index %} genie-terminal-current-line" +
                                  "{% end %}' id='{{index}}'>{% if v.current_line == index %}{{ v.prompt }}{% end %}{! var line_number = index; !}" +
-                                 "{% for char in (line + ' ') %}{! if (v.key_view_dict[char] !== undefined) { char = v.key_view_dict[char] } !}{% if index == v.cursor_loc && line_number == v.current_line %}" +
+                                 "{% for char in (line + ' ') %}{! if (v.key_view_dict[char] !== undefined) { char = v.key_view_dict[char] } !}" +
+                                 "{% if index == v.cursor_loc && line_number == v.current_line %}" +
                                  "<span id='genie-cursor' style='background-color: #66b;'>{{char}}</span>{% else %}{{char}}{% end %}{% end %}</div>{% end %}";
 
-    this.keys_dict['8'] = function(term) { term.command_backspace(); }
-    this.keys_dict['46'] = function(term) { term.command_delete(); }
-    this.keys_dict['32'] = function(term) { term.insert_at_cursor(' '); }
-    this.keys_dict['37'] = function(term) { term.move_cursor_left(); }
-    this.keys_dict['38'] = function(term) { term.move_cursor_up(); }
-    this.keys_dict['39'] = function(term) { term.move_cursor_right(); }
-    this.keys_dict['40'] = function(term) { term.move_cursor_down(); }
+    //this.keys_dict['8'] = function(term) { term.command_backspace(); }
+    //this.keys_dict['46'] = function(term) { term.command_delete(); }
+    //this.keys_dict['32'] = function(term) { term.insert_at_cursor(' '); }
+    //this.keys_dict['37'] = function(term) { term.move_cursor_left(); }
+    //this.keys_dict['38'] = function(term) { term.move_cursor_up(); }
+    //this.keys_dict['39'] = function(term) { term.move_cursor_right(); }
+    //this.keys_dict['40'] = function(term) { term.move_cursor_down(); }
     
     this.modified_dict['control-g'] = function(term) { term.command_cancel(); }
     this.modified_dict['control-x'] = '!push!';
@@ -91,7 +85,6 @@ Terminal.prototype.initialize = function(root) {
         document.location.reload();
     }
             
-    this.env = new genie.Environment();
     this.env.create_template('genie-buffer-template', this.genie_buffer_template);
     
     this.buffer = document.createElement('div');
@@ -184,7 +177,7 @@ Terminal.prototype.keydown = function(event) {
         return;
     }
     
-    var name = this.key_names[event.keyCode];
+    var name = this.keys_dict[event.keyCode];
     var key = this.keys_dict[event.keyCode];
     var guess = key;
     var full_modifier = modifier;
@@ -201,7 +194,7 @@ Terminal.prototype.keydown = function(event) {
         full_modifier = this.command_stack.join(' ') + ' ' + modifier;
     } 
     
-    if (full_modifier) {
+    if (full_modifier || this.modified_dict[guess] !== undefined) {
         var mod_name = full_modifier + name;
         guess = this.modified_dict[mod_name];
 
@@ -230,6 +223,8 @@ Terminal.prototype.keydown = function(event) {
             //this.log('Could not find: ' + event.keyCode);
         }
     }
+
+    console.log('key: ' + guess);
 
     this.refresh();
     event.stopPropagation();

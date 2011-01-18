@@ -1,0 +1,91 @@
+<html>
+
+<script type="text/javascript" charset="utf-8" src='../genie.js'></script>
+<script type="text/javascript" charset="utf-8" src='../terminal.js'></script>
+<script type="text/javascript" charset="utf-8" src='../inbox.js'></script>
+<script type="text/javascript" charset="utf-8" src='../js/mootools.js'></script>
+
+<style type='text/css'>
+
+  .inbox_case { 
+    width: 80%; margin-left: auto; margin-right: auto; margin-top: 100px;
+    background-color: #ddd; padding: 20px;
+  }
+  
+  .inbox_item { width: 100%; }
+  .current_item { background-color: #aca; }
+  .selector { width: 20px; float: left; text-align: center; color: black;}
+  .checker { width: 30px; float: left; }
+  .marker { width: 32px; float: left; }
+  .context { width: 100px; float: right; }
+  .slug { overflow: auto; }
+
+</style>
+
+<script type="text/plain" charset="utf-8" class='jst-template' id='inbox'>
+  <div class='inbox_case'>
+    <div class='focus_status'></div>
+  {% for item in v.items %}
+    {! 
+      var selected = false;
+      if (index == v.current_item) {
+        selected = true;
+      }
+    !}
+
+    <div class='inbox_item {% if (selected) %}current_item{% end %}' id='item_{{index}}'>
+      <div class='selector'>{% if (selected) %}&rsaquo;{% else %}&nbsp;{% end %}</div>
+      <div class='checker'>
+	<input type='checkbox' {% if (item.checked) %}CHECKED{% end %}>
+      </div>
+      <div class='context'>accepted</div>
+
+      <div class='slug'>{{ item.title }}.</div>
+    </div>
+  {% end %}
+  </div>
+</script>
+
+<body>
+  <div id='search'><input type=textfield></div>
+  <div id='control'></div>
+  <div id='target'>Loading...</div>
+</body>
+
+<script type="text/javascript" charset="utf-8">
+  var last = null;
+
+  var genie_debug = 1;
+  var inbox = new Inbox();
+  inbox.env.create_template('inbox', document.getElementById('inbox').innerText);
+  inbox.initialize(document.getElementById('target'));
+
+  var steal_keys = function(event) {
+    console.log('code: ' + event.code);
+    last = event;
+    inbox.keydown(event.event);
+    event.event.stopPropagation();
+    event.stop();
+  }
+  
+  var steal_focus = function() {
+    console.log("stealing focus");
+    $(window).addEvent('keydown', steal_keys );
+  }
+
+  var return_focus = function() {
+    console.log("Returning Focus");
+    $(window).removeEvent('keydown', steal_keys);
+  }
+
+  $('target').addEvent('click', function(event) {
+    steal_focus();
+  });
+
+  window.addEvent('domready', function(){
+    steal_focus();
+  });
+
+</script>
+
+</html>
