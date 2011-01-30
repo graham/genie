@@ -220,7 +220,7 @@ Template.prototype.compile = function() {
     //header +=    "\n }";
     var header = '';
     
-    console.log(f_code.join('\n'));
+    //console.log(f_code.join('\n'));
      
     this.f_code = f_code;
     this.f_code_render = "(function(parent, v, defaults) { " + header + this.f_code.join(' ') + "})";
@@ -250,7 +250,7 @@ Template.prototype.render = function(variables) {
             return ____output.join('');
         }
         this.final_func = encased_template;
-        console.log(this.final_func);
+        //console.log(this.final_func);
     }
     
     var result = this.final_func(variables);
@@ -387,6 +387,13 @@ Environment.prototype.render_to = function(target_element, name_of_template, di)
     } else {
         target_element.innerHTML = 'Template ' + name_of_template + ' could not be found.';
     }
+};
+
+Environment.prototype.render_these = function(elements, data) {
+    for( var i = 0; i < elements.length; i++ ) {
+	var result = this.render_quick(elements[i].innerHTML, data);
+	elements[i].innerHTML = result;
+    }
 }
 
 Environment.prototype.render = function(name, variables) {
@@ -395,11 +402,11 @@ Environment.prototype.render = function(name, variables) {
         try {
             return t.render(variables);
         } catch (e) {
-	    console.log(e);
+	    //console.log(e);
             return e;
         }
     } catch (e) {
-        console.log("here: " + e);
+        //console.log("here: " + e);
     }
 }
 
@@ -417,7 +424,7 @@ Environment.prototype.run = function() {
                 defaults[key] = d[key];
             }
         } catch (e) {
-            console.log(e);
+            //console.log(e);
         }
     }
 
@@ -475,4 +482,4 @@ try {
     genie.StateTemplate = StateTemplate;
     genie.env = main_environment;
 }
-console.log('loaded genie');
+//console.log('loaded genie');

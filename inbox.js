@@ -11,10 +11,10 @@ Inbox.prototype = new Terminal();
 Inbox.prototype.initialize = function(root) {
     console.log("Inbox init");
     Terminal.prototype.initialize.call(this, root);
+    this.stop_event = false;
 
     this.data = {}
     this.data['items'] = [];
-
     this.data['current_item'] = 0;
 
     inbox.modified_dict['j'] = function(term) {
@@ -82,6 +82,15 @@ Inbox.prototype.get_selected = function() {
 	    result.push(item.getParent().getParent());
 	});
     return result;
+};
+
+Inbox.prototype.get_ids = function() {
+    var divs = this.get_selected();
+    var l = [];
+    for( var i = 0; i < divs.length; i++ ) {
+	l.push( divs[i].getElement('.id').innerHTML );
+    }
+    return l;
 };
 
 Inbox.prototype.add_item = function() { };

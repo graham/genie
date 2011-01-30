@@ -8,6 +8,7 @@ var Terminal = function(root) {
 }
 
 Terminal.prototype.initialize = function(root) {
+    this.stop_event = true;
     this.root = root;
     console.log("Initializeing " + this);
     
@@ -227,7 +228,9 @@ Terminal.prototype.keydown = function(event) {
     console.log('key: ' + guess);
 
     this.refresh();
-    event.stopPropagation();
+    if (this.stop_event) {
+	event.stopPropagation();
+    }
 }
 
 Terminal.prototype.insert_at_cursor = function(data) {
