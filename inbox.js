@@ -51,6 +51,30 @@ Inbox.prototype.initialize = function(root) {
     this.refresh();
 };
 
+Inbox.prototype.ensure_shown = function() {
+    var d = $('item_' + this.data['current_item']);
+    var item = d.getScroll().y;
+    var cur = document.getScroll().y;
+    var height = window.innerHeight;
+
+    console.log('ensure~: ' + cur + ' - ' + height + ' - ' + item);
+
+    if (item > cur && item < height) {
+	// we good!
+	return
+    }
+
+    if (item && height) {
+	window.scrollTo(0, item + 100);
+    }
+    if (item < cur) {
+	window.scrollTo(0, item - 100);
+    }
+
+    //window.scrollTo(0, d.getPosition().y);
+    
+};
+
 Inbox.prototype.refresh = function() {
     if (this.is_drawn) {
 	//var d = $('item_' + this.data['current_item']);
@@ -116,6 +140,7 @@ Inbox.prototype.move_cursor_to_index = function(index) {
     $$('#item_' + this.data['current_item'] + ' > .selector').each( function(item) {
 	    item.innerHTML = '&rsaquo;';
 	});
+    this.ensure_shown();
 };
 
 InboxItem = function() {
