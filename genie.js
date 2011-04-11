@@ -8,7 +8,7 @@ var GENIE_CONTEXT_lookup = {
         "!":"exec",
         "@":"special",
         "&":"bindable",
-	    
+        
         // These should be opposites, [] or () or {} or <>, these must match GENIE_CONTEXT_begin/end.
         "{": "variable", // Should be opener.
         "}": "variable"  // Should be closer.
@@ -16,18 +16,12 @@ var GENIE_CONTEXT_lookup = {
 
 var genie_environ_count = 0;
 
-String.prototype.trim = function() {
-    return this.replace(/^\s+|\s+$/g, "").replace(/^[\n|\r]+|[\n|\r]+$/g, "");
-}
+// I'm not really proud of this sort of monkey patching, but it's somewhat required here.
+String.prototype.trim = function() { return this.replace(/^\s+|\s+$/g, "").replace(/^[\n|\r]+|[\n|\r]+$/g, ""); };
+String.prototype.triml = function() { return this.replace(/^\s+/g, "").replace(/^[\n|\r]+/g, ""); };
+String.prototype.trimr = function() { return this.replace(/\s+$/g, "").replace(/[\n|\r]+$/g, ""); };
 
-String.prototype.triml = function() {
-    return this.replace(/^\s+/g, "").replace(/^[\n|\r]+/g, "");
-}
-
-String.prototype.trimr = function() {
-    return this.replace(/\s+$/g, "").replace(/[\n|\r]+$/g, "");    
-}
-
+// Makes the code printouts very pretty ( can't help but keep it )
 var pad = function(count) {
     var index = 0;
     var pad = "";
@@ -37,18 +31,6 @@ var pad = function(count) {
     }
     return pad;
 }
-
-// 
-// var filter = function(fun, list) {
-//     var new_list = [];
-//     for( var c = 0; c < list.length; c++ ) {
-//         var item = list[c];
-//         if (fun(item)  != false) {
-//             new_list.push(item);
-//         }
-//     }
-//     return new_list;
-// }
 
 var Template = function(string) {
     this.orig_string = string;
@@ -100,11 +82,12 @@ Template.prototype.find_next_block = function() {
             this.string = after_block.substring(0);
             return
         }
-
     }
-    
+
     end += 1;
 
+    // special blocks can probably be removed now that i've done better slurp-handling with - and =
+    // but i'm going to keep this around for a while just in case.
     var block = after_block.substring(1, end-1);
     if (type == 'special') {
         this.environment.specials[block.trim()](this);
@@ -172,7 +155,6 @@ Template.prototype.compile = function() {
                 if (d[0] == '(') {
                     bulk = d.substring(1, d.length-2);
                 }
-                                
                 f_code.push( "\n " + pad(depth) );
                 f_code.push("while (" + bulk + ")" + " {\n");
                 depth += 1;
@@ -190,7 +172,6 @@ Template.prototype.compile = function() {
                 var cvar = '_count_' + counter_count;
                 counter_count += 1;
                 f_code.push( "\n for( var " + value_name + " in " + rest + " ) {" );
-                //f_code.push( "\n" + rest + ".forEach( function(" + value_name +") {" );
                 f_code.push( "\n " + pad(depth) );
                 in_func.push('}');
                 depth += 1;                
@@ -209,7 +190,6 @@ Template.prototype.compile = function() {
                 f_code.push( "\n for( var " + cvar + " = 0; " + cvar + " < " + rest + ".length; " + cvar + "++ ) {" );
                 f_code.push( "\n   var " + value_name + " = " + rest + "[" + cvar + "]; var index=" + cvar + ";");
                 f_code.push( "\n   var rindex = (" + rest + ".length" + " - index) - 1");
-                //f_code.push( "\n" + rest + ".forEach( function(" + value_name +") {" );
                 f_code.push( "\n " + pad(depth) );
                 in_func.push('}');
                 depth += 1;
@@ -224,13 +204,13 @@ Template.prototype.compile = function() {
         } else if (type == 'variable') {
             f_code.push( pad(depth) );
             f_code.push( "write( " + data + " || undefined_variable('"+data+"') );\n");
-	} else if (type == 'bindable') {
-	    var value = this.environment.bindable_dict[data.trim()];
-	    if (value === undefined) {
-		value = '';
-	    }
-
-	    f_code.push( "write( \"<span class='genie_" + this.environment.id + "_value_update_" + data.trim() + "'>\" + " + value + " + \"</span>\" );\n" );
+        } else if (type == 'bindable') {
+            var value = this.environment.bindable_dict[data.trim()];
+            if (value === undefined) {
+                value = '';
+            }
+        
+            f_code.push( "write( \"<span class='genie_" + this.environment.id + "_value_update_" + data.trim() + "'>\" + " + value + " + \"</span>\" );\n" );
         } else if (type == 'exec') {
             f_code.push(data);
         }
@@ -238,7 +218,9 @@ Template.prototype.compile = function() {
 
     var header = "var __exposed_vars = []; for (var a in v) { if (v.hasOwnProperty(a)) { __exposed_vars.push(a); } }";
 
-    //console.log(f_code.join(''));
+    //    if (DEBUG) {
+    //        console.log(f_code.join(''));
+    //    }
     this.f_code = f_code;
     this.f_code_render = "(function(parent, v, defaults, undefined_variable) { " + header + this.f_code.join(' ') + "})";
 };
@@ -325,8 +307,8 @@ Environment.prototype.set_bindable = function(key, value) {
 
     var targets = document.getElementsByClassName('genie_' + this.id + '_value_update_' + key);
     for( var i = 0; i < targets.length; i++ ) {
-	var obj = targets[i];
-	obj.innerHTML = value;
+    var obj = targets[i];
+    obj.innerHTML = value;
     }
 }
 
@@ -360,8 +342,8 @@ Environment.prototype.render_to = function(target_element, name_of_template, di)
 
 Environment.prototype.render_these = function(elements, data) {
     for( var i = 0; i < elements.length; i++ ) {
-	var result = this.render_quick(elements[i].innerHTML, data);
-	elements[i].innerHTML = result;
+    var result = this.render_quick(elements[i].innerHTML, data);
+    elements[i].innerHTML = result;
     }
 };
 
