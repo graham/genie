@@ -150,7 +150,7 @@
     }
     
     function test_ford() {
-        var result = env.render_quick("{% ford i in asdf %}{{i}}-{{asdf[i]}},{% end %}", {'asdf':{'one':1, 'two':2}});
+        var result = env.render_quick("{% ford i in v.asdf %}{{i}}-{{v.asdf[i]}},{% end %}", {'asdf':{'one':1, 'two':2}});
         if (result == "one-1,two-2,") {
             return [true, result];
         } else {

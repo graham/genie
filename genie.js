@@ -1,5 +1,18 @@
-/* Lib features I need */
-/* testing */
+/* Written by Graham Abbott <graham.abbott@gmail.com> */
+
+var GENIE_CONTEXT_begin = '{';
+var GENIE_CONTEXT_end = '}';
+var GENIE_CONTEXT_lookup = {
+        "#":"comment",
+        "%":"condition",
+        "!":"exec",
+        "@":"special",
+        "&":"bindable",
+	    
+        // These should be opposites, [] or () or {} or <>, these must match GENIE_CONTEXT_begin/end.
+        "{": "variable", // Should be opener.
+        "}": "variable"  // Should be closer.
+    };
 
 var genie_environ_count = 0;
 
@@ -25,23 +38,17 @@ var pad = function(count) {
     return pad;
 }
 
-var filter = function(fun, list) {
-    var new_list = [];
-    for( var c = 0; c < list.length; c++ ) {
-        var item = list[c];
-        if (fun(item)  != false) {
-            new_list.push(item);
-        }
-    }
-    return new_list;
-}
-
-var genie_template_classname = 'jst-template';
-var genie_data_classname = 'jst-data';
-var genie_target_classname = 'jst-target';
-var genie_target_classname_url = 'jst-target-url';
-var genie_target_classname_url_json = 'jst-target-url-json';
-var genie_target_rendered_classname = 'jst-rendered';
+// 
+// var filter = function(fun, list) {
+//     var new_list = [];
+//     for( var c = 0; c < list.length; c++ ) {
+//         var item = list[c];
+//         if (fun(item)  != false) {
+//             new_list.push(item);
+//         }
+//     }
+//     return new_list;
+// }
 
 var Template = function(string) {
     this.orig_string = string;
@@ -52,11 +59,13 @@ var Template = function(string) {
     this.parent_container = null;
 
     this.next_slurp = 0;
+    this.ends_slurp = 0;
+    this.one_slurp = 0;
     this.arg_list = [];
 }
 
 Template.prototype.find_next_block = function() {
-    var start = this.string.search(this.environment.begin);
+    var start = this.string.indexOf(this.environment.begin);
     var next_char = start+1;
     
     if (start == -1) {
@@ -81,13 +90,13 @@ Template.prototype.find_next_block = function() {
 
     var end = null;
 
-    if (start_char == '{') {
-        end = after_block.search("}" + this.environment.end);
+    if (start_char == this.environment.begin) {
+        end = after_block.indexOf(this.environment.end + this.environment.end);
     } else {
         if (start_char in this.environment.lookup) {
-            end = after_block.search(start_char + this.environment.end);
+            end = after_block.indexOf(start_char + this.environment.end);
         } else {
-            this.blocks.push( ['text', '{'] );
+            this.blocks.push( ['text', this.environment.begin] );
             this.string = after_block.substring(0);
             return
         }
@@ -103,7 +112,6 @@ Template.prototype.find_next_block = function() {
         this.blocks.push( [type, block] );
     }
     this.string = after_block.substring(end+1);
-        
     return end;
 }
 
@@ -122,22 +130,38 @@ Template.prototype.compile = function() {
 
     for( var c = 0; c < this.blocks.length; c++ ) {
         var obj = this.blocks[c];
-
         var type = obj[0];
         var data = obj[1];
-        
+
+        if (this.ends_slurp) {
+            data = data.triml();
+            this.ends_slurp -= 1;
+        } else if (this.one_slurp) {
+            data = data.substring(1)
+            this.one_slurp -= 1;
+        }
+
         if (type == 'text') {
             f_code.push( pad(depth) );
             f_code.push("write(" + JSON.stringify(data) + ");\n" );
         } else if ( type == 'condition') {
             data = data.trim();
+            if (data[data.length-1] == '=') {
+                this.ends_slurp += 1;
+                data = data.substring(0, data.length-1);
+                data = data.trim();
+            } else if (data[data.length-1] == '-') {
+                this.one_slurp += 1;
+                data = data.substring(0, data.length-1);
+                data = data.trim();
+            }
+
             if (data.substring(0,2) == 'if') {
                 var d = data.substring(2).trim();
                 var bulk = d;
                 if (d[0] == '(') {
                     bulk = d.substring(1, d.length-1);
                 }
-                                
                 f_code.push( "\n " + pad(depth) );
                 f_code.push("if (" + bulk + ")" + " {\n");
                 depth += 1;
@@ -170,8 +194,6 @@ Template.prototype.compile = function() {
                 f_code.push( "\n " + pad(depth) );
                 in_func.push('}');
                 depth += 1;                
-		//	    } else if (data.substring(0, 7) == 'foreach') {
-		//console.log("dont support foreach yet");
             } else if (data.substring(0, 3) == 'for') {
                 var d = data.substring(3).trim();
                 var bulk = d;
@@ -201,7 +223,7 @@ Template.prototype.compile = function() {
             }
         } else if (type == 'variable') {
             f_code.push( pad(depth) );
-            f_code.push( "write( " + data + " );\n" );
+            f_code.push( "write( " + data + " || undefined_variable('"+data+"') );\n");
 	} else if (type == 'bindable') {
 	    var value = this.environment.bindable_dict[data.trim()];
 	    if (value === undefined) {
@@ -213,20 +235,15 @@ Template.prototype.compile = function() {
             f_code.push(data);
         }
     }
-    
-    //var header = " for(var __local_keys__ = 0; __local_keys__ < v.keys().length; __local_keys__++) {";
-    //header +=    "\n   try { alert('var ' + v.keys()[__local_keys__] + ' = JSON.parse(\'' + JSON.stringify(v[v.keys()[__local_keys__]]) + '\');') } ";
-    //header +=    "\n   catch(e) { console.log('error for key ' + v.keys()[__local_keys__] + ' -> ' + JSON.stringify(v[v.keys()[__local_keys__]]) + ' : ' + e); }";
-    //header +=    "\n }";
-    var header = '';
-    
-    //console.log(f_code.join('\n'));
-     
-    this.f_code = f_code;
-    this.f_code_render = "(function(parent, v, defaults) { " + header + this.f_code.join(' ') + "})";
-}
 
-Template.prototype.render = function(variables) {
+    var header = "var __exposed_vars = []; for (var a in v) { if (v.hasOwnProperty(a)) { __exposed_vars.push(a); } }";
+
+    //console.log(f_code.join(''));
+    this.f_code = f_code;
+    this.f_code_render = "(function(parent, v, defaults, undefined_variable) { " + header + this.f_code.join(' ') + "})";
+};
+
+Template.prototype.render = function(variables, undefined_variable) {
     if (this.final_func == null) {
         this.compile();
 
@@ -238,70 +255,30 @@ Template.prototype.render = function(variables) {
         
         var compiled_code = eval(this.f_code_render);
 
-        var encased_template = function(tvars) {
+        var encased_template = function(tvars, uv) {
             ____output = [];
             try {
                 var template_vars = JSON.parse(tvars);
             } catch (e) {
                 var template_vars = tvars;
             }
+
+            var undef_var = function(name) {
+                if (uv.indexOf('%s') == -1) {
+                    return uv.trim();
+                } else {
+                    return uv.replace('%s', name.trim()).trim();
+                }
+            };
             
-            compiled_code(_template, template_vars, this.environment.default_dict);
+            compiled_code(_template, template_vars, this.environment.default_dict, undef_var);
             return ____output.join('');
         }
         this.final_func = encased_template;
-        //console.log(this.final_func);
     }
     
-    var result = this.final_func(variables);
+    var result = this.final_func(variables, undefined_variable);
     return result.trim();
-}
-
-var PersistentTemplate = function(target_search, template) {
-    this.target_search = target_search;
-    this.template = template;
-    this.current_data = {};
-}
-
-PersistentTemplate.prototype.update = function(data) {
-    for(key in data) {
-        this.current_data[key] = data[key];
-    }
-}
-
-PersistentTemplate.prototype.clear = function() {
-    this.current_data = {};
-}
-
-PersistentTemplate.prototype.render = function() {
-    document.getElementById(this.target_search).innerHTML = this.template.render(this.current_data);
-}
-
-var StateTemplate = function(target_div, state_template_dict) {
-    this.target_div = target_div;
-    this.state_template_dict = state_template_dict;
-    this.current_data = {};
-}
-
-StateTemplate.prototype.update = function(data) {
-    for(key in data) {
-        this.current_data[key] = data[key];
-    }
-}
-
-StateTemplate.prototype.clear = function() {
-    this.current_data = {};
-}
-
-StateTemplate.prototype.change_state = function(new_state, new_vars) {
-    this.update(new_vars);
-    this.parent_container = this.target_div;
-    var template = this.state_template_dict[new_state];
-    this.on_state_change(this.target_div, template.render(this.current_data));
-}
-
-StateTemplate.prototype.on_state_change = function(target, new_state_data) {
-    target.innerHTML = new_state_data;
 }
 
 var Environment = function() {
@@ -312,17 +289,9 @@ var Environment = function() {
     this.template_dict = {};
     this.bindable_dict = {};
 
-    this.begin = '{';
-    this.end = '}';
-    
-    this.lookup = {
-        "{":"variable", "}":"variable",
-        "#":"comment",
-        "%":"condition",
-        "!":"exec",
-        "@":"special",
-	"&":"bindable",
-    }
+    this.begin = GENIE_CONTEXT_begin;
+    this.end = GENIE_CONTEXT_end;
+    this.lookup = GENIE_CONTEXT_lookup;
     
     this.specials = {
         'slurp': function(template) {
@@ -371,13 +340,13 @@ Environment.prototype.create_template = function(name, data) {
     t.environment = this;
     this.template_dict[name] = t;
     return t;
-}
+};
 
-Environment.prototype.render_quick = function(template_text, vars) {
+Environment.prototype.render_quick = function(template_text, vars, undef_var) {
     var t = new Template(template_text);
     t.key = 'anon';
     t.environment = this;
-    return t.render(vars);
+    return t.render(vars, undef_var);
 }
 
 Environment.prototype.render_to = function(target_element, name_of_template, di) {
@@ -394,66 +363,17 @@ Environment.prototype.render_these = function(elements, data) {
 	var result = this.render_quick(elements[i].innerHTML, data);
 	elements[i].innerHTML = result;
     }
-}
+};
 
-Environment.prototype.render = function(name, variables) {
+Environment.prototype.render = function(name, variables, undef_var) {
     try {
         var t = this.template_dict[name];
         try {
-            return t.render(variables);
+            return t.render(variables, undef_var);
         } catch (e) {
-	    //console.log(e);
             return e;
         }
     } catch (e) {
-        //console.log("here: " + e);
-    }
-}
-
-Environment.prototype.run = function() {
-    var datas = document.getElementsByClassName(genie_data_classname);
-    var defaults = {};
-    var env = this;
-    
-    // This will require a lib of some kind.
-    for( var c = 0; c < datas.length; c++ ) {
-        var obj = datas[c];
-        try {
-            var d = JSON.parse(obj.innerHTML);
-            for( key in d ) {
-                defaults[key] = d[key];
-            }
-        } catch (e) {
-            //console.log(e);
-        }
-    }
-
-    this.default_data = defaults;
-    
-    var templates = document.getElementsByClassName(genie_template_classname);
-    var template_dict = this.template_dict;
-    
-    for( var c = 0; c < templates.length; c++ ) {
-        var obj = templates[c];
-        env.create_template( obj.id, obj.innerHTML );
-    }
-    
-    var targets = document.getElementsByClassName(genie_target_classname);
-    
-    for( var c = 0; c < targets.length; c++ ) {
-        var obj = targets[c];
-        var classes = obj.className.split(' ');
-        var data = obj.innerHTML;
-        var class_names = [];
-        for( var cc = 0; cc < classes.length; cc++ ) {
-            var name = classes[cc];
-            if (name != genie_target_classname) {
-                var tr = env.render(name, data);
-                obj.innerHTML = tr;
-                class_names.push(name);
-            }
-        }
-        obj.className = class_names.join(' ') + " " + genie_target_rendered_classname;
     }
 }
 
@@ -465,21 +385,16 @@ Environment.prototype.get_obj = function(name) {
     return this.object_dict[name];
 }
 
-
 var main_environment = new Environment();
 
 try {
     exports.Template = Template;
     exports.Environment = Environment;
-    exports.PersistentTemplate = PersistentTemplate;
-    exports.StateTemplate = StateTemplate;
     exports.env = main_environment;
 } catch (e) {
     var genie = {};
     genie.Template = Template;
     genie.Environment = Environment;
-    genie.PersistentTemplate = PersistentTemplate;
-    genie.StateTemplate = StateTemplate;
     genie.env = main_environment;
 }
-//console.log('loaded genie');
+
