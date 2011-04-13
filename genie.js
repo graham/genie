@@ -1,5 +1,5 @@
 /* Written by Graham Abbott <graham.abbott@gmail.com> */
-/* Licensed to Dropbox Inc forever. */
+
 var last = null;
 var genie_context_begin = "<";
 var genie_context_end = ">";
