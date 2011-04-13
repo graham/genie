@@ -1,18 +1,23 @@
 /* Written by Graham Abbott <graham.abbott@gmail.com> */
+/* Licensed to Dropbox Inc forever. */
+var last = null;
+var genie_context_begin = "<";
+var genie_context_end = ">";
 
-var GENIE_CONTEXT_begin = '{';
-var GENIE_CONTEXT_end = '}';
+var GENIE_CONTEXT_begin = eval("genie_context_begin") || "{";
+var GENIE_CONTEXT_end =   eval("genie_context_end") || "}";
+
 var GENIE_CONTEXT_lookup = {
         "#":"comment",
         "%":"condition",
         "!":"exec",
         "@":"special",
         "&":"bindable",
-        
-        // These should be opposites, [] or () or {} or <>, these must match GENIE_CONTEXT_begin/end.
-        "{": "variable", // Should be opener.
-        "}": "variable"  // Should be closer.
+        "^":"notes"
     };
+
+GENIE_CONTEXT_lookup[GENIE_CONTEXT_begin] = "variable";
+GENIE_CONTEXT_lookup[GENIE_CONTEXT_end] = "variable";
 
 var genie_environ_count = 0;
 
@@ -20,6 +25,8 @@ var genie_environ_count = 0;
 String.prototype.trim = function() { return this.replace(/^\s+|\s+$/g, "").replace(/^[\n|\r]+|[\n|\r]+$/g, ""); };
 String.prototype.triml = function() { return this.replace(/^\s+/g, "").replace(/^[\n|\r]+/g, ""); };
 String.prototype.trimr = function() { return this.replace(/\s+$/g, "").replace(/[\n|\r]+$/g, ""); };
+String.prototype.trimr_spaces = function() { return this.replace(/[ |\t]+$/g, "") };
+String.prototype.triml_one = function() { return this.replace(/^[ |\t]*\n/g, "") };
 
 // Makes the code printouts very pretty ( can't help but keep it )
 var pad = function(count) {
@@ -30,7 +37,7 @@ var pad = function(count) {
         index += 1;
     }
     return pad;
-}
+};
 
 var Template = function(string) {
     this.orig_string = string;
@@ -42,9 +49,10 @@ var Template = function(string) {
 
     this.next_slurp = 0;
     this.ends_slurp = 0;
-    this.one_slurp = 0;
     this.arg_list = [];
-}
+
+    this.notes = [];
+};
 
 Template.prototype.find_next_block = function() {
     var start = this.string.indexOf(this.environment.begin);
@@ -65,11 +73,10 @@ Template.prototype.find_next_block = function() {
     if (this.next_slurp) {
         this.blocks.push( ['text', before_block.triml()] );
     } else {
-        this.blocks.push( ['text', before_block] );
+        this.blocks.push( ['text', before_block] ); 
     }
     var start_char = after_block[0];
     var type = this.environment.lookup[start_char];
-
     var end = null;
 
     if (start_char == this.environment.begin) {
@@ -89,14 +96,33 @@ Template.prototype.find_next_block = function() {
     // special blocks can probably be removed now that i've done better slurp-handling with - and =
     // but i'm going to keep this around for a while just in case.
     var block = after_block.substring(1, end-1);
+    after_block = after_block.substring(end+1);
     if (type == 'special') {
         this.environment.specials[block.trim()](this);
     } else {
+        if (block[0] == '-') {
+            block = block.substring(1);
+            if (this.blocks[this.blocks.length-1]) {
+                this.blocks[this.blocks.length-1][1] = this.blocks[this.blocks.length-1][1].trimr_spaces();
+            }
+        } else if (block[0] == '=' || type == "notes") {
+            block = block.substring(1);
+            if (this.blocks[this.blocks.length-1]) {
+                this.blocks[this.blocks.length-1][1] = this.blocks[this.blocks.length-1][1].trimr();
+            }
+        }
+        if (block[block.length-1] == '-') {
+            block = block.substring(0, block.length-1);
+            after_block = after_block.triml_one();
+        } else if (block[block.length-1] == '=') {
+            block = block.substring(0, block.length-1);
+            after_block = after_block.triml();
+        }
         this.blocks.push( [type, block] );
     }
-    this.string = after_block.substring(end+1);
+    this.string = after_block;
     return end;
-}
+};
 
 Template.prototype.compile = function() {
     this.working_string = ""+this.string;
@@ -115,29 +141,12 @@ Template.prototype.compile = function() {
         var obj = this.blocks[c];
         var type = obj[0];
         var data = obj[1];
-
-        if (this.ends_slurp) {
-            data = data.triml();
-            this.ends_slurp -= 1;
-        } else if (this.one_slurp) {
-            data = data.substring(1)
-            this.one_slurp -= 1;
-        }
-
+        
         if (type == 'text') {
             f_code.push( pad(depth) );
             f_code.push("write(" + JSON.stringify(data) + ");\n" );
         } else if ( type == 'condition') {
             data = data.trim();
-            if (data[data.length-1] == '=') {
-                this.ends_slurp += 1;
-                data = data.substring(0, data.length-1);
-                data = data.trim();
-            } else if (data[data.length-1] == '-') {
-                this.one_slurp += 1;
-                data = data.substring(0, data.length-1);
-                data = data.trim();
-            }
 
             if (data.substring(0,2) == 'if') {
                 var d = data.substring(2).trim();
@@ -213,55 +222,63 @@ Template.prototype.compile = function() {
             f_code.push( "write( \"<span class='genie_" + this.environment.id + "_value_update_" + data.trim() + "'>\" + " + value + " + \"</span>\" );\n" );
         } else if (type == 'exec') {
             f_code.push(data);
+        } else if (type == 'notes') {
+            this.notes.push(data);
         }
     }
 
     var header = "var __exposed_vars = []; for (var a in v) { if (v.hasOwnProperty(a)) { __exposed_vars.push(a); } }";
-
-    //    if (DEBUG) {
-    //        console.log(f_code.join(''));
-    //    }
+    header += " with(v) { "; // this is the first time i've seen this used and felt it was a good thing.
     this.f_code = f_code;
-    this.f_code_render = "(function(parent, v, defaults, undefined_variable) { " + header + this.f_code.join(' ') + "})";
+    this.f_code_render = "(function(parent, v, defaults, undefined_variable) { " + header + this.f_code.join(' ') + "}})";
+
+};
+
+Template.prototype.pre_render = function(undefined_variable) {
+    this.compile();
+
+    var _env = this.environment;
+    var ____output = [];
+    var partial = function(name, d) { return _env.render(name, d); };
+    var write = function(ddd) { ____output.push(ddd); };
+    var _template = this;
+    
+    var compiled_code = eval(this.f_code_render);
+
+    var encased_template = function(tvars, uv) {
+        ____output = [];
+        try {
+            var template_vars = JSON.parse(tvars);
+        } catch (e) {
+            var template_vars = tvars;
+        }
+
+        var undef_var = function(name) {
+            if (uv.indexOf('%s') == -1) {
+                return uv.trim();
+            } else {
+                return uv.replace('%s', name.trim()).trim();
+            }
+        };
+        
+        compiled_code(_template, template_vars, this.environment.default_dict, undef_var);
+        return ____output.join('');
+    }
+    this.final_func = encased_template;
 };
 
 Template.prototype.render = function(variables, undefined_variable) {
     if (this.final_func == null) {
-        this.compile();
-
-        var _env = this.environment;
-        var ____output = [];
-        var partial = function(name, d) { return _env.render(name, d); };
-        var write = function(ddd) { ____output.push(ddd); };
-        var _template = this;
-        
-        var compiled_code = eval(this.f_code_render);
-
-        var encased_template = function(tvars, uv) {
-            ____output = [];
-            try {
-                var template_vars = JSON.parse(tvars);
-            } catch (e) {
-                var template_vars = tvars;
-            }
-
-            var undef_var = function(name) {
-                if (uv.indexOf('%s') == -1) {
-                    return uv.trim();
-                } else {
-                    return uv.replace('%s', name.trim()).trim();
-                }
-            };
-            
-            compiled_code(_template, template_vars, this.environment.default_dict, undef_var);
-            return ____output.join('');
-        }
-        this.final_func = encased_template;
+        this.pre_render(undefined_variable);
     }
-    
     var result = this.final_func(variables, undefined_variable);
     return result.trim();
-}
+};
+
+var BailoutException = function( template, callback ) {
+    callback( template );
+    
+};
 
 var Environment = function() {
     this.id = genie_environ_count + 1;
@@ -291,8 +308,7 @@ var Environment = function() {
             template.next_slurp = 1;
         }
     }
-}    
-
+};
 
 Environment.prototype.template_list = function() {
     l = []; 
@@ -300,7 +316,7 @@ Environment.prototype.template_list = function() {
         l.push(i);
     }
     return l;
-}
+};
 
 Environment.prototype.set_bindable = function(key, value) {
     this.bindable_dict[key] = value;
@@ -310,11 +326,11 @@ Environment.prototype.set_bindable = function(key, value) {
     var obj = targets[i];
     obj.innerHTML = value;
     }
-}
+};
 
 Environment.prototype.get_template = function(name) {
     return this.template_dict[name];
-}
+};
 
 Environment.prototype.create_template = function(name, data) {
     var t = new Template(data);
@@ -329,22 +345,6 @@ Environment.prototype.render_quick = function(template_text, vars, undef_var) {
     t.key = 'anon';
     t.environment = this;
     return t.render(vars, undef_var);
-}
-
-Environment.prototype.render_to = function(target_element, name_of_template, di) {
-    var t = this.get_template(name_of_template);
-    if (t !== undefined) {
-        target_element.innerHTML = t.render(di);
-    } else {
-        target_element.innerHTML = 'Template ' + name_of_template + ' could not be found.';
-    }
-};
-
-Environment.prototype.render_these = function(elements, data) {
-    for( var i = 0; i < elements.length; i++ ) {
-    var result = this.render_quick(elements[i].innerHTML, data);
-    elements[i].innerHTML = result;
-    }
 };
 
 Environment.prototype.render = function(name, variables, undef_var) {
@@ -356,16 +356,19 @@ Environment.prototype.render = function(name, variables, undef_var) {
             return e;
         }
     } catch (e) {
+        // buh wah?
     }
-}
+};
 
 Environment.prototype.set_obj = function(name, obj) {
     this.object_dict[name] = obj;
-}
+};
 
 Environment.prototype.get_obj = function(name) {
     return this.object_dict[name];
-}
+};
+
+
 
 var main_environment = new Environment();
 
