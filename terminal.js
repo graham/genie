@@ -5,7 +5,7 @@ var Terminal = function(root) {
         this.initialize(root);
         this.refresh();
     }
-}
+};
 
 Terminal.prototype.initialize = function(root) {
     this.stop_event = true;

@@ -169,5 +169,4 @@ exports.Messageable = Messageable;
 
 Resourceable = function(resource_name, callback) {
     this.cache = {};
-    this.
 }

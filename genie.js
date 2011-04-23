@@ -1,8 +1,8 @@
 /* Written by Graham Abbott <graham.abbott@gmail.com> */
 
 var last = null;
-var genie_context_begin = "<";
-var genie_context_end = ">";
+var genie_context_begin = "{";
+var genie_context_end = "}";
 
 var GENIE_CONTEXT_begin = eval("genie_context_begin") || "{";
 var GENIE_CONTEXT_end =   eval("genie_context_end") || "}";
@@ -367,8 +367,6 @@ Environment.prototype.set_obj = function(name, obj) {
 Environment.prototype.get_obj = function(name) {
     return this.object_dict[name];
 };
-
-
 
 var main_environment = new Environment();
 
