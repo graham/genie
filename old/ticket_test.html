@@ -1,0 +1,142 @@
+<html>
+
+<script type="text/javascript" charset="utf-8">
+    var genie_debug = 1;
+    var genie_context_begin = "<";
+    var genie_context_end = ">";
+</script>
+
+<script type="text/javascript" charset="utf-8" src='js/prototype.js'> </script>
+<script type="text/javascript" charset="utf-8" src='genie.js'></script>
+
+<style type="text/css" media="screen">
+    * {
+        font-family: Courier;
+        font-weight: 300;
+        flood-opacity: 1;
+        flood-color: black;
+    }
+    
+    .title {
+        float:left;
+        width: 400px;
+    }
+    
+    .pass_fail {
+        float:right;
+        width: 200px;
+    }
+    
+    .success {
+        background-color: #cfc;
+    }
+    
+    .failure {
+        background-color: #fcc;
+    }
+</style>
+
+<script type="text/javascript" charset="utf-8">
+    var orig_template_text = null;
+    var env = new genie.Environment();
+
+    document.observe("dom:loaded", function() {
+    // for moo: window.addEvent('domready', function() {
+      var ta = document.getElementById('ticket');
+      orig_template_text = ta.value;
+      $(ta).observe('keydown', steal_keys);
+      // for moo: $(ta).addEvent('keydown', steal_keys);
+      ta.focus();
+    });
+
+    var steal_keys = function(event) {
+      if (event.code == 82 && event.shift && event.meta) {
+        render_ta();
+        event.event.stopPropagation();
+        event.stop();
+      } else if (event.code == 69 && event.shift && event.meta) {
+        document.getElementById('ticket').value = orig_template_text;
+        event.event.stopPropagation();
+        event.stop();
+      }
+    }
+
+    var data = {
+      agent_name:'Graham', 
+      age: 27,
+      uid: 12345678,
+      user: "Jon Ying",
+      hosts: ['mac', 'win', 'linux'],
+      greet: "Thank you for writing in! We love to hear it when people are happy with Dropbox.",
+      win_install: "You can download the Windows Dropbox client here: http://www.dropbox.com/install",
+      files: [ ['iphone-toolbar-icons.png', '100 kb'], ['Photo Feb 02, 21 39 35.jpg', '240 mb'], ['players.db', '123 gb'] ],
+      emails: [ 'graham@dropbox.com', 'gramillionaire@dropbox.com', 'g-dog@dropbox.com' ]
+    };
+
+    function render_ta() {
+      var ta = document.getElementById('ticket');
+      var t = env.create_template('ticket', ta.value);
+      ta.value = t.render(data, '*!* %s is not defined *!*');
+    }
+
+    function has_host(h) {
+      return (data.hosts.indexOf(h) != -1);
+    }
+
+    function toggle_host(host_name) {
+      if (has_host(host_name)) {
+        data.hosts = data.hosts.filter( function(item) { if (item == host_name) { return false; } else { return true; }} );
+      } else {
+        data.hosts.push( host_name );
+      }
+    }
+</script>
+
+<div style='float:right; width: 100px;'>
+  <input type='checkbox' CHECKED id='mac_cb' value='mac' onchange="toggle_host(this.value);">Mac OS X<br>
+  <input type='checkbox' CHECKED id='win_cb' value='win' onclick="toggle_host(this.value);">Win XP<br>
+  <input type='checkbox' CHECKED id='linux_cb' value='linux' onclick="toggle_host(this.value);">Linux<br>
+</div>
+
+<div style='width: 800px; margin-left:auto; margin-right: auto;'>
+    <textarea id='ticket' style='width: 800px; height: 500px;'>
+<^ require('user_data'); ^>
+<^ require('file_data'); ^>
+Hi <<user>>,
+
+<<greet>>
+
+One issue might be that you have some rather large files in your Dropbox, I've provided a list of them here:
+<% for i in files -%>
+ << i[1] >> - << i[0] >>
+<% end -%>
+
+          <<- v.woot >>
+
+It looks like you are not running the latest version of Dropbox on your hosts.
+
+ <% if (hosts.indexOf('mac') != -1) =%>
+  For your Mac you can download the client here: http://www.dropbox.com/install?os=mac
+ <% end =%>
+ <% if has_host('win') =%>
+  For your Windows computer you can download the client here: http://www.dropbox.com/install?os=win
+ <% end =%>
+ <% if has_host('linux') =%>
+  For your Ubuntu/Linux computer you can download the client here: http://www.dropbox.com/install?os=linux
+ <% end -%>
+
+If you have any other questions please let me know.
+
+<< agent_name >>
+Dropbox Support
+
+You can reach me at any of the following email addresses:
+<% for i in emails =%><<i>><%if rindex!=0%>, <%end%><% end %>
+</textarea>
+</div>
+<div style='width: 400px; margin-left:auto; margin-right: auto; text-align: right;'>
+  <input type=button value="Render" onclick="render_ta();">
+  <input type=button value="Reset" onclick="document.getElementById('ticket').value = orig_template_text;">
+</div>
+
+</html>
