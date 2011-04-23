@@ -1,26 +1,22 @@
 <html>
 
-<script type="text/javascript" charset="utf-8">
-    var genie_debug = 1;
-</script>
-
 <script type="text/javascript" charset="utf-8" src='../kapture.js'></script>
 <script type="text/javascript" charset="utf-8" src='../js/mootools.js'></script>
 
 <script type="text/javascript" charset="utf-8">
   var kap = new Kapture();
-  
+  kap.add_command('control-x control-s', function(term) {
+    document.activeElement.value += 'asdf';
+  });
   var steal_keys = function(event) {
     kap.keydown(event.event);
   };
   
   var steal_focus = function() {
-    console.log("stealing focus");
     $(window).addEvent('keydown', steal_keys );
   };
 
   var return_focus = function() {
-    console.log("Returning Focus");
     $(window).removeEvent('keydown', steal_keys);
   };
 
@@ -31,9 +27,11 @@
 </script>
 
 <body>
-  <textarea style='width: 200px; height: 100px;'>
+  <div style='width: 300px; margin-left: auto; margin-right: auto;'>
+   <textarea style='width: 300px; height: 200px;'>
     Here lies the body of Yorik.
-  </textarea>
+   </textarea>
+  </div>
 </body>
 
 </html>

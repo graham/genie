@@ -4,7 +4,6 @@ var Kapture = function() {
 
 Kapture.prototype.initialize = function() {
     this.stop_event = 0;
-    console.log("Initializeing " + this);
     
     this.keys_dict = {
         "48": "0", "49": "1", "50": "2", "51": "3", "52": "4", "53": "5", "54": "6", "55": "7", 
@@ -44,10 +43,9 @@ Kapture.prototype.initialize = function() {
     this.history = [];
     this.command_stack = [];
     this.log("Testing Log");
-}
+};
 
 Kapture.prototype.log = function(message) {
-    console.log(message);
 }
 
 Kapture.prototype.keydown = function(event) {
@@ -120,8 +118,6 @@ Kapture.prototype.keydown = function(event) {
         }
     }
 
-    //console.log('key: ' + guess);
-
     if (this.stop_event) {
 	event.stopPropagation();
     }
@@ -137,4 +133,8 @@ Kapture.prototype.insert_at_cursor = function(guess) {
 Kapture.prototype.command_cancel = function() {
     this.command_stack = [];
     this.log('Cancelled!');
+};
+
+Kapture.prototype.add_command = function(key, func) {
+    this.modified_dict[key] = func;
 };
