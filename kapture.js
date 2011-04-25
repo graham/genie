@@ -52,7 +52,9 @@ Kapture.prototype.initialize = function() {
 };
 
 Kapture.prototype.log = function(message) {
-    console.log(message);
+    if (console) {
+        console.log(message);
+    }
 };
 
 Kapture.prototype.keydown = function(event) {
