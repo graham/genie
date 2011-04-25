@@ -52,9 +52,8 @@ Kapture.prototype.initialize = function() {
 };
 
 Kapture.prototype.log = function(message) {
-    if (console) {
-        console.log(message);
-    }
+    // fuck you firefox
+
 };
 
 Kapture.prototype.keydown = function(event) {
