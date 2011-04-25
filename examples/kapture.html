@@ -5,9 +5,13 @@
 
 <script type="text/javascript" charset="utf-8">
   var kap = new Kapture();
-  kap.add_command('control-x control-s', function(term) {
+  kap.add_command('control-x control-f', function(term) {
     document.activeElement.value += 'asdf';
   });
+  kap.on_push = function(key) {
+    var d = document.getElementById('debug');
+    d.innerHTML += 'PUSH:' + key +'<br>';
+  };
   var steal_keys = function(event) {
     kap.keydown(event.event);
   };
@@ -22,8 +26,8 @@
 
   window.addEvent('domready', function(){
     steal_focus();
+  
   });
-
 </script>
 
 <body>
@@ -32,6 +36,8 @@
     Here lies the body of Yorik.
    </textarea>
   </div>
+
+  <div id='debug'>Debug: </div>
 </body>
 
 </html>

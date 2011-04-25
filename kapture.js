@@ -4,6 +4,8 @@ var Kapture = function() {
 
 Kapture.prototype.initialize = function() {
     this.stop_event = 0;
+    this.last_event = null;
+    this.last_guess = null;
     
     this.keys_dict = {
         "48": "0", "49": "1", "50": "2", "51": "3", "52": "4", "53": "5", "54": "6", "55": "7", 
@@ -37,19 +39,24 @@ Kapture.prototype.initialize = function() {
     
     this.modified_dict['control-g'] = function(term) { term.command_cancel(); };
     this.modified_dict['control-x'] = '!push!';
+    this.modified_dict['esc'] = '!push!';
+
     this.modified_dict['control-x control-v'] = function(term) { alert("Version 0.2 Kapture written by Graham Abbott <graham.abbott@gmail.com>"); };
     this.modified_dict['control-x control-r'] = function(term) { document.location.reload(); };
-
+    this.modified_dict['control-x control-s'] = function(term) { document.body.innerHTML += 'SAVED<br>';};
+    this.modified_dict['control-x control-i'] = function(term) { term.log(term.last_event); term.log(term.last_guess);};
+    this.modified_dict['esc x'] = function(term) { alert('dope!'); };
     this.history = [];
     this.command_stack = [];
     this.log("Testing Log");
 };
 
 Kapture.prototype.log = function(message) {
-}
+    console.log(message);
+};
 
 Kapture.prototype.keydown = function(event) {
-    last_event = event;
+    this.last_event = event;
     var modifier = '';
     this.stop_event = 0;
     
@@ -101,6 +108,7 @@ Kapture.prototype.keydown = function(event) {
 
         if (guess == '!push!') {
             this.command_stack.push( modifier + key );
+            this.on_push(modifier+key);
             this.stop_event = 1;
         } else {
             this.command_stack = [];
@@ -121,6 +129,7 @@ Kapture.prototype.keydown = function(event) {
     if (this.stop_event) {
 	event.stopPropagation();
     }
+    last_guess = modifier + key;
 };
 
 Kapture.prototype.insert_at_cursor = function(guess) {
@@ -137,4 +146,8 @@ Kapture.prototype.command_cancel = function() {
 
 Kapture.prototype.add_command = function(key, func) {
     this.modified_dict[key] = func;
+};
+
+Kapture.prototype.on_push = function(key) {
+    // do nothing.
 };
