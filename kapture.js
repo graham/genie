@@ -6,6 +6,8 @@ Kapture.prototype.initialize = function() {
     this.stop_event = 0;
     this.last_event = null;
     this.last_guess = null;
+
+    this.documentation = {};
     
     this.keys_dict = {
         "48": "0", "49": "1", "50": "2", "51": "3", "52": "4", "53": "5", "54": "6", "55": "7", 
@@ -39,21 +41,20 @@ Kapture.prototype.initialize = function() {
     
     this.modified_dict['control-g'] = function(term) { term.command_cancel(); };
     this.modified_dict['control-x'] = '!push!';
+    this.modified_dict['control-d'] = '!push!';
     this.modified_dict['esc'] = '!push!';
 
     this.modified_dict['control-x control-v'] = function(term) { alert("Version 0.2 Kapture written by Graham Abbott <graham.abbott@gmail.com>"); };
-    this.modified_dict['control-x control-r'] = function(term) { document.location.reload(); };
-    this.modified_dict['control-x control-s'] = function(term) { document.body.innerHTML += 'SAVED<br>';};
-    this.modified_dict['control-x control-i'] = function(term) { term.log(term.last_event); term.log(term.last_guess);};
-    this.modified_dict['esc x'] = function(term) { alert('dope!'); };
+
     this.history = [];
     this.command_stack = [];
     this.log("Testing Log");
 };
 
 Kapture.prototype.log = function(message) {
-    // fuck you firefox
-
+    if (this.do_log == true) {
+        console.log(message);
+    }
 };
 
 Kapture.prototype.keydown = function(event) {
@@ -101,7 +102,9 @@ Kapture.prototype.keydown = function(event) {
         guess = this.modified_dict[mod_name];
 
         if (typeof guess == 'function') {
+            this.log("Running: " + mod_name);
             guess = guess(this);
+            this.stop_event = 1;
             if (guess == undefined) {
                 guess = '';
             }
@@ -116,7 +119,7 @@ Kapture.prototype.keydown = function(event) {
             if (guess != undefined) {
                 this.insert_at_cursor(guess);
             } else {
-                this.log(full_modifier + name + ' is not defined. <br>(' + mod_name +') ['+event.keyCode+']');
+                this.log(full_modifier + name + ' is not defined.');
             }
         }
     } else {
@@ -129,6 +132,7 @@ Kapture.prototype.keydown = function(event) {
 
     if (this.stop_event) {
 	event.stopPropagation();
+        event.stop();
     }
     last_guess = modifier + key;
 };
@@ -138,6 +142,7 @@ Kapture.prototype.insert_at_cursor = function(guess) {
     // faux text area if you wanted, i'm assuming that if they get here you just
     // want things to be passed on, basically this means the event will not be
     // stopped in anyway.
+    this.log("press: " + guess);
 };
 
 Kapture.prototype.command_cancel = function() {
@@ -145,10 +150,15 @@ Kapture.prototype.command_cancel = function() {
     this.log('Cancelled!');
 };
 
-Kapture.prototype.add_command = function(key, func) {
+Kapture.prototype.add_command = function(key, func, doc) {
     this.modified_dict[key] = func;
+    this.documentation[key] = doc;
 };
 
 Kapture.prototype.on_push = function(key) {
-    // do nothing.
+    this.log("Push: " + key);
+};
+
+Kapture.prototype.show_help = function() {
+
 };
