@@ -5,9 +5,19 @@
 
 <script type="text/javascript" charset="utf-8">
   var kap = new Kapture();
+  kap.safe_input = true;
+
   kap.add_command('control-x control-f', function(term) {
     document.activeElement.value += 'asdf';
   });
+  kap.add_passive_command('j', function(term) {
+    $('foo').value += 'fooooo  ';
+  });
+  kap.add_command('control-x f', function(term) {
+    document.activeElement.value += 'asdfwoooooo';
+  });
+
+
   kap.on_push = function(key) {
     var d = document.getElementById('debug');
     d.innerHTML += 'PUSH:' + key +'<br>';
@@ -26,15 +36,17 @@
 
   window.addEvent('domready', function(){
     steal_focus();
-  
   });
 </script>
 
 <body>
   <div style='width: 300px; margin-left: auto; margin-right: auto;'>
-   <textarea style='width: 300px; height: 200px;'>
+   <textarea id='foo' style='width: 300px; height: 200px;'>
     Here lies the body of Yorik.
    </textarea>
+
+   <input type='textfield' id='tf'><br>
+   <input type='password' id='pw'><br>
   </div>
 
   <div id='debug'>Debug: </div>

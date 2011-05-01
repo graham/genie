@@ -6,6 +6,11 @@ Kapture.prototype.initialize = function() {
     this.stop_event = 0;
     this.last_event = null;
     this.last_guess = null;
+    this.safe_input = false;
+
+    this.capture_all = false;
+    this.capture_buffer = [];
+    this.capture_final = 'enter';
 
     this.documentation = {};
     
@@ -39,22 +44,28 @@ Kapture.prototype.initialize = function() {
         '<':'&lt;',
     };
     
-    this.modified_dict['control-g'] = function(term) { term.command_cancel(); };
-    this.modified_dict['control-x'] = '!push!';
-    this.modified_dict['control-d'] = '!push!';
-    this.modified_dict['esc'] = '!push!';
+    this.commands = {};
+    this.passive_commands = {};
+    this.pushes = {};
+    this.cancel_keybinding = 'control-g';
 
-    this.modified_dict['control-x control-v'] = function(term) { alert("Version 0.2 Kapture written by Graham Abbott <graham.abbott@gmail.com>"); };
+    this.pushes['control-x'] = '!push!';
+    this.pushes['control-d'] = '!push!';
+    this.pushes['esc'] = '!push!';
+    this.pushes['alt-x'] = '!push_until!enter';
+
+    this.commands[this.cancel_keybinding] = function(term) { term.command_cancel(); };
+    this.commands['control-x control-v'] = function(term) { alert("Version 0.2 Kapture written by Graham Abbott <graham.abbott@gmail.com>"); };
+    this.commands['test'] = function(term) { alert('testing!'); };
+    this.commands['asdf'] = function(term) { return 'awesome'; };
+    this.passive_commands['control-x control-n'] = function(term) { alert("this will not happen while focused on a textfield"); };
 
     this.history = [];
     this.command_stack = [];
-    this.log("Testing Log");
 };
 
 Kapture.prototype.log = function(message) {
-    if (this.do_log == true) {
-        console.log(message);
-    }
+    console.log(message);
 };
 
 Kapture.prototype.keydown = function(event) {
@@ -75,66 +86,67 @@ Kapture.prototype.keydown = function(event) {
         modifier += 'meta-';
     }
 
-    //if (event.keyCode == 16 || event.keyCode == 17 || event.keyCode == 18 || event.keyCode == 91) {
-    //    this.refresh_line();
-    //    return;
-    //}
-    
     var name = this.keys_dict[event.keyCode];
-    var key = this.keys_dict[event.keyCode];
-    var guess = key;
+    var guess = name;
     var full_modifier = modifier;
-    
-    if (typeof guess == 'function' && !modifier) {
-        try {
-            guess = guess(this);
-        } catch (e) {
-            this.log(e);
-        }
+
+    if (this.command_stack.length && (modifier+guess) != this.cancel_keybinding) {
+        full_modifier = this.command_stack.join(' ') + ' ' + modifier;
     }
     
-    if (this.command_stack.length && (modifier+guess) != 'control-g') {
-        full_modifier = this.command_stack.join(' ') + ' ' + modifier;
-    } 
-    
-    if (full_modifier || this.modified_dict[guess] !== undefined) {
-        var mod_name = full_modifier + name;
-        guess = this.modified_dict[mod_name];
+    var mod_name = full_modifier + name;
+    var result = null;
 
-        if (typeof guess == 'function') {
-            this.log("Running: " + mod_name);
-            guess = guess(this);
-            this.stop_event = 1;
-            if (guess == undefined) {
-                guess = '';
+    if (this.capture_all) {
+        if (mod_name == this.capture_final) {
+            this.capture_all = false;
+            var c = this.capture_buffer.join('');
+            this.capture_buffer = [];
+            if (this.commands[c] !== undefined) {
+                result = this.commands[c](this);
             }
-        }
-
-        if (guess == '!push!') {
-            this.command_stack.push( modifier + key );
-            this.on_push(modifier+key);
-            this.stop_event = 1;
+            event.preventDefault();
         } else {
-            this.command_stack = [];
-            if (guess != undefined) {
-                this.insert_at_cursor(guess);
-            } else {
-                this.log(full_modifier + name + ' is not defined.');
-            }
+            this.capture_buffer.push(mod_name);
+            this.on_capture(mod_name);
+            event.preventDefault();
+            return;
         }
+    }
+
+    if (full_modifier || this.modified_dict[guess] !== undefined) {
+        result = this.modified_dict[mod_name];
+    }
+    
+    if (this.pushes[mod_name] !== undefined) {
+        if (this.pushes[mod_name] == "!push!") {
+            this.command_stack.push( modifier + name );
+            this.on_push(modifier+name);
+        } else if (this.pushes[mod_name].substring(0, 12) == "!push_until!") {
+            this.capture_final = this.pushes[mod_name].substring(12);
+            this.capture_all = true;
+        }
+        this.stop_event = 1;
+    } else if (this.commands[mod_name] !== undefined) {
+        this.command_stack = [];
+        this.stop_event = 1;
+        result = this.commands[mod_name](this);
+    } else if (this.passive_commands[mod_name] !== undefined && this.passive_allowed()) {
+        this.command_stack = [];
+        this.stop_event = 1;
+        result = this.passive_commands[mod_name](this);
     } else {
-        if (guess != undefined) {
-            this.insert_at_cursor(guess);
-        } else { 
-            //this.log('Could not find: ' + event.keyCode);
-        }
+        this.command_stack = [];
+    }
+
+    if (result) {
+        this.insert_at_cursor(result);
     }
 
     if (this.stop_event) {
-	event.stopPropagation();
-        event.stop();
+        event.preventDefault();
     }
-    last_guess = modifier + key;
+    last_guess = modifier + name;
 };
 
 Kapture.prototype.insert_at_cursor = function(guess) {
@@ -151,7 +163,12 @@ Kapture.prototype.command_cancel = function() {
 };
 
 Kapture.prototype.add_command = function(key, func, doc) {
-    this.modified_dict[key] = func;
+    this.commands[key] = func;
+    this.documentation[key] = doc;
+};
+
+Kapture.prototype.add_passive_command = function(key, func, doc) {
+    this.passive_commands[key] = func;
     this.documentation[key] = doc;
 };
 
@@ -159,6 +176,19 @@ Kapture.prototype.on_push = function(key) {
     this.log("Push: " + key);
 };
 
+Kapture.prototype.on_capture = function(key) {
+    this.log("Captured: " + this.capture_buffer.join('') + " - waiting for " + this.capture_final);
+};
+
 Kapture.prototype.show_help = function() {
 
+};
+
+Kapture.prototype.passive_allowed = function() {
+    var t = document.activeElement.type;
+    if (t == "textarea" || t == "text" || t == "password") {
+        return false;
+    } else { 
+        return true;
+    }
 };
