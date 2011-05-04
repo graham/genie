@@ -37,9 +37,9 @@ View.prototype.find = function(d) {
 			if (d[key] == item[key]) {
 			    l.append(true);
 			}
-		}
-	    }));
-        }
+                    }
+                }
+            }));
 };
 
 View.prototype.limit = function(count) { 
@@ -54,14 +54,6 @@ View.prototype.sort = function(fun) {
     return new View(this.data.sort(fun));
 };
 
-View.prototype.head = function() {
-    return this.data[0];
-};
-
-View.prototype.tail = funtion() {
-    return new View(this.data.slice(1));
-};
-
 View.prototype.each = function(cb) {
     var l = this.data.length;
     for(var i = 0; i < l; i++) {
@@ -69,4 +61,22 @@ View.prototype.each = function(cb) {
     }
 };
 
-View.prototype.length = function() { return this.data.length; };
+View.prototype.length = function() { 
+    return this.data.length;
+};
+
+View.prototype.head = function() {
+    return this.data[0];
+};
+
+View.prototype.tail = function() {
+    return new View(this.data.slice(1));
+};
+
+View.prototype.toString = function() {
+    return "<View: " + this.data + ">";
+};
+
+View.prototype.valueOf = function() {
+    return this.data;
+};
