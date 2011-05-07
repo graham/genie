@@ -192,3 +192,12 @@ Kapture.prototype.passive_allowed = function() {
         return true;
     }
 };
+
+Kapture.prototype.add_push = function(key, until) {
+    if (until === undefined) {
+        // normal push.
+        this.pushes[key] = '!push!';
+    } else {
+        this.pushes[key] = '!push_until!' + until;
+    }
+};
