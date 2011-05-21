@@ -400,7 +400,7 @@ var ts = function() {
     return d.getTime() / 1000.0;
 };
 
-var genie_render_dom_element(d, o) {
+var genie_render_dom_element = function(d, o) {
     var content = d.value;
     var t = new Template(content);
     d.value = t.render(o);
