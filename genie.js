@@ -1,20 +1,20 @@
 /* Written by Graham Abbott <graham.abbott@gmail.com> */
 
 var last = null;
-var genie_context_begin = "{";
-var genie_context_end = "}";
+var genie_context_begin;
+var genie_context_end;
 
-var GENIE_CONTEXT_begin = eval("genie_context_begin") || "{";
-var GENIE_CONTEXT_end =   eval("genie_context_end") || "}";
+var GENIE_CONTEXT_begin = eval("genie_context_begin") || "<";
+var GENIE_CONTEXT_end =   eval("genie_context_end") || ">";
 
 var GENIE_CONTEXT_lookup = {
-        "#":"comment",
-        "%":"condition",
-        "!":"exec",
-        "@":"special",
-        "&":"bindable",
-        "^":"notes"
-    };
+    "#":"comment",
+    "%":"condition",
+    "!":"exec",
+    "@":"special",
+    "&":"bindable",
+    "^":"notes"
+};
 
 GENIE_CONTEXT_lookup[GENIE_CONTEXT_begin] = "variable";
 GENIE_CONTEXT_lookup[GENIE_CONTEXT_end] = "variable";
@@ -55,7 +55,20 @@ var Template = function(string) {
 };
 
 Template.prototype.find_next_block = function() {
-    var start = this.string.indexOf(this.environment.begin);
+    var begin_char;
+    var end_char;
+    var cmd_lookup;
+    if (this.environment) {
+        begin_char = this.environment.begin;
+        end_char = this.environment.end;
+        cmd_lookup = this.environment.lookup;
+    } else {
+        begin_char = GENIE_CONTEXT_begin;
+        end_char = GENIE_CONTEXT_end;
+        cmd_lookup = GENIE_CONTEXT_lookup;
+    }
+    
+    var start = this.string.indexOf(begin_char);
     var next_char = start+1;
     
     if (start == -1) {
@@ -76,16 +89,16 @@ Template.prototype.find_next_block = function() {
         this.blocks.push( ['text', before_block] ); 
     }
     var start_char = after_block[0];
-    var type = this.environment.lookup[start_char];
+    var type = cmd_lookup[start_char];
     var end = null;
 
-    if (start_char == this.environment.begin) {
-        end = after_block.indexOf(this.environment.end + this.environment.end);
+    if (start_char == begin_char) {
+        end = after_block.indexOf(end_char + end_char);
     } else {
-        if (start_char in this.environment.lookup) {
-            end = after_block.indexOf(start_char + this.environment.end);
+        if (start_char in cmd_lookup) {
+            end = after_block.indexOf(start_char + end_char);
         } else {
-            this.blocks.push( ['text', this.environment.begin] );
+            this.blocks.push( ['text', begin_char] );
             this.string = after_block.substring(0);
             return
         }
@@ -260,8 +273,15 @@ Template.prototype.pre_render = function(undefined_variable) {
                 return uv.replace('%s', name.trim()).trim();
             }
         };
+
+        var defaults;
+        if (this.environment) {
+            defaults = this.environment.default_dict;
+        } else {
+            defaults = {};
+        }
         
-        compiled_code(_template, template_vars, this.environment.default_dict, undef_var);
+        compiled_code(_template, template_vars, defaults, undef_var);
         return ____output.join('');
     }
     this.final_func = encased_template;
@@ -370,6 +390,24 @@ Environment.prototype.get_obj = function(name) {
 
 var main_environment = new Environment();
 
+var fs = function( s, args ) {
+    var t = new Template(s);
+    return t.render(args);
+};
+
+var ts = function() {
+    var d = new Date();
+    return d.getTime() / 1000.0;
+};
+
+var loadr = function(url) {
+    var d = document.createElement('script');
+    d.src = url;
+    d.type = 'text/javascript';
+    document.body.appendChild(d);
+};
+
+
 try {
     exports.Template = Template;
     exports.Environment = Environment;
@@ -379,5 +417,6 @@ try {
     genie.Template = Template;
     genie.Environment = Environment;
     genie.env = main_environment;
+    genie.fs = fs;
 }
 

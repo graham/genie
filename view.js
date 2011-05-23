@@ -80,3 +80,10 @@ View.prototype.toString = function() {
 View.prototype.valueOf = function() {
     return this.data;
 };
+
+try {
+    exports.View = View;
+} catch (e) {
+    var view = {};
+    view.View = View;
+}

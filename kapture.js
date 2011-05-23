@@ -49,15 +49,20 @@ Kapture.prototype.initialize = function() {
     this.pushes = {};
     this.cancel_keybinding = 'control-g';
 
-    this.pushes['control-x'] = '!push!';
-    this.pushes['control-d'] = '!push!';
-    this.pushes['esc'] = '!push!';
+    this.pushes['`'] = '!push!';
+    this.pushes['alt-c'] = '!push!';
     this.pushes['alt-x'] = '!push_until!enter';
 
     this.commands[this.cancel_keybinding] = function(term) { term.command_cancel(); };
     this.commands['control-x control-v'] = function(term) { alert("Version 0.2 Kapture written by Graham Abbott <graham.abbott@gmail.com>"); };
     this.commands['test'] = function(term) { alert('testing!'); };
     this.commands['asdf'] = function(term) { return 'awesome'; };
+    this.commands['` h'] = function(term) { term.show_help(); };
+    this.commands['esc'] = function(term) { 
+        var d = document.getElementById('___helpdiv');
+        d.parentElement.removeChild(d);
+    };
+        
     this.passive_commands['control-x control-n'] = function(term) { alert("this will not happen while focused on a textfield"); };
 
     this.history = [];
@@ -181,7 +186,11 @@ Kapture.prototype.on_capture = function(key) {
 };
 
 Kapture.prototype.show_help = function() {
-
+    var d = document.getElementById('___helpdiv') || document.createElement('div');
+    d.id = '___helpdiv';
+    d.style.cssText = 'position: fixed; top: 40px; right: 40px; bottom: 40px; left: 40px; background-color: rgba(0, 0, 0, 0.75); color: white; padding: 30px; border-radius: 15px;';
+    d.innerHTML = 'You have found the Kapture Help, nice work!<br><br>press esc to close.';
+    document.body.appendChild(d);
 };
 
 Kapture.prototype.passive_allowed = function() {
