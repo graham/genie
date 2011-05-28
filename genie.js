@@ -413,7 +413,6 @@ var loadr = function(url) {
     document.body.appendChild(d);
 };
 
-
 try {
     exports.Template = Template;
     exports.Environment = Environment;
