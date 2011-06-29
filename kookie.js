@@ -15,7 +15,11 @@ Kookie.prototype.load = function() {
                 key = key.substring(1);
             }
             
-            this.cookies[key] = value;
+	    try {
+		this.cookies[key] = JSON.parse(value);
+	    } catch (e) {
+		this.cookies[key] = value;
+	    }
         }
     }
 };
@@ -78,8 +82,8 @@ Kookie.prototype.drop = function(key) {
 
 Kookie.prototype.flush = function() {
     var c = this.render();
-    // this is so fucked.
 
+    // this is so fucked.
     for( var i=0; i < c.length; i++ ) {
         document.cookie = c[i];
     }
