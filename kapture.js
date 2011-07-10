@@ -7,6 +7,8 @@ Kapture.prototype.initialize = function() {
     this.last_event = null;
     this.last_guess = null;
     this.safe_input = false;
+    this.game_mode = false;
+    this.game_mode_cache = [];
 
     this.capture_all = false;
     this.capture_buffer = [];
@@ -46,34 +48,26 @@ Kapture.prototype.initialize = function() {
     
     this.commands = {};
     this.passive_commands = {};
+    this.non_passive_commands = {};
     this.pushes = {};
     this.cancel_keybinding = 'control-g';
 
-    this.pushes['`'] = '!push!';
-    this.pushes['alt-c'] = '!push!';
-    this.pushes['alt-x'] = '!push_until!enter';
+    this.add_push('`');
+    this.add_push('control-x');
 
-    this.commands[this.cancel_keybinding] = function(term) { term.command_cancel(); };
-    this.commands['control-x control-v'] = function(term) { alert("Version 0.2 Kapture written by Graham Abbott <graham.abbott@gmail.com>"); };
-    this.commands['test'] = function(term) { alert('testing!'); };
-    this.commands['asdf'] = function(term) { return 'awesome'; };
-    this.commands['` h'] = function(term) { term.show_help(); };
-    this.commands['esc'] = function(term) { 
-        var d = document.getElementById('___helpdiv');
-        d.parentElement.removeChild(d);
-    };
-        
-    this.passive_commands['control-x control-n'] = function(term) { alert("this will not happen while focused on a textfield"); };
+    this.add_command(this.cancel_keybinding, function(term) { term.command_cancel(); });
+    this.add_command('control-x control-v', function(term) { alert("Version 0.2 Kapture written by Graham Abbott <graham.abbott@gmail.com>"); });
+    this.add_command('` h', function(term) { term.show_help(term); } );
+    this.add_passive_command('control-x control-n', function(term) { alert("this will not happen while focused on a textfield"); } );
 
     this.history = [];
     this.command_stack = [];
 };
 
 Kapture.prototype.log = function(message) {
-    console.log(message);
 };
 
-Kapture.prototype.keydown = function(event) {
+Kapture.prototype.key_event = function(event, type) {
     this.last_event = event;
     var modifier = '';
     this.stop_event = 0;
@@ -87,9 +81,12 @@ Kapture.prototype.keydown = function(event) {
     if (event.ctrlKey) {
         modifier += 'control-';
     }
+
+    /* this seems to always be true for jquery, so we are going to ignore at this point
     if (event.metaKey) {
         modifier += 'meta-';
     }
+    */
 
     var name = this.keys_dict[event.keyCode];
     var guess = name;
@@ -100,7 +97,23 @@ Kapture.prototype.keydown = function(event) {
     }
     
     var mod_name = full_modifier + name;
-    var result = null;
+    if (this.game_mode) {
+	if (type == "KEYDOWN") {
+	    if (this.game_mode_cache.indexOf(mod_name) != -1) {
+		return;
+	    } else {
+		this.game_mode_cache.push(mod_name);
+	    }
+	} else if (type == "KEYUP") {
+	    var index = this.game_mode_cache.indexOf(mod_name);
+	    if (index != -1) {
+		this.game_mode_cache.splice(index, 1);
+	    }
+	}
+	mod_name += ' ' + type;
+    }
+
+    var result = [];
 
     if (this.capture_all) {
         if (mod_name == this.capture_final) {
@@ -108,7 +121,7 @@ Kapture.prototype.keydown = function(event) {
             var c = this.capture_buffer.join('');
             this.capture_buffer = [];
             if (this.commands[c] !== undefined) {
-                result = this.commands[c](this);
+                result = [this.commands[c](this)];
             }
             event.preventDefault();
         } else {
@@ -120,7 +133,7 @@ Kapture.prototype.keydown = function(event) {
     }
 
     if (full_modifier || this.modified_dict[guess] !== undefined) {
-        result = this.modified_dict[mod_name];
+        result = [this.modified_dict[mod_name]];
     }
     
     if (this.pushes[mod_name] !== undefined) {
@@ -135,11 +148,42 @@ Kapture.prototype.keydown = function(event) {
     } else if (this.commands[mod_name] !== undefined) {
         this.command_stack = [];
         this.stop_event = 1;
-        result = this.commands[mod_name](this);
+        var commands = this.commands[mod_name];
+        var retain = [];
+        for( var f=0; f < commands.length; f++ ) {
+            var fc = commands[f];
+            var r = fc(this);
+            if (r != -1) {
+                retain.push(fc);
+            }
+        }
+        this.commands[mod_name] = retain;
     } else if (this.passive_commands[mod_name] !== undefined && this.passive_allowed()) {
         this.command_stack = [];
         this.stop_event = 1;
-        result = this.passive_commands[mod_name](this);
+        var commands = this.passive_commands[mod_name];
+        var retain = [];
+        for( var f=0; f < commands.length; f++ ) {
+            var fc = commands[f];
+            var r = fc(this);
+            if (r != -1) {
+                retain.push(fc);
+            }
+        }
+        this.passive_commands[mod_name] = retain;
+    } else if (this.non_passive_commands[mod_name] !== undefined && !this.passive_allowed()) {
+        this.command_stack = [];
+        this.stop_event = 1;
+        var commands = this.non_passive_commands[mod_name];
+        var retain = [];
+        for( var f=0; f < commands.length; f++ ) {
+            var fc = commands[f];
+            var r = fc(this);
+            if (r != -1) {
+                retain.push(fc);
+            }
+        }
+        this.non_passive_commands[mod_name] = retain;
     } else {
         this.command_stack = [];
     }
@@ -152,6 +196,14 @@ Kapture.prototype.keydown = function(event) {
         event.preventDefault();
     }
     last_guess = modifier + name;
+};
+
+Kapture.prototype.key_down = function(event) {
+    this.key_event(event, "KEYDOWN");
+};
+
+Kapture.prototype.key_up = function(event) {
+    this.key_event(event, "KEYUP");
 };
 
 Kapture.prototype.insert_at_cursor = function(guess) {
@@ -168,12 +220,24 @@ Kapture.prototype.command_cancel = function() {
 };
 
 Kapture.prototype.add_command = function(key, func, doc) {
-    this.commands[key] = func;
-    this.documentation[key] = doc;
+    if (this.commands[key] === undefined) {
+        this.commands[key] = [];
+    }
+    this.commands[key].push(func);
 };
 
 Kapture.prototype.add_passive_command = function(key, func, doc) {
-    this.passive_commands[key] = func;
+    if (this.passive_commands[key] === undefined) {
+        this.passive_commands[key] = [];
+    }
+    this.passive_commands[key].push(func);
+};
+
+Kapture.prototype.add_non_passive_command = function(key, func, doc) {
+    if (this.non_passive_commands[key] === undefined) {
+        this.non_passive_commands[key] = [];
+    }
+    this.non_passive_commands[key].push(func);
     this.documentation[key] = doc;
 };
 
@@ -185,12 +249,19 @@ Kapture.prototype.on_capture = function(key) {
     this.log("Captured: " + this.capture_buffer.join('') + " - waiting for " + this.capture_final);
 };
 
-Kapture.prototype.show_help = function() {
+Kapture.prototype.show_help = function(term) {
     var d = document.getElementById('___helpdiv') || document.createElement('div');
     d.id = '___helpdiv';
     d.style.cssText = 'position: fixed; top: 40px; right: 40px; bottom: 40px; left: 40px; background-color: rgba(0, 0, 0, 0.75); color: white; padding: 30px; border-radius: 15px;';
-    d.innerHTML = 'You have found the Kapture Help, nice work!<br><br>press esc to close.';
+    d.innerHTML = 'You have found the Kapture Help, nice work!<br><br>press space to close.';
     document.body.appendChild(d);
+    
+    term.add_command('space', function() { 
+            console.log('removing help thing');
+            var d = document.getElementById('___helpdiv');
+            d.parentElement.removeChild(d);
+            return -1;
+        });
 };
 
 Kapture.prototype.passive_allowed = function() {
@@ -210,3 +281,5 @@ Kapture.prototype.add_push = function(key, until) {
         this.pushes[key] = '!push_until!' + until;
     }
 };
+
+
