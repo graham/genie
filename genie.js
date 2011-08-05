@@ -413,6 +413,14 @@ var loadr = function(url) {
     document.body.appendChild(d);
 };
 
+var monkey_patch = function() {
+    String.prototype.render = function(args, undef_var) {
+	var t = new Template(this);
+	t.key = 'anon';
+	return t.render(args, undef_var);
+    };
+};
+
 try {
     exports.Template = Template;
     exports.Environment = Environment;
