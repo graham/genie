@@ -10,3 +10,11 @@ Gett.prototype.init = function() {
 Gett.prototype.get = function(data) {
 
 };
+
+Gett.prototype.post = function(data) {
+
+};
+
+Gett.prototype.json_p = function(url, callback) {
+
+};

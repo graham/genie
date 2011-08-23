@@ -118,9 +118,13 @@ var genie_environ_count = 0;
 String.prototype.trim = function() { return this.replace(/^\s+|\s+$/g, "").replace(/^[\n|\r]+|[\n|\r]+$/g, ""); };
 String.prototype.triml = function() { return this.replace(/^\s+/g, "").replace(/^[\n|\r]+/g, ""); };
 String.prototype.trimr = function() { return this.replace(/\s+$/g, "").replace(/[\n|\r]+$/g, ""); };
+
 String.prototype.trimr_spaces = function() { return this.replace(/[ |\t]+$/g, "") };
+String.prototype.trimr_one = function()    { return this.replace(/\n[ |\t]*/g, "") };
+
 String.prototype.triml_spaces = function() { return this.replace(/^[ |\t]+/g, "") };
 String.prototype.triml_one = function()    { return this.replace(/^[ |\t]*\n/g, "") };
+
 
 // Makes the code printouts very pretty ( can't help but keep it )
 var pad = function(count) {
@@ -207,6 +211,7 @@ Template.prototype.find_next_block = function() {
     if (type == 'special') {
         this.environment.specials[block.trim()](this);
     } else {
+        // Pre-inner-operator.
         if (block[0] == '-') {
             block = block.substring(1);
             if (this.blocks[this.blocks.length-1]) {
@@ -217,7 +222,11 @@ Template.prototype.find_next_block = function() {
             if (this.blocks[this.blocks.length-1]) {
                 this.blocks[this.blocks.length-1][1] = this.blocks[this.blocks.length-1][1].trimr();
             }
+        } else if (block[0] == '|') {
+            block = block.substring(1);
         }
+        
+        //post inner operator.
         if (block[block.length-1] == '|') {
             block = block.substring(0, block.length-1);
             after_block = after_block.triml_one();
@@ -516,6 +525,68 @@ var monkey_patch = function() {
 	t.key = 'anon';
 	return t.render(args, undef_var);
     };
+};
+
+var TestSuite = function(note) {
+    this.note = note;
+    this.passes = Array();
+    this.fails = Array();
+};
+
+TestSuite.prototype.assertEqual = function(val1, val2, add_note) {
+    if (val1 == val2) {
+        this.passes.push(add_note);
+    } else {
+        this.fails.push( [add_note, '!=', val1, val2]);
+    }
+};
+
+TestSuite.prototype.assertNotEqual = function(val1, val2, add_note) {
+    if (val1 != val2) {
+        this.passes.push(add_note);
+    } else {
+        this.fails.push( [add_note, '==', val1, val2]);
+    }
+};
+
+var run_tests = function() {
+    var suite = new TestSuite('tests!');
+
+    // start writing tests here
+
+    var t = new Template("My name is <<name>>");
+    suite.assertEqual( t.render({'name':'Genie'}), "My name is Genie", "basic genie render" );
+    suite.assertEqual( t.render({'name':'asdf'}),  "My name is asdf", "basic genie render 2" );
+
+    var t2 = new Template("<% if true %>Test<% end %>");
+    suite.assertEqual( t2.render({}), "Test", "condition test 1" );
+    
+    var t3 = new Template("        <% if true %>Test   <% end %>");
+    suite.assertEqual( t3.render({}), "Test", "condition test" );
+
+    // finish writing tests here
+
+    return [suite.passes, suite.fails];
+};
+
+var run_tests_simple = function() {
+    results = run_tests();
+    if (results[1].length) {
+        return false;
+    }
+    return true;
+};
+
+var run_tests_debug = function() {
+    results = run_tests();
+    for(var i=0; i < results[0].length; i++) {
+        console.log( 'PASS: ' + results[0][i] );
+    }
+    for(var i=0; i < results[1].length; i++) {
+        var o = results[1][i];
+        console.log(o);
+        console.log( 'FAIL: (' + o[0] + ') -> ' + JSON.stringify(o[2]) + ' ' + o[1] + ' ' + JSON.stringify(o[3]) );
+    }
 };
 
 try {

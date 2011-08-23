@@ -4,8 +4,9 @@
     var genie_debug = 1;
 </script>
 
-<script type="text/javascript" charset="utf-8" src='../js/mootools.js'> </script>
+<script type="text/javascript" charset="utf-8" src='../js/jquery-1.6.2.min.js'> </script>
 <script type="text/javascript" charset="utf-8" src='../genie.js'></script>
+<link rel="stylesheet" href="../js/bootstrap-1.0.0.min.css">
 
 <style type="text/css" media="screen">    
     body {
@@ -66,12 +67,16 @@
         text-align: center;
         border: 1px solid gray;
     }
+    blockquote {
+        padding: 5px;
+        margin: 15px;
+    }
 </style>
 
 <script type="text/javascript" charset="utf-8">
     function run_example(exp) {
         var data = [];
-        $$(exp).each(function(obj) {
+        $(exp).each(function(index, obj) {
             data.push(obj.innerText);
         });
         
@@ -79,9 +84,65 @@
             eval(data[i]);
         }
     }
+
+  $(document).ready( function() {                           
+  $("body").bind("click", function(e) {
+    $("ul.menu-dropdown").hide();
+    $('a.menu').parent("li").removeClass("open").children("ul.menu-dropdown").hide();
+  });
+
+  $("a.menu").click(function(e) {
+    var $target = $(this);
+    var $parent = $target.parent("li");
+    var $siblings = $target.siblings("ul.menu-dropdown");
+    var $parentSiblings = $parent.siblings("li");
+    if ($parent.hasClass("open")) {
+      $parent.removeClass("open");
+      $siblings.hide();
+    } else {
+      $parent.addClass("open");
+      $siblings.show();
+    }
+    $parentSiblings.children("ul.menu-dropdown").hide();
+    $parentSiblings.removeClass("open");
+    return false;
+  });
+                           });
 </script>
 
 <body>
+  <div class="topbar-wrapper" style="z-index: 5;">
+    <div class="topbar">
+      <div class="fill">
+        <div class="container">
+          <h3><a href="#">Project Name</a></h3>
+          <ul>
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#">Link</a></li>
+            <li><a href="#">Link</a></li>
+            <li><a href="#">Link</a></li>
+          </ul>
+          <form action="">
+            <input type="text" placeholder="Search" style='font-size: 18px; height: 28px;'/>
+          </form>
+          <ul class="nav secondary-nav">
+            <li class="menu">
+              <a href="#" class="menu">Dropdown</a>
+              <ul class="menu-dropdown">
+                <li><a href="#">Secondary link</a></li>
+                <li><a href="#">Something else here</a></li>
+                <li class="divider"></li>
+                <li><a href="#">Another link</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div> <!-- /fill -->
+    </div> <!-- /topbar -->
+  </div> <!-- topbar-wrapper -->
+
+  <BR><BR>
+
     <div class='title'>Introducing Genie</div>
     <div class='content'>
         You might be asking yourself, 
@@ -94,7 +155,9 @@
     </div>
     
     <div class='content'>
-        If you are saying to yourself, <blockquote>"This doesn't help me, I already have a great template language on my server"</blockquote>Well, you're right, Genie isn't for you. It isn't for sites that render things on the server, it's for a new kind of web application. One that is a little more flexible than you might think.
+        <p>If you are saying to yourself, 
+          <blockquote>"This doesn't help me, I already have a great template language on my server"</blockquote>
+          Well, you're right, Genie isn't for you. It isn't for sites that render things on the server, it's for a new kind of web application. One that is a little more flexible than you might think.</p>
         <p>Initially this seems like a odd idea, I know, but when you think about it, it can really open up some really interesting possibilities. If you stop thinking of your website as a series of pages, and start seeing it as a bunch of pieces of data, you can start to see how this can help you.
         </p>
         
@@ -131,7 +194,7 @@
         
         <div class='code example1'>
             var result = env.render_quick(t, {name:'Genie'});<br>
-            $('result_example1').innerHTML = result;
+            $('#result_example1').html(result);
         </div>
         
         Result: <div id='result_example1' class='example'></div>
@@ -155,10 +218,10 @@
             env.create_template('saved', "Hello {{ v.place }}.");<br>
             <br>
             // You can render to a DOMElement<br>
-            env.render('saved', $('result_example2'), {place:'World'});<br>
+            env.render('saved', $('#result_example2'), {place:'World'});<br>
             <br>
             // or put the data in yourself.<br>
-            $('result_example2').innerHTML = env.render('saved', {place:'World'});<br>
+            $('#result_example2').innerHTML = env.render('saved', {place:'World'});<br>
         </div>
         
         Result: <div id='result_example2' class='example'></div>
@@ -176,7 +239,7 @@
             env.create_template('greeting', "Hello, {{ v.name }}");<br>
             env.create_template('say', 'The proper way to greet someone is "{{ partial("greeting", {name:"Graham"}) }}".');
             <br><br>
-            $('result_example3').innerHTML = env.render('say', {});
+            $('#result_example3').innerHTML = env.render('say', {});
         </div>
         Result: <div id='result_example3' class='example'></div>
         <input type=button onclick='run_example(".example3");' value='Try It!'><br><br>
@@ -206,7 +269,7 @@
         <div class='code example4'>
             var env = new genie.Environment();<br>
             env.create_template('account', $('mytemplate').innerHTML);<br>
-             $('result_example4').innerHTML = env.render('account', {'account_balance':-100.0});
+             $('#result_example4').innerHTML = env.render('account', {'account_balance':-100.0});
         </div>
         Result: <div id='result_example4' class='example'></div>
         <input type=button onclick='run_example(".example4");' value='Try It!'><br><br>
@@ -293,7 +356,7 @@
         <div class='code example5' style='display:none;'>
             var env = new genie.Environment();<br>
             env.create_template('ifs', $('mytemplate2').innerHTML);<br>
-             $('result_example5').innerHTML = env.render('ifs', {'x':100.0});
+             $('#result_example5').innerHTML = env.render('ifs', {'x':100.0});
         </div>
         Result: <div id='result_example5' class='example'></div>
         <input type=button onclick='run_example(".example5");' value='Try It!'><br><br>
@@ -319,7 +382,7 @@
         <div class='code example6' style='display:none;'>
             var env = new genie.Environment();<br>
             env.create_template('ifs', $('example6').innerHTML);<br>
-             $('result_example6').innerHTML = env.render('ifs', {'x':100.0});
+             $('#result_example6').innerHTML = env.render('ifs', {'x':100.0});
         </div>
         Result: <div id='result_example6' class='example'></div>
         <input type=button onclick='run_example(".example6");' value='Try It!'><br><br>
@@ -358,7 +421,7 @@
     <div class='code example7' style='display:none;'>
         var env = new genie.Environment();<br>
         env.create_template('ifs', $('example7').innerHTML);<br>
-         $('result_example7').innerHTML = env.render('ifs', {'x':100.0});
+         $('#result_example7').innerHTML = env.render('ifs', {'x':100.0});
     </div>
     Result: <div id='result_example7' class='example'></div>
     <input type=button onclick='run_example(".example7");' value='Try It!'><br><br>
@@ -396,7 +459,7 @@
 
 <script type="text/javascript" charset="utf-8">
 
-  window.addEvent('domready', function() {
+  $(document).ready( function() {
     var env = new genie.Environment();
   });
 
