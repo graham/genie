@@ -77,15 +77,23 @@
       *** AJAX request for user data ***
       t.render( downloaded_user_data );
 
-    6. Bindable ** NEEDS WORK **
+    6. Bindable (not HTML 5 data-binding)
       Bindable values are designed specially for web applications (the rest of Genie should
       work fine in almost any Javascript Environment). Bindable elements basically allow
       the developer to tag things (with a css class) so that later a single line of code
-      will update the value across the page.
+      will update the value across the page. 
 
-      Docs to come on this one.
+      This section still needs some work, but the intent is to allow some variables on your
+      page to be replaceable easily. By using something like <& value &> Genie will replace
+      it with something like <span class='genie_update_value'>100</span> when the value is 100
+      
+      Using the set_bindable you can update the value of this span whenever you want. For
+      now it's not wildly usable, however, with time it will mature into a better feature.
 
-    7. Slurping Whitspace ** NEEDS WORK **
+    7. Cleaning up whitespace
+      Whitespace in templates can always be an issue, mostly because spacing can be very
+      important. It's important to be able to layout
+
       Developers can add special characters to the front and back of Genie blocks.
       - slurp all whitespace until next newline (or until previous newline)
       | slurp all whitespace and the next new line (or until the previous newline)
@@ -338,7 +346,7 @@ Template.prototype.compile = function() {
                 value = '';
             }
         
-            f_code.push( "write( \"<span class='genie_" + this.environment.id + "_value_update_" + data.trim() + "'>\" + " + value + " + \"</span>\" );\n" );
+            f_code.push( "write( \"<span class='genie_" + this.environment.id + "_value_update_" + data.trim() + "'>\" + " + data + " + \"</span>\" );\n" );
         } else if (type == 'exec') {
             f_code.push(data);
         } else if (type == 'notes') {
@@ -449,8 +457,8 @@ Environment.prototype.set_bindable = function(key, value) {
 
     var targets = document.getElementsByClassName('genie_' + this.id + '_value_update_' + key);
     for( var i = 0; i < targets.length; i++ ) {
-    var obj = targets[i];
-    obj.innerHTML = value;
+        var obj = targets[i];
+        obj.innerHTML = value;
     }
 };
 
@@ -592,11 +600,13 @@ var run_tests_debug = function() {
 try {
     exports.Template = Template;
     exports.Environment = Environment;
+    exports.monkey_patch = monkey_patch;
     exports.env = main_environment;
 } catch (e) {
     var genie = {};
     genie.Template = Template;
     genie.Environment = Environment;
+    genie.monkey_patch = monkey_patch;
     genie.env = main_environment;
     genie.fs = fs;
 }
