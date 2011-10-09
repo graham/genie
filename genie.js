@@ -110,7 +110,6 @@
       <~ end ~>
 */
 
-var last = null;
 var genie_context_begin;
 var genie_context_end;
 
@@ -171,6 +170,9 @@ Template.prototype.find_next_block = function() {
     var begin_char;
     var end_char;
     var cmd_lookup;
+
+    var blocks = [];
+
     if (this.environment) {
         begin_char = this.environment.begin;
         end_char = this.environment.end;
@@ -185,14 +187,20 @@ Template.prototype.find_next_block = function() {
     var next_char = start+1;
     
     if (start == -1) {
-        this.blocks.push( ['text', this.string]);
-        return -1;
+        var s = this.string;
+        this.string = '';
+        if (s == '') {
+            return [];
+        } else {
+            blocks.push( ['text', s]);
+            return blocks;
+        }
     }
     
     var before_block = this.string.substring(0, start);
     var after_block = this.string.substring(start+1);
     
-    this.blocks.push( ['text', before_block] ); 
+    blocks.push( ['text', before_block] ); 
 
     var start_char = after_block[0];
     var type = cmd_lookup[start_char];
@@ -204,9 +212,9 @@ Template.prototype.find_next_block = function() {
         if (start_char in cmd_lookup) {
             end = after_block.indexOf(start_char + end_char);
         } else {
-            this.blocks.push( ['text', begin_char] );
+            blocks.push( ['text', begin_char] );
             this.string = after_block.substring(0);
-            return
+            return blocks;
         }
     }
 
@@ -218,13 +226,13 @@ Template.prototype.find_next_block = function() {
     // Pre-inner-operator.
     if (block[0] == '-') {
         block = block.substring(1);
-        if (this.blocks[this.blocks.length-1]) {
-            this.blocks[this.blocks.length-1][1] = this.blocks[this.blocks.length-1][1].trimr_spaces();
+        if (blocks[blocks.length-1]) {
+            blocks[blocks.length-1][1] = blocks[blocks.length-1][1].trimr_spaces();
         }
     } else if (block[0] == '=' || type == "notes") {
         block = block.substring(1);
-        if (this.blocks[this.blocks.length-1]) {
-            this.blocks[this.blocks.length-1][1] = this.blocks[this.blocks.length-1][1].trimr();
+        if (blocks[blocks.length-1]) {
+            blocks[blocks.length-1][1] = blocks[blocks.length-1][1].trimr();
         }
     } else if (block[0] == '|') {
         block = block.substring(1);
@@ -241,15 +249,11 @@ Template.prototype.find_next_block = function() {
         block = block.substring(0, block.length-1);
         after_block = after_block.triml();
     }
-    this.blocks.push( [type, block] );
+    
+    blocks.push( [type, block] );
 
     this.string = after_block;
-    return end;
-};
-
-Template.prototype.stage_pass = function(data) {
-    /* create a new template object after a compiler pass of this template */
-    
+    return blocks;
 };
 
 Template.prototype.bailout = function() {
@@ -258,106 +262,109 @@ Template.prototype.bailout = function() {
 };
 
 Template.prototype.compile = function() {
-    this.working_string = ""+this.string;
+    this.working_string = ""+this.orig_string;
     var counter_count = 0;
-    var last = 0;
     var depth = 0;
-    
-    while(last != -1) {
-        last = this.find_next_block();
-    }
-    
     var f_code = ["\n"];
     var in_func = [];
-
-    for( var c = 0; c < this.blocks.length; c++ ) {
-        var obj = this.blocks[c];
-        var type = obj[0];
-        var data = obj[1];
+    var i = 0;
+    
+    var blocks = this.find_next_block();
+    
+    while(blocks.length > 0) {
+        for( i = 0; i < blocks.length; i++ ) {
+            var obj = blocks[i];
+            var type = obj[0];
+            var data = obj[1];
         
-        if (type == 'text') {
-            f_code.push( pad(depth) );
-            f_code.push("write(" + JSON.stringify(data) + ");\n" );
-        } else if ( type == 'condition') {
-            data = data.trim();
-
-            if (data.substring(0,2) == 'if') {
-                var d = data.substring(2).trim();
-                var bulk = d;
-                if (d[0] == '(') {
-                    bulk = d.substring(1, d.length-1);
-                }
-                f_code.push( "\n " + pad(depth) );
-                f_code.push("if (" + bulk + ")" + " {\n");
-                depth += 1;
-                in_func.push('}');
-            } else if (data.substring(0, 5) == 'while') {
-                var d = data.substring(5).trim();
-                var bulk = d;
-                if (d[0] == '(') {
-                    bulk = d.substring(1, d.length-2);
-                }
-                f_code.push( "\n " + pad(depth) );
-                f_code.push("while (" + bulk + ")" + " {\n");
-                depth += 1;
-                in_func.push('}');
-            } else if (data.substring(0, 4) == 'ford') {
-                var d = data.substring(4).trim();
-                var bulk = d;
-                if (d[0] == '(') {
-                    bulk = d.substring(1, d.length-2);
-                }
-                
-                var value_name = bulk.substring(0, bulk.indexOf(' in '));
-                var rest = bulk.substring(bulk.indexOf(' in ') + 4);
-                
-                var cvar = '_count_' + counter_count;
-                counter_count += 1;
-                f_code.push( "\n for( var " + value_name + " in " + rest + " ) {" );
-                f_code.push( "\n " + pad(depth) );
-                in_func.push('}');
-                depth += 1;                
-            } else if (data.substring(0, 3) == 'for') {
-                var d = data.substring(3).trim();
-                var bulk = d;
-                if (d[0] == '(') {
-                    bulk = d.substring(1, d.length-2);
-                }
-                
-                var value_name = bulk.substring(0, bulk.indexOf(' in '));
-                var rest = bulk.substring(bulk.indexOf(' in ') + 4);
-                
-                var cvar = '_count_' + counter_count;
-                counter_count += 1;
-                f_code.push( "\n for( var " + cvar + " = 0; " + cvar + " < " + rest + ".length; " + cvar + "++ ) {" );
-                f_code.push( "\n   var " + value_name + " = " + rest + "[" + cvar + "]; var index=" + cvar + ";");
-                f_code.push( "\n   var rindex = (" + rest + ".length" + " - index) - 1");
-                f_code.push( "\n " + pad(depth) );
-                in_func.push('}');
-                depth += 1;
-            } else if (data == 'end') {
-                depth -= 1;
+            if (type == 'text') {
                 f_code.push( pad(depth) );
-                f_code.push(in_func.pop() + ';\n');
-            } else if (data.substring(0, 4) == 'else' || data.substring(0, 7) == 'else if') {
-                f_code.push( pad(depth-1) );
-                f_code.push( "} " + data + " {\n");
-            }
-        } else if (type == 'variable') {
-            f_code.push( pad(depth) );
-            f_code.push( "write( " + data + " || undefined_variable('"+data+"') );\n");
-        } else if (type == 'bindable') {
-            var value = this.environment.bindable_dict[data.trim()];
-            if (value === undefined) {
-                value = '';
-            }
+                f_code.push("write(" + JSON.stringify(data) + ");\n" );
+            } else if ( type == 'condition') {
+                data = data.trim();
+
+                if (data.substring(0,2) == 'if') {
+                    var d = data.substring(2).trim();
+                    var bulk = d;
+                    if (d[0] == '(') {
+                        bulk = d.substring(1, d.length-1);
+                    }
+                    f_code.push( "\n " + pad(depth) );
+                    f_code.push("if (" + bulk + ")" + " {\n");
+                    depth += 1;
+                    in_func.push('}');
+                } else if (data.substring(0, 5) == 'while') {
+                    var d = data.substring(5).trim();
+                    var bulk = d;
+                    if (d[0] == '(') {
+                        bulk = d.substring(1, d.length-2);
+                    }
+                    f_code.push( "\n " + pad(depth) );
+                    f_code.push("while (" + bulk + ")" + " {\n");
+                    depth += 1;
+                    in_func.push('}');
+                } else if (data.substring(0, 4) == 'ford') {
+                    var d = data.substring(4).trim();
+                    var bulk = d;
+                    if (d[0] == '(') {
+                        bulk = d.substring(1, d.length-2);
+                    }
+                
+                    var value_name = bulk.substring(0, bulk.indexOf(' in '));
+                    var rest = bulk.substring(bulk.indexOf(' in ') + 4);
+                
+                    var cvar = '_count_' + counter_count;
+                    counter_count += 1;
+                    f_code.push( "\n for( var " + value_name + " in " + rest + " ) {" );
+                    f_code.push( "\n " + pad(depth) );
+                    in_func.push('}');
+                    depth += 1;                
+                } else if (data.substring(0, 3) == 'for') {
+                    var d = data.substring(3).trim();
+                    var bulk = d;
+                    if (d[0] == '(') {
+                        bulk = d.substring(1, d.length-2);
+                    }
+                
+                    var value_name = bulk.substring(0, bulk.indexOf(' in '));
+                    var rest = bulk.substring(bulk.indexOf(' in ') + 4);
+                
+                    var cvar = '_count_' + counter_count;
+                    counter_count += 1;
+                    f_code.push( "\n for( var " + cvar + " = 0; " + cvar + " < " + rest + ".length; " + cvar + "++ ) {" );
+                    f_code.push( "\n   var " + value_name + " = " + rest + "[" + cvar + "]; var index=" + cvar + ";");
+                    f_code.push( "\n   var rindex = (" + rest + ".length" + " - index) - 1");
+                    f_code.push( "\n " + pad(depth) );
+                    in_func.push('}');
+                    depth += 1;
+                } else if (data == 'end') {
+                    depth -= 1;
+                    f_code.push( pad(depth) );
+                    f_code.push(in_func.pop() + ';\n');
+                } else if (data.substring(0, 4) == 'else' || data.substring(0, 7) == 'else if') {
+                    f_code.push( pad(depth-1) );
+                    f_code.push( "} " + data + " {\n");
+                }
+            } else if (type == 'variable') {
+                f_code.push( pad(depth) );
+                f_code.push( "write( " + data + " || undefined_variable('"+data+"') );\n");
+            } else if (type == 'bindable') {
+                var value = this.environment.bindable_dict[data.trim()];
+                if (value === undefined) {
+                    value = '';
+                }
         
-            f_code.push( "write( \"<span class='genie_" + this.environment.id + "_value_update_" + data.trim() + "'>\" + " + data + " + \"</span>\" );\n" );
-        } else if (type == 'exec') {
-            f_code.push(data);
-        } else if (type == 'notes') {
-            this.notes.push(data);
+                f_code.push( "write( \"<span class='genie_" + this.environment.id + "_value_update_" + data.trim() + "'>\" + " + data + " + \"</span>\" );\n" );
+            } else if (type == 'exec') {
+                f_code.push(data);
+            } else if (type == 'notes') {
+                this.notes.push(data);
+            } else if (type == 'compiler') {
+                // this should have been compiled out, ignore in this case.
+                // pass
+            }
         }
+        blocks = this.find_next_block();
     }
 
     var header = "var __exposed_vars = []; for (var a in v) { if (v.hasOwnProperty(a)) { __exposed_vars.push(a); } }";
@@ -409,11 +416,14 @@ Template.prototype.pre_render = function(undefined_variable) {
 };
 
 Template.prototype.render = function(variables, undefined_variable) {
+    var start_time = new Date().valueOf();
+
     if (this.final_func == null) {
         this.pre_render(undefined_variable);
     }
     try {
         var result = this.final_func(variables, undefined_variable);
+        console.log('render took: ' + (new Date().valueOf() - start_time));
         return result.trim();
     } catch (e) {
         if (e.type == 'bailout') {
@@ -580,8 +590,8 @@ var run_tests = function() {
     suite.assertEqual( t.render({'name':'Genie'}), "My name is Genie", "basic genie render" );
     suite.assertEqual( t.render({'name':'asdf'}),  "My name is asdf", "basic genie render 2" );
 
-    var t2 = new Template("<% if true %>Test<% end %>");
-    suite.assertEqual( t2.render({}), "Test", "condition test 1" );
+    var t2 = new Template("<% if true %>Test<% end %>asdf");
+    suite.assertEqual( t2.render({}), "Testasdf", "condition test 1" );
     
     var t3 = new Template("        <% if true %>Test   <% end %>");
     suite.assertEqual( t3.render({}), "Test", "condition test" );
