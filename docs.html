@@ -64,6 +64,14 @@
         background-color: #222;
         color: #ddd;
     }
+    pre {
+        font-family: monaco;
+        font-size: 12px;
+        margin: 15px;
+        padding: 10px;
+        background-color: #222;
+        color: #ddd;
+    }
     .example {
         padding: 15px;
         margin: 5px;
@@ -416,18 +424,37 @@
     </script>
     
     <div class='code example7' style='display:none;'>
-        var env = new genie.Environment();<br>
-        env.create_template('ifs', $('#example7').html());<br>
-         $('#result_example7').html(env.render('ifs', {'x':100.0}));
+      var env = new genie.Environment();<br>
+      env.create_template('ifs', $('#example7').html());<br>
+      $('#result_example7').html(env.render('ifs', {'x':100.0}));
     </div>
     Result: <div id='result_example7' class='example'></div>
     <input type=button onclick='run_example(".example7");' value='Try It!'><br><br>
-
     </div>
 
 
+    <div class='subtitle'>Async Rendering</div>
+    <div class='content'>
+      For all our node friends, and really this applies to all sorts of places, there is a more async version of render that you might like.
+      
+    </div>
 
-    <br>    <br>    <br>    <br>    <br>    <br>    <br><hr>
+    <div>
+      <pre>
+      var t = new Template('This is a test << value >>').async_render({value:'this is the value'}, {
+        on_success: function(result, template) {
+          console.log(result);
+        }, 
+        on_error: function(exception, template) {
+          alert('there is an error in the template: ' + exception);
+        },
+        on_bailout: function(template) {
+          console.log("we stopped rendering for some reason");
+        }
+      });</pre>
+    </div>
+
+    <br><br><br><br><br><br><br><hr>
     <div class='subtitle'>
         Try It
     </div>

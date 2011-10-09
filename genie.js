@@ -99,6 +99,15 @@
       | slurp all whitespace and the next new line (or until the previous newline)
       = slurp all whitespace until not whitespace (or until the previous non-whitespace)
 
+    8. Compiler Directives
+      One features that is really nice to have is related to having things that will change
+      prior to actually rendering the template. This can be helpful if you are using genie
+      in a place where you basically want multi-stage rendering of templates. This is
+      a kind of non-standard feature for templates, but, well, genie is non-standard too.
+
+      <~ if true ~>
+        << value >>
+      <~ end ~>
 */
 
 var last = null;
@@ -112,9 +121,9 @@ var GENIE_CONTEXT_lookup = {
     "#":"comment",
     "%":"condition",
     "!":"exec",
-    "@":"special",
     "&":"bindable",
-    "^":"notes"
+    "^":"notes",
+    "~":"compiler",
 };
 
 GENIE_CONTEXT_lookup[GENIE_CONTEXT_begin] = "variable";
@@ -153,8 +162,6 @@ var Template = function(string) {
     this.final_func = null;
     this.parent_container = null;
 
-    this.next_slurp = 0;
-    this.ends_slurp = 0;
     this.arg_list = [];
 
     this.notes = [];
@@ -178,22 +185,15 @@ Template.prototype.find_next_block = function() {
     var next_char = start+1;
     
     if (start == -1) {
-        if (this.next_slurp) {
-            this.blocks.push( ['text', this.string.triml()]);
-        } else {
-            this.blocks.push( ['text', this.string]);
-        }
+        this.blocks.push( ['text', this.string]);
         return -1;
     }
     
     var before_block = this.string.substring(0, start);
     var after_block = this.string.substring(start+1);
     
-    if (this.next_slurp) {
-        this.blocks.push( ['text', before_block.triml()] );
-    } else {
-        this.blocks.push( ['text', before_block] ); 
-    }
+    this.blocks.push( ['text', before_block] ); 
+
     var start_char = after_block[0];
     var type = cmd_lookup[start_char];
     var end = null;
@@ -212,43 +212,49 @@ Template.prototype.find_next_block = function() {
 
     end += 1;
 
-    // special blocks can probably be removed now that i've done better slurp-handling with - and =
-    // but i'm going to keep this around for a while just in case.
     var block = after_block.substring(1, end-1);
     after_block = after_block.substring(end+1);
-    if (type == 'special') {
-        this.environment.specials[block.trim()](this);
-    } else {
-        // Pre-inner-operator.
-        if (block[0] == '-') {
-            block = block.substring(1);
-            if (this.blocks[this.blocks.length-1]) {
-                this.blocks[this.blocks.length-1][1] = this.blocks[this.blocks.length-1][1].trimr_spaces();
-            }
-        } else if (block[0] == '=' || type == "notes") {
-            block = block.substring(1);
-            if (this.blocks[this.blocks.length-1]) {
-                this.blocks[this.blocks.length-1][1] = this.blocks[this.blocks.length-1][1].trimr();
-            }
-        } else if (block[0] == '|') {
-            block = block.substring(1);
+
+    // Pre-inner-operator.
+    if (block[0] == '-') {
+        block = block.substring(1);
+        if (this.blocks[this.blocks.length-1]) {
+            this.blocks[this.blocks.length-1][1] = this.blocks[this.blocks.length-1][1].trimr_spaces();
         }
-        
-        //post inner operator.
-        if (block[block.length-1] == '|') {
-            block = block.substring(0, block.length-1);
-            after_block = after_block.triml_one();
-        } else if (block[block.length-1] == '-') {
-            block = block.substring(0, block.length-1);
-            after_block = after_block.triml_spaces();
-        } else if (block[block.length-1] == '=') {
-            block = block.substring(0, block.length-1);
-            after_block = after_block.triml();
+    } else if (block[0] == '=' || type == "notes") {
+        block = block.substring(1);
+        if (this.blocks[this.blocks.length-1]) {
+            this.blocks[this.blocks.length-1][1] = this.blocks[this.blocks.length-1][1].trimr();
         }
-        this.blocks.push( [type, block] );
+    } else if (block[0] == '|') {
+        block = block.substring(1);
     }
+    
+    //post inner operator.
+    if (block[block.length-1] == '|') {
+        block = block.substring(0, block.length-1);
+        after_block = after_block.triml_one();
+    } else if (block[block.length-1] == '-') {
+        block = block.substring(0, block.length-1);
+        after_block = after_block.triml_spaces();
+    } else if (block[block.length-1] == '=') {
+        block = block.substring(0, block.length-1);
+        after_block = after_block.triml();
+    }
+    this.blocks.push( [type, block] );
+
     this.string = after_block;
     return end;
+};
+
+Template.prototype.stage_pass = function(data) {
+    /* create a new template object after a compiler pass of this template */
+    
+};
+
+Template.prototype.bailout = function() {
+    /* throw an exception and stop rendering a template */
+    throw { type: "bailout", message: "bailout of current template render" };
 };
 
 Template.prototype.compile = function() {
@@ -355,7 +361,7 @@ Template.prototype.compile = function() {
     }
 
     var header = "var __exposed_vars = []; for (var a in v) { if (v.hasOwnProperty(a)) { __exposed_vars.push(a); } }";
-    header += " with(v) { "; // this is the first time i've seen this used and felt it was a good thing.
+    header += " with(v) { "; // this is the first time i've seen 'with' used and felt it was a good thing.
     this.f_code = f_code;
     this.f_code_render = "(function(parent, v, defaults, undefined_variable) { " + header + this.f_code.join(' ') + "}})";
 
@@ -369,6 +375,7 @@ Template.prototype.pre_render = function(undefined_variable) {
     var partial = function(name, d) { return _env.render(name, d); };
     var write = function(ddd) { ____output.push(ddd); };
     var _template = this;
+    var bailout = this.bailout;
     
     var compiled_code = eval(this.f_code_render);
 
@@ -394,7 +401,7 @@ Template.prototype.pre_render = function(undefined_variable) {
         } else {
             defaults = {};
         }
-        
+
         compiled_code(_template, template_vars, defaults, undef_var);
         return ____output.join('');
     }
@@ -405,13 +412,37 @@ Template.prototype.render = function(variables, undefined_variable) {
     if (this.final_func == null) {
         this.pre_render(undefined_variable);
     }
-    var result = this.final_func(variables, undefined_variable);
-    return result.trim();
+    try {
+        var result = this.final_func(variables, undefined_variable);
+        return result.trim();
+    } catch (e) {
+        if (e.type == 'bailout') {
+            return null;
+        } else {
+            throw e;
+        }
+    }
 };
 
-var BailoutException = function( template, callback ) {
-    callback( template );
-    
+Template.prototype.async_render = function(variables, options) {
+    var undefined_variable = options['undefined_variable'];
+    var on_success = options['on_success'];
+    var on_error = options['on_error'];
+    var on_bailout = options['on_bailout'];
+
+    try {
+        var result = this.render(variables, undefined_variable);
+        if (result == null && on_bailout) {
+            on_bailout(this);
+            return;
+        } else {
+            if (on_success) {
+                on_success(result, this);
+            }
+        }
+    } catch (e) {
+        on_error(e, this);
+    }
 };
 
 var Environment = function() {
@@ -425,23 +456,6 @@ var Environment = function() {
     this.begin = GENIE_CONTEXT_begin;
     this.end = GENIE_CONTEXT_end;
     this.lookup = GENIE_CONTEXT_lookup;
-    
-    this.specials = {
-        'slurp': function(template) {
-            var index = template.blocks.length - 1;
-            var last_text = null;
-            while( index > 0 ) {
-                if (template.blocks[index][0] == 'text') {
-                    last_text = index;
-                    break;
-                }
-            }
-            if (last_text != null) {
-                template.blocks[index][1] = template.blocks[index][1].trimr();
-            }
-            template.next_slurp = 1;
-        }
-    }
 };
 
 Environment.prototype.template_list = function() {
@@ -571,6 +585,9 @@ var run_tests = function() {
     
     var t3 = new Template("        <% if true %>Test   <% end %>");
     suite.assertEqual( t3.render({}), "Test", "condition test" );
+
+    var t4 = new Template("this is a test<! bailout(); !>");
+    suite.assertEqual( t4.render({}), null, "Bailout Test");
 
     // finish writing tests here
 
