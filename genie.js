@@ -108,6 +108,8 @@
       <~ if true ~>
         << value >>
       <~ end ~>
+
+    end docs
 */
 
 var genie_context_begin;
@@ -131,15 +133,15 @@ GENIE_CONTEXT_lookup[GENIE_CONTEXT_end] = "variable";
 var genie_environ_count = 0;
 
 // I'm not really proud of this sort of monkey patching, but it's somewhat required here.
-String.prototype.trim = function() { return this.replace(/^\s+|\s+$/g, "").replace(/^[\n|\r]+|[\n|\r]+$/g, ""); };
-String.prototype.triml = function() { return this.replace(/^\s+/g, "").replace(/^[\n|\r]+/g, ""); };
-String.prototype.trimr = function() { return this.replace(/\s+$/g, "").replace(/[\n|\r]+$/g, ""); };
+var str_trim = function(s) { return s.replace(/^\s+|\s+$/g, "").replace(/^[\n|\r]+|[\n|\r]+$/g, ""); };
 
-String.prototype.trimr_spaces = function() { return this.replace(/[ |\t]+$/g, "") };
-String.prototype.trimr_one = function()    { return this.replace(/\n[ |\t]*/g, "") };
+var str_trimr = function(s) { return s.replace(/\s+$/g, "").replace(/[\n|\r]+$/g, ""); };
+var str_trimr_spaces = function(s) { return s.replace(/[ |\t]+$/g, "") };
+var str_trimr_one = function(s)    { return s.replace(/\n[ |\t]*/g, "") };
 
-String.prototype.triml_spaces = function() { return this.replace(/^[ |\t]+/g, "") };
-String.prototype.triml_one = function()    { return this.replace(/^[ |\t]*\n/g, "") };
+var str_triml = function(s) { return s.replace(/^\s+/g, "").replace(/^[\n|\r]+/g, ""); };
+var str_triml_spaces = function(s) { return s.replace(/^[ |\t]+/g, "") };
+var str_triml_one = function(s)    { return s.replace(/^[ |\t]*\n/g, "") };
 
 
 // Makes the code printouts very pretty ( can't help but keep it )
@@ -227,12 +229,12 @@ Template.prototype.find_next_block = function() {
     if (block[0] == '-') {
         block = block.substring(1);
         if (blocks[blocks.length-1]) {
-            blocks[blocks.length-1][1] = blocks[blocks.length-1][1].trimr_spaces();
+            blocks[blocks.length-1][1] = str_trimr_spaces(blocks[blocks.length-1][1]);
         }
     } else if (block[0] == '=' || type == "notes") {
         block = block.substring(1);
         if (blocks[blocks.length-1]) {
-            blocks[blocks.length-1][1] = blocks[blocks.length-1][1].trimr();
+            blocks[blocks.length-1][1] = str_trimr(blocks[blocks.length-1][1]);
         }
     } else if (block[0] == '|') {
         block = block.substring(1);
@@ -241,19 +243,24 @@ Template.prototype.find_next_block = function() {
     //post inner operator.
     if (block[block.length-1] == '|') {
         block = block.substring(0, block.length-1);
-        after_block = after_block.triml_one();
+        after_block = str_triml_one(after_block);
     } else if (block[block.length-1] == '-') {
         block = block.substring(0, block.length-1);
-        after_block = after_block.triml_spaces();
+        after_block = str_triml_spaces(after_block);
     } else if (block[block.length-1] == '=') {
         block = block.substring(0, block.length-1);
-        after_block = after_block.triml();
+        after_block = str_triml(after_block);
     }
     
     blocks.push( [type, block] );
 
     this.string = after_block;
     return blocks;
+};
+
+Template.prototype.pre_process = function() {
+    
+
 };
 
 Template.prototype.bailout = function() {
@@ -281,10 +288,10 @@ Template.prototype.compile = function() {
                 f_code.push( pad(depth) );
                 f_code.push("write(" + JSON.stringify(data) + ");\n" );
             } else if ( type == 'condition') {
-                data = data.trim();
+                data = str_trim(data);
 
                 if (data.substring(0,2) == 'if') {
-                    var d = data.substring(2).trim();
+                    var d = str_trim(data.substring(2));
                     var bulk = d;
                     if (d[0] == '(') {
                         bulk = d.substring(1, d.length-1);
@@ -294,7 +301,7 @@ Template.prototype.compile = function() {
                     depth += 1;
                     in_func.push('}');
                 } else if (data.substring(0, 5) == 'while') {
-                    var d = data.substring(5).trim();
+                    var d = str_trim(data.substring(5));
                     var bulk = d;
                     if (d[0] == '(') {
                         bulk = d.substring(1, d.length-2);
@@ -304,7 +311,7 @@ Template.prototype.compile = function() {
                     depth += 1;
                     in_func.push('}');
                 } else if (data.substring(0, 4) == 'ford') {
-                    var d = data.substring(4).trim();
+                    var d = str_trim(data.substring(4));
                     var bulk = d;
                     if (d[0] == '(') {
                         bulk = d.substring(1, d.length-2);
@@ -320,7 +327,7 @@ Template.prototype.compile = function() {
                     in_func.push('}');
                     depth += 1;                
                 } else if (data.substring(0, 3) == 'for') {
-                    var d = data.substring(3).trim();
+                    var d = str_trim(data.substring(3));
                     var bulk = d;
                     if (d[0] == '(') {
                         bulk = d.substring(1, d.length-2);
@@ -349,12 +356,12 @@ Template.prototype.compile = function() {
                 f_code.push( pad(depth) );
                 f_code.push( "write( " + data + " || undefined_variable('"+data+"') );\n");
             } else if (type == 'bindable') {
-                var value = this.environment.bindable_dict[data.trim()];
+                var value = this.environment.bindable_dict[str_trim(data)];
                 if (value === undefined) {
                     value = '';
                 }
         
-                f_code.push( "write( \"<span class='genie_" + this.environment.id + "_value_update_" + data.trim() + "'>\" + " + data + " + \"</span>\" );\n" );
+                f_code.push( "write( \"<span class='genie_" + this.environment.id + "_value_update_" + str_trim(data) + "'>\" + " + data + " + \"</span>\" );\n" );
             } else if (type == 'exec') {
                 f_code.push(data);
             } else if (type == 'notes') {
@@ -396,9 +403,9 @@ Template.prototype.pre_render = function(undefined_variable) {
 
         var undef_var = function(name) {
             if (uv.indexOf('%s') == -1) {
-                return uv.trim();
+                return str_trim(uv);
             } else {
-                return uv.replace('%s', name.trim()).trim();
+                return str_trim(uv.replace('%s', str_trim(name)));
             }
         };
 
@@ -424,7 +431,7 @@ Template.prototype.render = function(variables, undefined_variable) {
     try {
         var result = this.final_func(variables, undefined_variable);
         console.log('render took: ' + (new Date().valueOf() - start_time));
-        return result.trim();
+        return str_trim(result);
     } catch (e) {
         if (e.type == 'bailout') {
             return null;
