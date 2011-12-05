@@ -99,16 +99,6 @@
       | slurp all whitespace and the next new line (or until the previous newline)
       = slurp all whitespace until not whitespace (or until the previous non-whitespace)
 
-    8. Compiler Directives
-      One features that is really nice to have is related to having things that will change
-      prior to actually rendering the template. This can be helpful if you are using genie
-      in a place where you basically want multi-stage rendering of templates. This is
-      a kind of non-standard feature for templates, but, well, genie is non-standard too.
-
-      <~ if true ~>
-        << value >>
-      <~ end ~>
-
     end docs
 */
 
