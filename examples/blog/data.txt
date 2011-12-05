@@ -1,1 +1,0 @@
-{"templates": ["templates/view_post.html"], "html_files": [[1290675750.0, "entries/hosting_repositories_from_dropbox.html"], [1290643553.0, "entries/second_post.html"], [1290642526.0, "entries/test_post.html"]]}

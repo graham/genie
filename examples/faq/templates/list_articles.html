@@ -1,9 +1,0 @@
-<ul>
-    {% for article in v.articles %}
-        {! 
-            var s = article.split('/');
-            var name = s[s.length-1].split('.')[0];
-        !}
-        <li><a href='#show_article/{{article}}' onclick='show_article("{{ article }}"); return false;'>{{ name }}</a></li>
-    {% end %}
-</ul>
