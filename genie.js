@@ -347,7 +347,7 @@ var genie = ( function() {
                     }
                 } else if (type == 'variable') {
                     f_code.push( pad(depth) );
-                    f_code.push( "write( " + data + " || undefined_variable('"+data+"') );\n");
+                    f_code.push( "write( " + data + " == undefined ? undefined_variable('"+data+"') : " + data + " );\n");
                 } else if (type == 'bindable') {
                     var value = this.environment.bindable_dict[str_trim(data)];
                     if (value === undefined) {
@@ -395,7 +395,9 @@ var genie = ( function() {
             }
 
             var undef_var = function(name) {
-                if (uv.indexOf('%s') == -1) {
+		if (!uv) {
+		    console.log("Variable '" + name + "' is not defined, state: " + JSON.stringify(tvars));
+                } else if (uv.indexOf('%s') == -1) {
                     return str_trim(uv);
                 } else {
                     return str_trim(uv.replace('%s', str_trim(name)));
