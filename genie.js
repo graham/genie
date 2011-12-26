@@ -99,10 +99,12 @@
       | slurp all whitespace and the next new line (or until the previous newline)
       = slurp all whitespace until not whitespace (or until the previous non-whitespace)
 
+    Extra note: Using an additional < at the beginning of a value will remove error checking.
+                This can be useful when calling functions.
+                <<< my_func_that_might_fail() >>
+
     end docs
 */
-
-
 
 var genie = ( function() {
     var genie_context_begin;
@@ -347,7 +349,11 @@ var genie = ( function() {
                     }
                 } else if (type == 'variable') {
                     f_code.push( pad(depth) );
-                    f_code.push( "write( " + data + " == undefined ? undefined_variable('"+data+"') : " + data + " );\n");
+		    if (data.indexOf('<') == 0) {
+			f_code.push( "write( " + data.substring(1) + " );\n");
+		    } else {
+			f_code.push( "write( " + data + " == undefined ? undefined_variable('"+data+"') : " + data + " );\n");
+		    }
                 } else if (type == 'bindable') {
                     var value = this.environment.bindable_dict[str_trim(data)];
                     if (value === undefined) {
@@ -383,7 +389,7 @@ var genie = ( function() {
         var write = function(ddd) { ____output.push(ddd); };
         var _template = this;
         var bailout = this.bailout;
-    
+
         var compiled_code = eval(this.f_code_render);
 
         var encased_template = function(tvars, uv) {
@@ -428,6 +434,7 @@ var genie = ( function() {
             console.log('render took: ' + (new Date().valueOf() - start_time));
             return str_trim(result);
         } catch (e) {
+            printStackTrace();
             if (e.type == 'bailout') {
                 return null;
             } else {
@@ -508,16 +515,8 @@ var genie = ( function() {
     };
 
     Environment.prototype.render = function(name, variables, undef_var) {
-        try {
-            var t = this.template_dict[name];
-            try {
-                return t.render(variables, undef_var);
-            } catch (e) {
-                return e;
-            }
-        } catch (e) {
-            // buh wah?
-        }
+        var t = this.template_dict[name];
+        return t.render(variables, undef_var);
     };
 
     Environment.prototype.set_obj = function(name, obj) {
@@ -555,12 +554,12 @@ var genie = ( function() {
 
     var monkey_patch = function() {
         String.prototype.render = function(args, undef_var) {
-    	var t = new Template(this);
-    	t.key = 'anon';
-    	return t.render(args, undef_var);
+        var t = new Template(this);
+        t.key = 'anon';
+        return t.render(args, undef_var);
         };
     };
-    
+
     return {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs};
 })();
 
