@@ -1,3 +1,5 @@
+var last = null;
+
 /* Written by Graham Abbott <graham.abbott@gmail.com> */
 
 /* 
@@ -132,8 +134,8 @@
         Javascript Error => Can't find variable: wtf
         On template line => 1
         --------------------
-         line 0:  <% if wtf < 0 %>
-         line 1:      hello world.
+         line 1:  <% if wtf < 0 %>
+         line 2:      hello world.
         --------------------
         
       It will also work for javascript compilation errors, assuming the following template:
@@ -147,13 +149,12 @@
         Javascript Error => Unexpected token '>>'
         On template line => 1
         --------------------
-         line 0:  <% if >>?>?><><><><>&&&& %>
-         line 1:      hello world.
+         line 1:  <% if >>?>?><><><><>&&&& %>
+         line 2:      hello world.
         --------------------
 
       These sorts of exceptions will make you feel more at home with Genie as your template
       engine.
-
 
     Extra note: Using an additional < at the beginning of a value will remove error checking.
                 This can be useful when calling functions.
@@ -546,6 +547,10 @@ var genie = ( function() {
     };
 
     Template.prototype.stack_trace = function(e) {
+        if (e.arguments && e.stack) {
+            // you're in chrome, life sucks.
+            throw new Error('Chrome sucks: ' + e.message);
+        }
         var line = this.f_code.join('').split('\n')[e.line-3];
         if (line.slice(0, 2) == '/*') {
             var os_by_line = this.orig_string.split('\n');
@@ -553,13 +558,13 @@ var genie = ( function() {
             var error_lines = [];
 
             if (line_number > 0) { 
-                error_lines.push(" line " + (line_number-1) + ": " + os_by_line[line_number-1]);
+                error_lines.push(" line " + (line_number) + ": " + os_by_line[line_number-1]);
             }
 
-            error_lines.push(" line " + (line_number) + ": " + os_by_line[line_number]);
+            error_lines.push(" line " + (line_number+1) + ": " + os_by_line[line_number]);
 
             if (line_number < os_by_line.length-1) { 
-                error_lines.push(" line " + (line_number+1) + ": " + os_by_line[line_number+1]);
+                error_lines.push(" line " + (line_number+2) + ": " + os_by_line[line_number+1]);
             }
 
             var message = "Javascript Error => " + e.message + "\nOn template line => " + (line_number+1) + "\n--------------------\n" + error_lines.join('\n') + "\n--------------------";

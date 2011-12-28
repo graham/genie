@@ -131,8 +131,8 @@ Written by Graham Abbott <graham.abbott@gmail.com>
         Javascript Error => Can't find variable: wtf
         On template line => 1
         --------------------
-         line 0:  <% if wtf < 0 %>
-         line 1:      hello world.
+         line 1:  <% if wtf < 0 %>
+         line 2:      hello world.
         --------------------
         
       It will also work for javascript compilation errors, assuming the following template:
@@ -146,8 +146,8 @@ Written by Graham Abbott <graham.abbott@gmail.com>
         Javascript Error => Unexpected token '>>'
         On template line => 1
         --------------------
-         line 0:  <% if >>?>?><><><><>&&&& %>
-         line 1:      hello world.
+         line 1:  <% if >>?>?><><><><>&&&& %>
+         line 2:      hello world.
         --------------------
 
       These sorts of exceptions will make you feel more at home with Genie as your template
