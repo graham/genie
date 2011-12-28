@@ -157,6 +157,18 @@ var genie = ( function() {
     var str_triml = function(s) { return s.replace(/^\s+/g, "").replace(/^[\n|\r]+/g, ""); };
     var str_triml_spaces = function(s) { return s.replace(/^[ |\t]+/g, "") };
     var str_triml_one = function(s)    { return s.replace(/^[ |\t]*\n/g, "") };
+    var str_count = function(s, c, accum) {
+        if (accum == undefined) {
+            accum = 0;
+        }
+        var i = s.indexOf(c);
+        if (i == -1) {
+            return accum;
+        } else {
+            return str_count(s.slice(i+1), c, accum+1);
+        }
+    };
+        
 
 
     // Makes the code printouts very pretty ( can't help but keep it )
@@ -181,6 +193,7 @@ var genie = ( function() {
         this.arg_list = [];
 
         this.notes = [];
+        this.cur_template_line = 0;
     };
 
     Template.prototype.escape_variable = function(vardata, vartype) {
@@ -217,15 +230,21 @@ var genie = ( function() {
             if (s == '') {
                 return [];
             } else {
-                blocks.push( ['text', s]);
+                //*
+                this.cur_template_line += str_count(s, '\n');
+                //*
+                blocks.push( ['text', s, this.cur_template_line]);
                 return blocks;
             }
         }
     
         var before_block = this.string.substring(0, start);
         var after_block = this.string.substring(start+1);
-    
-        blocks.push( ['text', before_block] ); 
+
+        // *
+        this.cur_template_line += str_count(before_block, '\n');
+        // *
+        blocks.push( ['text', before_block, this.cur_template_line] ); 
 
         var start_char = after_block[0];
         var type = cmd_lookup[start_char];
@@ -237,7 +256,10 @@ var genie = ( function() {
             if (start_char in cmd_lookup) {
                 end = after_block.indexOf(start_char + end_char);
             } else {
-                blocks.push( ['text', begin_char] );
+                // *
+                this.cur_template_line += str_count(begin_char, '\n');
+                // *
+                blocks.push( ['text', begin_char, this.cur_template_line] );
                 this.string = after_block.substring(0);
                 return blocks;
             }
@@ -274,8 +296,11 @@ var genie = ( function() {
             block = block.substring(0, block.length-1);
             after_block = str_triml(after_block);
         }
-    
-        blocks.push( [type, block] );
+        
+        // *
+        this.cur_template_line += str_count(block, '\n');
+        // *
+        blocks.push( [type, block, this.cur_template_line] );
 
         this.string = after_block;
         return blocks;
@@ -290,10 +315,9 @@ var genie = ( function() {
         this.working_string = ""+this.orig_string;
         var counter_count = 0;
         var depth = 0;
-        var f_code = ["\n"];
+        var f_code = [];
         var in_func = [];
         var i = 0;
-    
         var blocks = this.find_next_block();
     
         while(blocks.length > 0) {
@@ -301,9 +325,10 @@ var genie = ( function() {
                 var obj = blocks[i];
                 var type = obj[0];
                 var data = obj[1];
+                var line = obj[2];
         
                 if (type == 'text') {
-                    f_code.push( pad(depth) );
+                    f_code.push( "/* " + line + " */ " + pad(depth) );
                     f_code.push("write(" + JSON.stringify(data) + ");\n" );
                 } else if ( type == 'condition') {
                     data = str_trim(data);
@@ -314,7 +339,7 @@ var genie = ( function() {
                         if (d[0] == '(') {
                             bulk = d.substring(1, d.length-1);
                         }
-                        f_code.push( "\n " + pad(depth) );
+                        f_code.push( "\n" + "/* " + line + " */ " + pad(depth) );
                         f_code.push("if (" + bulk + ")" + " {\n");
                         depth += 1;
                         in_func.push('}');
@@ -324,7 +349,7 @@ var genie = ( function() {
                         if (d[0] == '(') {
                             bulk = d.substring(1, d.length-2);
                         }
-                        f_code.push( "\n " + pad(depth) );
+                        f_code.push( "\n/* " + line + " */ " + pad(depth) );
                         f_code.push("while (" + bulk + ")" + " {\n");
                         depth += 1;
                         in_func.push('}');
@@ -340,8 +365,8 @@ var genie = ( function() {
                 
                         var cvar = '_count_' + counter_count;
                         counter_count += 1;
-                        f_code.push( "\n for( var " + value_name + " in " + rest + " ) {" );
-                        f_code.push( "\n " + pad(depth) );
+                        f_code.push( "\n/* " + line + " */ for( var " + value_name + " in " + rest + " ) {" );
+                        f_code.push( "\n/* " + line + " */ " + pad(depth) );
                         in_func.push('}');
                         depth += 1;                
                     } else if (data.substring(0, 3) == 'for') {
@@ -356,18 +381,18 @@ var genie = ( function() {
                 
                         var cvar = '_count_' + counter_count;
                         counter_count += 1;
-                        f_code.push( "\n for( var " + cvar + " = 0; " + cvar + " < " + rest + ".length; " + cvar + "++ ) {" );
-                        f_code.push( "\n   var " + value_name + " = " + rest + "[" + cvar + "]; var index=" + cvar + ";");
-                        f_code.push( "\n   var rindex = (" + rest + ".length" + " - index) - 1");
-                        f_code.push( "\n " + pad(depth) );
+                        f_code.push( "\n/* " + line + " */ for( var " + cvar + " = 0; " + cvar + " < " + rest + ".length; " + cvar + "++ ) {" );
+                        f_code.push( "\n/* " + line + " */   var " + value_name + " = " + rest + "[" + cvar + "]; var index=" + cvar + ";");
+                        f_code.push( "\n/* " + line + " */   var rindex = (" + rest + ".length" + " - index) - 1");
+                        f_code.push( "\n/* " + line + " */ " + pad(depth) );
                         in_func.push('}');
                         depth += 1;
                     } else if (data == 'end') {
                         depth -= 1;
-                        f_code.push( pad(depth) );
+                        f_code.push( "/* " + line + " */ " + pad(depth) );
                         f_code.push(in_func.pop() + ';\n');
                     } else if (data.substring(0, 4) == 'else' || data.substring(0, 7) == 'else if') {
-                        f_code.push( pad(depth-1) );
+                        f_code.push( "/* " + line + " */ " + pad(depth-1) );
                         f_code.push( "} " + data + " {\n");
                     }
                 } else if (type == 'variable') {
@@ -383,9 +408,9 @@ var genie = ( function() {
                     }
 
 		    if (data.indexOf('<') == 0) {
-			f_code.push( "write( " + vardata.substring(1) + " );\n");
+			f_code.push( "/* " + line + " */ write( " + vardata.substring(1) + " );\n");
 		    } else {
-			f_code.push( "write( escape_variable(" + vardata + ", '" + vartype + "') == undefined ? undefined_variable('"+data+"') : " + "escape_variable(" + vardata + ", '" + vartype + "')" + " );\n");
+			f_code.push( "/* " + line + " */ write( escape_variable(" + vardata + ", '" + vartype + "') == undefined ? undefined_variable('"+data+"') : " + "escape_variable(" + vardata + ", '" + vartype + "')" + " );\n");
 		    }
                 } else if (type == 'bindable') {
                     var value = this.environment.bindable_dict[str_trim(data)];
@@ -393,9 +418,9 @@ var genie = ( function() {
                         value = '';
                     }
         
-                    f_code.push( "write( \"<span class='genie_" + this.environment.id + "_value_update_" + str_trim(data) + "'>\" + " + data + " + \"</span>\" );\n" );
+                    f_code.push( "/* " + line + " */ write( \"<span class='genie_" + this.environment.id + "_value_update_" + str_trim(data) + "'>\" + " + data + " + \"</span>\" );\n" );
                 } else if (type == 'exec') {
-                    f_code.push(data);
+                    f_code.push( "/* " + line + " */ " + data);
                 } else if (type == 'notes') {
                     this.notes.push(data);
                 } else if (type == 'compiler') {
@@ -407,11 +432,16 @@ var genie = ( function() {
         }
 
         var header = "var __exposed_vars = []; for (var a in v) { if (v.hasOwnProperty(a)) { __exposed_vars.push(a); } }";
-        header += " with(v) { "; // this is the first time i've seen 'with' used and felt it was a good thing.
-        this.f_code = f_code;
-        this.f_code_render = "(function(parent, v, defaults, undefined_variable) { " + header + this.f_code.join(' ') + "}})";
-        console.log(this.f_code.join('\n'));
-
+        header += " with(v) { \n"; // this is the first time i've seen 'with' used and felt it was a good thing.
+        var fresh_code = [];
+        for( var i in f_code ) {
+            if (f_code[i] != '') {
+                fresh_code.push(f_code[i]);
+            }
+        }
+        this.f_code = fresh_code;
+        this.f_code_render = "(function(parent, v, defaults, undefined_variable) { " + header + this.f_code.join('') + "}})";
+        this.f_code_render2 = "with(locals) {\n"+ header + this.f_code.join('') + "}}";
     };
 
     Template.prototype.pre_render = function(undefined_variable) {
@@ -425,7 +455,12 @@ var genie = ( function() {
         var bailout = this.bailout;
         var escape_variable = this.escape_variable;
 
-        var compiled_code = eval(this.f_code_render);
+        try {
+            //var compiled_code = eval(this.f_code_render);
+            var compiled_code = new Function('parent', 'v', 'defaults', 'undefined_variable', 'locals', this.f_code_render2);
+        } catch (e) {
+            this.stack_trace(e);
+        }
 
         var encased_template = function(tvars, uv) {
             ____output = [];
@@ -452,7 +487,17 @@ var genie = ( function() {
                 defaults = {};
             }
 
-            compiled_code(_template, template_vars, defaults, undef_var);
+            var locals = {};
+            locals['_env'] = _env;
+            locals['____output'] = ____output;
+            locals['partial'] = partial;
+            locals['write'] = write;
+            locals['_template'] = _template;
+            locals['bailout'] = bailout;
+            locals['escape_variable'] = escape_variable;
+
+            //compiled_code(_template, template_vars, defaults, undef_var);
+            compiled_code(_template, template_vars, defaults, undef_var, locals);
             return ____output.join('');
         }
         this.final_func = encased_template;
@@ -469,16 +514,31 @@ var genie = ( function() {
             if (e.type == 'bailout') {
                 return null;
             } else {
-                throw e;
+                this.stack_trace(e);
             }
         }
     };
 
+    Template.prototype.stack_trace = function(e) {
+        var line = this.f_code.join('').split('\n')[e.line-3];
+        if (line.slice(0, 2) == '/*') {
+            var line_number = parseInt(str_trim(line.slice(2, line.indexOf('*/'))));
+            var error_lines = [this.orig_string.split('\n')[line_number]];
+            line_number += 1;
+            var message = "Javascript Error => " + e.message + "\nOn template line => " + line_number + "\n--------------------\n    " + error_lines.join('\n    ') + "\n--------------------";
+            console.log(message);
+            throw new Error(message);
+        } else {
+            throw e;
+        }
+    };
+
     Template.prototype.async_render = function(variables, options) {
-        var undefined_variable = options['undefined_variable'];
-        var on_success = options['on_success'];
-        var on_error = options['on_error'];
-        var on_bailout = options['on_bailout'];
+        var do_nothing = function() { };
+        var undefined_variable = options['undefined_variable'] || do_nothing;
+        var on_success = options['on_success'] || do_nothing;
+        var on_error = options['on_error'] || do_nothing;
+        var on_bailout = options['on_bailout'] || do_nothing;
 
         try {
             var result = this.render(variables, undefined_variable);
@@ -598,7 +658,7 @@ var genie = ( function() {
         };
     };
 
-    return {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs};
+    return {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count};
 })();
 
 
