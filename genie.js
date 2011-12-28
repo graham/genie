@@ -440,30 +440,29 @@ var genie = ( function() {
             }
         }
         this.f_code = fresh_code;
-        this.f_code_render = "(function(parent, v, defaults, undefined_variable) { " + header + this.f_code.join('') + "}})";
         this.f_code_render2 = "with(locals) {\n"+ header + this.f_code.join('') + "}}";
     };
 
     Template.prototype.pre_render = function(undefined_variable) {
         this.compile();
 
-        var _env = this.environment;
-        var ____output = [];
-        var partial = function(name, d) { return _env.render(name, d); };
-        var write = function(ddd) { ____output.push(ddd); };
-        var _template = this;
-        var bailout = this.bailout;
-        var escape_variable = this.escape_variable;
-
+        var locals = {};
+        locals['_env'] = this.environment;
+        locals['____output'] = [];
+        locals['partial'] = function(name, d) { return locals['_env'].render(name, d); };
+        locals['write'] = function(ddd) { locals['____output'].push(ddd); };
+        locals['_template'] = this;
+        locals['bailout'] = this.bailout;
+        locals['escape_variable'] = this.escape_variable;
+        
         try {
-            //var compiled_code = eval(this.f_code_render);
             var compiled_code = new Function('parent', 'v', 'defaults', 'undefined_variable', 'locals', this.f_code_render2);
         } catch (e) {
             this.stack_trace(e);
         }
 
         var encased_template = function(tvars, uv) {
-            ____output = [];
+            locals['____output'] = [];
             try {
                 var template_vars = JSON.parse(tvars);
             } catch (e) {
@@ -487,18 +486,8 @@ var genie = ( function() {
                 defaults = {};
             }
 
-            var locals = {};
-            locals['_env'] = _env;
-            locals['____output'] = ____output;
-            locals['partial'] = partial;
-            locals['write'] = write;
-            locals['_template'] = _template;
-            locals['bailout'] = bailout;
-            locals['escape_variable'] = escape_variable;
-
-            //compiled_code(_template, template_vars, defaults, undef_var);
-            compiled_code(_template, template_vars, defaults, undef_var, locals);
-            return ____output.join('');
+            compiled_code(locals['_template'], template_vars, defaults, undef_var, locals);
+            return locals['____output'].join('');
         }
         this.final_func = encased_template;
     };
@@ -522,10 +511,21 @@ var genie = ( function() {
     Template.prototype.stack_trace = function(e) {
         var line = this.f_code.join('').split('\n')[e.line-3];
         if (line.slice(0, 2) == '/*') {
+            var os_by_line = this.orig_string.split('\n');
             var line_number = parseInt(str_trim(line.slice(2, line.indexOf('*/'))));
-            var error_lines = [this.orig_string.split('\n')[line_number]];
-            line_number += 1;
-            var message = "Javascript Error => " + e.message + "\nOn template line => " + line_number + "\n--------------------\n    " + error_lines.join('\n    ') + "\n--------------------";
+            var error_lines = [];
+
+            if (line_number > 0) { 
+                error_lines.push(" line " + (line_number-1) + ": " + os_by_line[line_number-1]);
+            }
+
+            error_lines.push(" line " + (line_number) + ": " + os_by_line[line_number]);
+
+            if (line_number < os_by_line.length-1) { 
+                error_lines.push(" line " + (line_number+1) + ": " + os_by_line[line_number+1]);
+            }
+
+            var message = "Javascript Error => " + e.message + "\nOn template line => " + (line_number+1) + "\n--------------------\n" + error_lines.join('\n') + "\n--------------------";
             console.log(message);
             throw new Error(message);
         } else {
