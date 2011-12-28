@@ -1,3 +1,5 @@
+Written by Graham Abbott <graham.abbott@gmail.com>
+
    Genie - Javascript Templates that make your wishes come true.
 
    Quick Intro:
@@ -95,3 +97,65 @@
       - slurp all whitespace until next newline (or until previous newline)
       | slurp all whitespace and the next new line (or until the previous newline)
       = slurp all whitespace until not whitespace (or until the previous non-whitespace)
+
+    8. Escaping
+      Templates are great, but any real work requires that you escape your content. Genie
+      tries to make this a little easier for you. By default each template (and environment)
+      has a "escape_variable" method that is called on data at render time. If you create
+      your template via an environment the global environment method will be used for each
+      render.
+
+      When using variables you can use the following syntax:
+
+          << variable_name :: variable_type >>
+      
+      The function definition for escape_variable looks like this 
+      
+          escape_variable(var_data, var_type)
+
+      Variable Type is simply everything after the "::" (spaces trimmed). While this could
+      have been more detailed (perhaps including the ability to receive a list of args) I
+      think it's better just to leave it up to the implementer. Check doc.html for more
+      concrete examples of how to use this.
+
+    9. Stack Traces (as of 0.1)
+      Genie now supports stack traces. (as demostrated in show_trace.html)
+      Assuming the following template:
+
+        <% if wtf < 0 %>
+          hello world.
+        <% end %>
+
+      You would get a console error (as well as an exception) that looked like:
+
+        Javascript Error => Can't find variable: wtf
+        On template line => 1
+        --------------------
+         line 0:  <% if wtf < 0 %>
+         line 1:      hello world.
+        --------------------
+        
+      It will also work for javascript compilation errors, assuming the following template:
+ 
+        <% if >>?>?><><><><>&&&& %>
+          hello world.
+        <% end %>
+
+      Which of course is not correct javascript at all, you would receive the following error:
+
+        Javascript Error => Unexpected token '>>'
+        On template line => 1
+        --------------------
+         line 0:  <% if >>?>?><><><><>&&&& %>
+         line 1:      hello world.
+        --------------------
+
+      These sorts of exceptions will make you feel more at home with Genie as your template
+      engine.
+
+
+    Extra note: Using an additional < at the beginning of a value will remove error checking.
+                This can be useful when calling functions.
+                <<< my_func_that_might_fail() >>
+
+    end docs
