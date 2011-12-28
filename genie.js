@@ -424,14 +424,11 @@ var genie = ( function() {
     };
 
     Template.prototype.render = function(variables, undefined_variable) {
-        var start_time = new Date().valueOf();
-
         if (this.final_func == null) {
             this.pre_render(undefined_variable);
         }
         try {
             var result = this.final_func(variables, undefined_variable);
-            console.log('render took: ' + (new Date().valueOf() - start_time));
             return str_trim(result);
         } catch (e) {
             printStackTrace();
@@ -515,8 +512,11 @@ var genie = ( function() {
     };
 
     Environment.prototype.render = function(name, variables, undef_var) {
+        //var start_time = new Date().valueOf();
         var t = this.template_dict[name];
-        return t.render(variables, undef_var);
+        var result = t.render(variables, undef_var);
+        //console.log(name + ' render took: ' + (new Date().valueOf() - start_time));
+	return result;
     };
 
     Environment.prototype.set_obj = function(name, obj) {
