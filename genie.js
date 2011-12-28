@@ -163,8 +163,12 @@ var genie = ( function() {
         this.notes = [];
     };
 
-    Template.prototype.escape_var = function(vardata, vartype) {
-        return vardata;
+    Template.prototype.escape_variable = function(vardata, vartype) {
+        if (this.environment) {
+            return this.environment( vardata, vartype );
+        } else {
+            return vardata;
+        }
     };
 
     Template.prototype.find_next_block = function() {
@@ -351,17 +355,17 @@ var genie = ( function() {
                     var vardata = data;
                     var vartype = undefined;
 
-                    // :: means type of. (obj :: type)
+                    // :: means of type. (obj :: type)
                     if (data.indexOf('::') != -1) {
                         var temp = data.split('::');
-                        vardata = temp[0];
-                        vartype = temp[1];
+                        vardata = str_trim(temp[0]);
+                        vartype = str_trim(temp[1]);
                     }
+
 		    if (data.indexOf('<') == 0) {
-			f_code.push( "write( " + this.escape_var(vardata.substring(1), vartype) + " );\n");
+			f_code.push( "write( " + vardata.substring(1) + " );\n");
 		    } else {
-                        var escaped_var = this.escape_var(vardata, vartype);
-			f_code.push( "write( " + escaped_var + " == undefined ? undefined_variable('"+data+"') : " + escaped_var + " );\n");
+			f_code.push( "write( escape_variable(" + vardata + ", '" + vartype + "') == undefined ? undefined_variable('"+data+"') : " + "escape_variable(" + vardata + ", '" + vartype + "')" + " );\n");
 		    }
                 } else if (type == 'bindable') {
                     var value = this.environment.bindable_dict[str_trim(data)];
@@ -386,6 +390,7 @@ var genie = ( function() {
         header += " with(v) { "; // this is the first time i've seen 'with' used and felt it was a good thing.
         this.f_code = f_code;
         this.f_code_render = "(function(parent, v, defaults, undefined_variable) { " + header + this.f_code.join(' ') + "}})";
+        console.log(this.f_code.join('\n'));
 
     };
 
@@ -398,6 +403,7 @@ var genie = ( function() {
         var write = function(ddd) { ____output.push(ddd); };
         var _template = this;
         var bailout = this.bailout;
+        var escape_variable = this.escape_variable;
 
         var compiled_code = eval(this.f_code_render);
 
@@ -480,6 +486,10 @@ var genie = ( function() {
         this.begin = GENIE_CONTEXT_begin;
         this.end = GENIE_CONTEXT_end;
         this.lookup = GENIE_CONTEXT_lookup;
+    };
+
+    Template.prototype.escape_variable = function(vardata, vartype) {
+        return vardata;
     };
 
     Environment.prototype.template_list = function() {
