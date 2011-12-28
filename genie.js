@@ -99,6 +99,26 @@
       | slurp all whitespace and the next new line (or until the previous newline)
       = slurp all whitespace until not whitespace (or until the previous non-whitespace)
 
+    8. Escaping
+      Templates are great, but any real work requires that you escape your content. Genie
+      tries to make this a little easier for you. By default each template (and environment)
+      has a "escape_variable" method that is called on data at render time. If you create
+      your template via an environment the global environment method will be used for each
+      render.
+
+      When using variables you can use the following syntax:
+
+          << variable_name :: variable_type >>
+      
+      The function definition for escape_variable looks like this 
+      
+          escape_variable(var_data, var_type)
+
+      Variable Type is simply everything after the "::" (spaces trimmed). While this could
+      have been more detailed (perhaps including the ability to receive a list of args) I
+      think it's better just to leave it up to the implementer. Check doc.html for more
+      concrete examples of how to use this.
+
     Extra note: Using an additional < at the beginning of a value will remove error checking.
                 This can be useful when calling functions.
                 <<< my_func_that_might_fail() >>
@@ -488,7 +508,7 @@ var genie = ( function() {
         this.lookup = GENIE_CONTEXT_lookup;
     };
 
-    Template.prototype.escape_variable = function(vardata, vartype) {
+    Environment.prototype.escape_variable = function(vardata, vartype) {
         return vardata;
     };
 
