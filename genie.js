@@ -119,6 +119,42 @@
       think it's better just to leave it up to the implementer. Check doc.html for more
       concrete examples of how to use this.
 
+    9. Stack Traces (as of 0.1)
+      Genie now supports stack traces. (as demostrated in show_trace.html)
+      Assuming the following template:
+
+        <% if wtf < 0 %>
+          hello world.
+        <% end %>
+
+      You would get a console error (as well as an exception) that looked like:
+
+        Javascript Error => Can't find variable: wtf
+        On template line => 1
+        --------------------
+         line 0:  <% if wtf < 0 %>
+         line 1:      hello world.
+        --------------------
+        
+      It will also work for javascript compilation errors, assuming the following template:
+ 
+        <% if >>?>?><><><><>&&&& %>
+          hello world.
+        <% end %>
+
+      Which of course is not correct javascript at all, you would receive the following error:
+
+        Javascript Error => Unexpected token '>>'
+        On template line => 1
+        --------------------
+         line 0:  <% if >>?>?><><><><>&&&& %>
+         line 1:      hello world.
+        --------------------
+
+      These sorts of exceptions will make you feel more at home with Genie as your template
+      engine.
+
+
     Extra note: Using an additional < at the beginning of a value will remove error checking.
                 This can be useful when calling functions.
                 <<< my_func_that_might_fail() >>
@@ -127,6 +163,7 @@
 */
 
 var genie = ( function() {
+    var GENIE_VERSION = "0.1";
     var genie_context_begin;
     var genie_context_end;
 
@@ -658,7 +695,7 @@ var genie = ( function() {
         };
     };
 
-    return {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count};
+    return {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count, 'version':GENIE_VERSION};
 })();
 
 
