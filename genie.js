@@ -163,6 +163,10 @@ var genie = ( function() {
         this.notes = [];
     };
 
+    Template.prototype.escape_var = function(vardata, vartype) {
+        return vardata;
+    };
+
     Template.prototype.find_next_block = function() {
         var begin_char;
         var end_char;
@@ -251,11 +255,6 @@ var genie = ( function() {
 
         this.string = after_block;
         return blocks;
-    };
-
-    Template.prototype.pre_process = function() {
-    
-
     };
 
     Template.prototype.bailout = function() {
@@ -349,10 +348,20 @@ var genie = ( function() {
                     }
                 } else if (type == 'variable') {
                     f_code.push( pad(depth) );
+                    var vardata = data;
+                    var vartype = undefined;
+
+                    // :: means type of. (obj :: type)
+                    if (data.indexOf('::') != -1) {
+                        var temp = data.split('::');
+                        vardata = temp[0];
+                        vartype = temp[1];
+                    }
 		    if (data.indexOf('<') == 0) {
-			f_code.push( "write( " + data.substring(1) + " );\n");
+			f_code.push( "write( " + this.escape_var(vardata.substring(1), vartype) + " );\n");
 		    } else {
-			f_code.push( "write( " + data + " == undefined ? undefined_variable('"+data+"') : " + data + " );\n");
+                        var escaped_var = this.escape_var(vardata, vartype);
+			f_code.push( "write( " + escaped_var + " == undefined ? undefined_variable('"+data+"') : " + escaped_var + " );\n");
 		    }
                 } else if (type == 'bindable') {
                     var value = this.environment.bindable_dict[str_trim(data)];
@@ -431,7 +440,6 @@ var genie = ( function() {
             var result = this.final_func(variables, undefined_variable);
             return str_trim(result);
         } catch (e) {
-            printStackTrace();
             if (e.type == 'bailout') {
                 return null;
             } else {
