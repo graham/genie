@@ -68,6 +68,6 @@ var genie_tests = ( function() {
     return {'TestSuite':TestSuite,
             'run_tests':run_tests,
             'run_tests_debug':run_tests_debug,
-            'test':run_tests_debug
+            'test':run_tests_debug,
             };
 })()
