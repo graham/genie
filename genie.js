@@ -224,10 +224,6 @@ var genie = ( function() {
         this.environment = null;
         this.blocks = [];
         this.final_func = null;
-        this.parent_container = null;
-
-        this.arg_list = [];
-
         this.notes = [];
         this.cur_template_line = 0;
     };
@@ -348,7 +344,6 @@ var genie = ( function() {
     };
 
     Template.prototype.compile = function() {
-        this.working_string = ""+this.orig_string;
         var counter_count = 0;
         var depth = 0;
         var f_code = [];
@@ -477,6 +472,7 @@ var genie = ( function() {
         }
         this.f_code = fresh_code;
         this.f_code_render2 = "with(locals) {\n"+ header + this.f_code.join('') + "}}";
+        this.f_code = null;
     };
 
     Template.prototype.pre_render = function(undefined_variable) {
@@ -526,6 +522,7 @@ var genie = ( function() {
             return locals['____output'].join('');
         }
         this.final_func = encased_template;
+        this.f_code_render2 = null;
     };
 
     Template.prototype.render = function(variables, undefined_variable) {
