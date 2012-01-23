@@ -471,7 +471,7 @@ var genie = ( function() {
             }
         }
         this.f_code = fresh_code;
-        this.f_code_render2 = "with(locals) {\n"+ header + this.f_code.join('') + "}}";
+        this.f_code_render = "with(locals) {\n"+ header + this.f_code.join('') + "}}";
         this.f_code = null;
     };
 
@@ -488,7 +488,7 @@ var genie = ( function() {
         locals['escape_variable'] = this.escape_variable;
         
         try {
-            var compiled_code = new Function('parent', 'v', 'defaults', 'undefined_variable', 'locals', this.f_code_render2);
+            var compiled_code = new Function('parent', 'v', 'defaults', 'undefined_variable', 'locals', this.f_code_render);
         } catch (e) {
             this.stack_trace(e);
         }
@@ -522,7 +522,7 @@ var genie = ( function() {
             return locals['____output'].join('');
         }
         this.final_func = encased_template;
-        this.f_code_render2 = null;
+        this.f_code_render = null;
     };
 
     Template.prototype.render = function(variables, undefined_variable) {
