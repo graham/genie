@@ -169,6 +169,8 @@ var genie = ( function() {
     var GENIE_CONTEXT_begin = eval("genie_context_begin") || "<";
     var GENIE_CONTEXT_end =   eval("genie_context_end") || ">";
 
+    var genie_lazy_load_templates = false;
+
     var GENIE_CONTEXT_lookup = {
         "#":"comment",
         "%":"condition",
@@ -481,7 +483,7 @@ var genie = ( function() {
         var locals = {};
         locals['_env'] = this.environment;
         locals['____output'] = [];
-        locals['partial'] = function(name, d) { return locals['_env'].render(name, d); };
+        locals['partial'] = function(name, d) { return locals['_env'].get_template(name).render(d); };
         locals['write'] = function(ddd) { locals['____output'].push(ddd); };
         locals['_template'] = this;
         locals['bailout'] = this.bailout;
@@ -542,6 +544,7 @@ var genie = ( function() {
     };
 
     Template.prototype.stack_trace = function(e) {
+        throw e;
         var line = null;
         if (e.line) {
             line = this.f_code.join('').split('\n')[e.line-3];
@@ -650,10 +653,8 @@ var genie = ( function() {
     };
 
     Environment.prototype.render = function(name, variables, undef_var) {
-        //var start_time = new Date().valueOf();
         var t = this.template_dict[name];
         var result = t.render(variables, undef_var);
-        //console.log(name + ' render took: ' + (new Date().valueOf() - start_time));
 	return result;
     };
 
@@ -663,6 +664,36 @@ var genie = ( function() {
 
     Environment.prototype.get_obj = function(name) {
         return this.object_dict[name];
+    };
+
+    Environment.prototype.load_template = function(url, name, cb) {
+        var env = this;
+        $.get(url, 
+              function(data) {
+                  env.create_template(name, data);
+                  console.log('created template: ' + name + ' (' + data.length + ')');
+                  if (cb) {
+                      cb.finish();
+                  }
+              });
+    };
+
+    Environment.prototype.load_template_dir = function(url, cb) {
+        var env = this;
+        $.get(url, function(data) {
+                data = JSON.parse(data);
+                var items = [];
+                for(var name in data) {
+                    var obj = data[name];
+                    var load = function(o) {
+                        return function(t) { 
+                            env.load_template(url + o, o.split('.')[0], t);
+                        }
+                    }
+                    items.push( load(obj) ); 
+                }
+                ut.serial(items, cb);
+            });
     };
 
     var main_environment = new Environment();
