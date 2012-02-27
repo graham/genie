@@ -1,4 +1,12 @@
-/* ut : (+ subj.) (purpose) in order that, to, that.  */
+/* ut : (+ subj.) (purpose) in order that, to, that.  
+   
+ ut - javascript controlled execution
+
+ Intro:
+  Ut is a simple javascript library that makes coordinating javascript
+  execution much easier. 
+
+*/
 
 var ut = (function() {
     var FAILED = 0;
@@ -75,15 +83,7 @@ var ut = (function() {
             return;
         }
 
-        var working = 0;
-        for (var key in this.pending) {
-            var obj = this.pending[key];
-            if (obj != null) {
-                working = working + 1;
-            }
-        }
-
-        if (working == 0) {
+        if (this.pending_count() == 0) {
             if (this.errors.length > 0) {
                 this.on_error(this.finished, this.errors);
             } else {
@@ -166,15 +166,7 @@ var ut = (function() {
             return;
         }
 
-        var working = 0;
-        for (var key in this.pending) {
-            var obj = this.pending[key];
-            if (obj != null) {
-                working = working + 1;
-            }
-        }
-
-        if (working == 0) {
+        if (this.pending_count() == 0) {
             if (this.errors.length > 0) {
                 this.on_error(this.finished, this.errors);
             } else {

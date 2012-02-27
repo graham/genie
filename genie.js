@@ -681,19 +681,19 @@ var genie = ( function() {
     Environment.prototype.load_template_dir = function(url, cb) {
         var env = this;
         $.get(url, function(data) {
-                data = JSON.parse(data);
-                var items = [];
-                for(var name in data) {
-                    var obj = data[name];
-                    var load = function(o) {
-                        return function(t) { 
-                            env.load_template(url + o, o.split('.')[0], t);
-                        }
+            data = JSON.parse(data);
+            var items = [];
+            for(var name in data) {
+                var obj = data[name];
+                var load = function(o) {
+                    return function(t) { 
+                        env.load_template(url + o, o.split('.')[0], t);
                     }
-                    items.push( load(obj) ); 
                 }
-                ut.serial(items, cb);
-            });
+                items.push( load(obj) ); 
+            }
+            ut.serial(items, cb);
+        });
     };
 
     var main_environment = new Environment();
