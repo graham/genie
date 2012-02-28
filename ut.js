@@ -175,8 +175,9 @@ var ut = (function() {
         }
     };
 
-    var serial = function(items, success, failure) {
+    var serial = function(asdf, items, success, failure) {
         var se = new SerialExecution(success, failure);
+	se.last_data = asdf();
         se.run(items);
     };
 

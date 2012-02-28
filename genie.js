@@ -671,7 +671,7 @@ var genie = ( function() {
         $.get(url, 
               function(data) {
                   env.create_template(name, data);
-                  console.log('created template: ' + name + ' (' + data.length + ')');
+                  console.log('created template: ' + name + ' (' + data.length + ' bytes)');
                   if (cb) {
                       cb.finish();
                   }
@@ -692,7 +692,7 @@ var genie = ( function() {
                 }
                 items.push( load(obj) ); 
             }
-            ut.serial(items, cb);
+            ut.serial(function() { return; }, items, cb);
         });
     };
 
@@ -729,7 +729,34 @@ var genie = ( function() {
         };
     };
 
-    return {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count, 'version':GENIE_VERSION};
+    var dig_get = function(obj, key, di) {
+	var split_key = di || "/";
+	if (key.indexOf(split_key) == -1) {
+	    return obj[key];
+	} else {
+	    var cur = key.split(split_key, 1);
+	    var rest = key.split(split_key).slice(1).join(split_key);
+	    obj = obj[cur];
+	    return this.dig_get(obj, rest);
+	}
+    };
+
+    var dig_set = function(obj, key, value, di) {
+	var split_key = di || "/";
+	if (key.indexOf(split_key) == -1) {
+	    obj[key] = value;
+	} else {
+	    var cur = key.split(split_key, 1);
+	    var rest = key.split(split_key).slice(1).join(split_key);
+	    var newb = obj[cur];
+	    if (newb == undefined) {
+		obj[cur] = {};
+		newb = obj[cur];
+	    }
+
+	    return this.dig_set(newb, rest, value);
+	}
+    }; 
+
+    return {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count, 'version':GENIE_VERSION, 'dig_set':dig_set, 'dig_get':dig_get};
 })();
-
-
