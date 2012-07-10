@@ -92,6 +92,8 @@ Kapture.prototype.key_event = function(event, type) {
     var guess = name;
     var full_modifier = modifier;
 
+    console.log(full_modifier);
+
     if (this.command_stack.length && (modifier+guess) != this.cancel_keybinding) {
         full_modifier = this.command_stack.join(' ') + ' ' + modifier;
     }

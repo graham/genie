@@ -119,7 +119,7 @@
       think it's better just to leave it up to the implementer. Check doc.html for more
       concrete examples of how to use this.
 
-    9. Stack Traces (as of 0.1)
+    9. Stack Traces (as of 0.2)
       Genie now supports stack traces. (as demostrated in show_trace.html)
       Assuming the following template:
 
@@ -162,14 +162,12 @@
 */
 
 var genie = ( function() {
-    var GENIE_VERSION = "0.1";
+    var GENIE_VERSION = "0.2";
     var genie_context_begin;
     var genie_context_end;
 
     var GENIE_CONTEXT_begin = eval("genie_context_begin") || "<";
     var GENIE_CONTEXT_end =   eval("genie_context_end") || ">";
-
-    var genie_lazy_load_templates = false;
 
     var GENIE_CONTEXT_lookup = {
         "#":"comment",
@@ -206,8 +204,6 @@ var genie = ( function() {
             return str_count(s.slice(i+1), c, accum+1);
         }
     };
-        
-
 
     // Makes the code printouts very pretty ( can't help but keep it )
     var pad = function(count) {
@@ -275,9 +271,7 @@ var genie = ( function() {
         var before_block = this.string.substring(0, start);
         var after_block = this.string.substring(start+1);
 
-        // *
         this.cur_template_line += str_count(before_block, '\n');
-        // *
         blocks.push( ['text', before_block, this.cur_template_line] ); 
 
         var start_char = after_block[0];
@@ -290,9 +284,7 @@ var genie = ( function() {
             if (start_char in cmd_lookup) {
                 end = after_block.indexOf(start_char + end_char);
             } else {
-                // *
                 this.cur_template_line += str_count(begin_char, '\n');
-                // *
                 blocks.push( ['text', begin_char, this.cur_template_line] );
                 this.string = after_block.substring(0);
                 return blocks;
@@ -331,9 +323,7 @@ var genie = ( function() {
             after_block = str_triml(after_block);
         }
         
-        // *
         this.cur_template_line += str_count(block, '\n');
-        // *
         blocks.push( [type, block, this.cur_template_line] );
 
         this.string = after_block;
@@ -577,7 +567,7 @@ var genie = ( function() {
     };
 
     Template.prototype.async_render = function(variables, options) {
-        var do_nothing = function() { };
+        var do_nothing = function() {};
         var undefined_variable = options['undefined_variable'] || do_nothing;
         var on_success = options['on_success'] || do_nothing;
         var on_error = options['on_error'] || do_nothing;
@@ -646,15 +636,21 @@ var genie = ( function() {
     };
 
     Environment.prototype.render_quick = function(template_text, vars, undef_var) {
+        if (vars === undefined) {
+            vars = {};
+        }
         var t = new Template(template_text);
         t.key = 'anon';
         t.environment = this;
         return t.render(vars, undef_var);
     };
 
-    Environment.prototype.render = function(name, variables, undef_var) {
+    Environment.prototype.render = function(name, vars, undef_var) {
+        if (vars === undefined) {
+            vars = {};
+        }
         var t = this.template_dict[name];
-        var result = t.render(variables, undef_var);
+        var result = t.render(vars, undef_var);
 	return result;
     };
 
@@ -729,8 +725,12 @@ var genie = ( function() {
         };
     };
 
-    var dig_get = function(obj, key, di) {
-	var split_key = di || "/";
+    var dig_get = function(obj, key, settings) {
+        var split_key = "/";
+        if (settings['di']) {
+            split_key = settings['di'];
+        }
+            
 	if (key.indexOf(split_key) == -1) {
 	    return obj[key];
 	} else {
@@ -741,22 +741,46 @@ var genie = ( function() {
 	}
     };
 
-    var dig_set = function(obj, key, value, di) {
-	var split_key = di || "/";
+    var dig_set = function(obj, key, value, settings) {
+        var split_key = "/";
+        var def = function() { return new Object(); };
+        if (settings == undefined) {
+            settings = {};
+        }
+        if (settings['di']) {
+            split_key = settings['di'];
+        }
+        if (settings['def']) {
+            def = settings['def'];
+        }
+
+        if (key[key.length-1] == split_key) {
+            key = key.slice(0, key.length-1);
+        }
+
 	if (key.indexOf(split_key) == -1) {
 	    obj[key] = value;
+            return [obj, key];
 	} else {
 	    var cur = key.split(split_key, 1);
 	    var rest = key.split(split_key).slice(1).join(split_key);
 	    var newb = obj[cur];
 	    if (newb == undefined) {
-		obj[cur] = {};
+		obj[cur] = def();
 		newb = obj[cur];
 	    }
 
 	    return this.dig_set(newb, rest, value);
 	}
     }; 
+    
+    var unpack_packed_hash = function(data) {
+    };
 
-    return {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count, 'version':GENIE_VERSION, 'dig_set':dig_set, 'dig_get':dig_get};
+    var exports;
+    exports = {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count, 'version':GENIE_VERSION, 'dig_set':dig_set, 'dig_get':dig_get};
+    if (typeof module !== 'undefined') {
+        module.exports = exports;
+    }
+    return exports;
 })();
