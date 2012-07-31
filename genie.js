@@ -166,8 +166,8 @@ var genie = ( function() {
     var genie_context_begin;
     var genie_context_end;
 
-    var GENIE_CONTEXT_begin = eval("genie_context_begin") || "<";
-    var GENIE_CONTEXT_end =   eval("genie_context_end") || ">";
+    var GENIE_CONTEXT_begin = eval("genie_context_begin") || "[";
+    var GENIE_CONTEXT_end =   eval("genie_context_end")   || "]";
 
     var GENIE_CONTEXT_lookup = {
         "#":"comment",
@@ -433,7 +433,7 @@ var genie = ( function() {
 		    if (data.indexOf('<') == 0) {
 			f_code.push( "/* " + line + " */ write( " + vardata.substring(1) + " );\n");
 		    } else {
-			f_code.push( "/* " + line + " */ write( escape_variable(" + vardata + ", '" + vartype + "') == undefined ? undefined_variable('"+data+"') : " + "escape_variable(" + vardata + ", '" + vartype + "')" + " );\n");
+			f_code.push( "/* " + line + " */ write( escape_variable(" + vardata + ", '" + vartype + "') == undefined ? undefined_variable('"+data.replace(/\'/g, "\\'")+"') : " + "escape_variable(" + vardata + ", '" + vartype + "')" + " );\n");
 		    }
                 } else if (type == 'bindable') {
                     var value = this.environment.bindable_dict[str_trim(data)];
@@ -777,8 +777,14 @@ var genie = ( function() {
     var unpack_packed_hash = function(data) {
     };
 
+    var render_body_as_template = function(d, undef_var) {
+        var v = main_environment.render_quick(document.body.innerHTML, d, undef_var);
+        document.body.innerHTML = v;
+        return v;
+    };
+
     var exports;
-    exports = {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count, 'version':GENIE_VERSION, 'dig_set':dig_set, 'dig_get':dig_get};
+    exports = {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count, 'version':GENIE_VERSION, 'dig_set':dig_set, 'dig_get':dig_get, 'render_body_as_template':render_body_as_template, 'rbt':render_body_as_template};
     if (typeof module !== 'undefined') {
         module.exports = exports;
     }
