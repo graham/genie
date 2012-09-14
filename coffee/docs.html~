@@ -1,0 +1,484 @@
+<html>
+
+<script type="text/javascript" charset="utf-8">
+    var genie_debug = 1;
+</script>
+
+<script type="text/javascript" charset="utf-8" src='../js/jquery.js'> </script>
+<script type="text/javascript" charset="utf-8" src='genie.js'></script>
+<script type="text/javascript" charset="utf-8" src='../test.js'></script>
+<link rel="stylesheet" href="js/bootstrap-1.0.0.min.css">
+
+<style type="text/css" media="screen">    
+    body {
+        margin-left: auto;
+        margin-right: auto;
+        min-width: 600px;
+        max-width: 960px;
+        color: #444;
+        margin-top: 40px;
+        font-size: 14px;
+    }
+    
+    .title {
+        font-family: 'Helvetica Neue', Helvetica, Arial;
+        font-weight: 300;
+        flood-opacity: 1;
+        flood-color: black;
+        
+        font-size: 28px;
+        font-weight: 600;
+        padding-bottom: 10px;
+    }
+
+    .subtitle {
+        font-family: 'Helvetica Neue', Helvetica, Arial;
+        font-weight: 400;
+        flood-opacity: 1;
+        flood-color: black;
+        
+        padding-left:10px;
+        font-size: 20px;
+        font-weight: 400;
+        padding-bottom: 8px;
+        padding-top: 8px;
+    }
+
+    .content {
+        font-family: 'Helvetica Neue', Helvetica, Arial;
+        font-weight: 300;
+        flood-opacity: 1;
+        flood-color: black;
+        
+        padding-left: 20px;
+        padding-bottom: 10px;
+    }
+    .content p {
+        padding-bottom: 10px;
+        margin: 0px;
+    }
+    .code {
+        font-family: monaco;
+        font-size: 12px;
+        margin: 15px;
+        padding: 10px;
+        background-color: #222;
+        color: #ddd;
+    }
+    pre {
+        font-family: monaco;
+        font-size: 12px;
+        margin: 15px;
+        padding: 10px;
+        background-color: #222;
+        color: #ddd;
+    }
+    .example {
+        padding: 15px;
+        margin: 5px;
+        font-size: 18px;
+        text-align: center;
+        border: 1px solid grey;
+        color: green;
+        font-weight: bold;
+    }
+    blockquote {
+        padding: 5px;
+        margin: 15px;
+    }
+</style>
+
+<script type="text/javascript" charset="utf-8">
+    genie.monkey_patch();
+    function run_example(exp) {
+        var data = [];
+        $(exp).each(function(index, obj) {
+            data.push(obj.innerText);
+        });
+        
+        for(var i = 0; i < data.length; i++) {
+            eval(data[i]);
+        }
+    }
+
+  $(document).ready( function() {                           
+  $("body").bind("click", function(e) {
+    $("ul.menu-dropdown").hide();
+    $('a.menu').parent("li").removeClass("open").children("ul.menu-dropdown").hide();
+  });
+
+  $("a.menu").click(function(e) {
+    var $target = $(this);
+    var $parent = $target.parent("li");
+    var $siblings = $target.siblings("ul.menu-dropdown");
+    var $parentSiblings = $parent.siblings("li");
+    if ($parent.hasClass("open")) {
+      $parent.removeClass("open");
+      $siblings.hide();
+    } else {
+      $parent.addClass("open");
+      $siblings.show();
+    }
+    $parentSiblings.children("ul.menu-dropdown").hide();
+    $parentSiblings.removeClass("open");
+    return false;
+  });
+                           });
+</script>
+
+<body>
+  <div class="topbar-wrapper" style="z-index: 5;">
+    <div class="topbar">
+      <div class="fill">
+        <div class="container">
+          <h3><a href="#">Project Name</a></h3>
+          <ul>
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#intro">Intro</a></li>
+            <li><a href="#vars">Vars</a></li>
+            <li><a href="#conditions">Conditions</a></li>
+          </ul>
+          <form action="">
+            <input type="text" placeholder="Search" style='font-size: 18px; height: 28px;'/>
+          </form>
+          <ul class="nav secondary-nav">
+            <li class="menu">
+              <a href="#" class="menu">Dropdown</a>
+              <ul class="menu-dropdown">
+                <li><a href="#">Secondary link</a></li>
+                <li><a href="#">Something else here</a></li>
+                <li class="divider"></li>
+                <li><a href="#">Another link</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div> <!-- /fill -->
+    </div> <!-- /topbar -->
+  </div> <!-- topbar-wrapper -->
+
+  <BR><BR>
+
+    <div class='title'>Genie</div>
+    <div class='content'>
+        You might be asking yourself, 
+        <blockquote>"Why another template framework? Haven't we solved this problem?"</blockquote>
+        In many ways most web frameworks solve this issue, either with their own template language or with the ability to plug in which ever template language you want. Django has it's own <a href=#>Templates</a> and there are a ton of other great template languages for Python in particular (Mako, Cheetah, Jinja2). However, Genie is really targeted at a different problem, it just seems similar.
+    </div>
+    
+    <div class='subtitle'>
+        A different kind of web application
+    </div>
+    
+    <div class='content'>
+        If you are saying to yourself, 
+          <blockquote>"This doesn't help me, I already have a great template language on my server"</blockquote>
+          Well, you're right, Genie isn't for you. It isn't for sites that render things on the server, it's for a new kind of web application. One that is a little more flexible than you might think.
+        Initially this seems like a odd idea, I know, but when you think about it, it can open up some really interesting possibilities. If you stop thinking of your website as a series of pages, and start seeing it as a bunch of pieces of data, you can start to see how this can help you.
+          <br>          <br>
+        If you look at each chunk of your website as a template (which it probably already is, the header, the user section, the "current page", the footer). You can really break these sections down into two things, the template and the data.
+        So stop rendering the template on the server, just ship the data to the client, and let the browser do the rendering.
+        Initially this seems useless, because nothing is different, but think about the other technologies that you can now use. First, each section of your site is simply a JSON object (most likely a list, or a dictionary). Which means you can cache this data, which means that you can render a whole new page with only the data that you NEED. Data can be cached, data can be updated, all you have to do is send data to the browser and it can render the rest for you. Heck you can even cache the templates themselves.
+          <br>          <br>        
+        Whats more, as you start to design your architecture around these ideas too. Put your user table on one server and your stock data on another, throw your sessions in memcache and you've got yourself some scalability. Well not really, but you get the idea.
+          <br>          <br>            
+        Once you start thinking this way a whole new world of possibilities arises, you can easily render lists and tables, because they are just JSON you are rendering, adding to your page. And re-rendering is easy, you simply update the local data and re-render the DOM object that has changed. (I've even included some classes that make this very easy)
+
+    </div>
+    
+    <div class='subtitle'>Prove it</div>
+    <div class='content'>
+        Ok, how about an example.
+        
+        First we include genie, and initialize an environment.
+        <div class='code example1'>
+            var env = new genie.Environment();
+        </div>
+        
+        Then we create a string of text.
+        
+        <div class='code example1'>
+            var t = "This is a rendered template, by the template engine << name >>.";
+        </div>
+        
+        Now we render the template:
+        
+        <div class='code example1'>
+            var result = env.render_quick(t, {name:'Genie'});<br>
+            $('#result_example1').html(result);
+        </div>
+        
+        Result: <div id='result_example1' class='example'></div>
+        <input type=button onclick='run_example(".example1");' value='Try It!'><br><br>
+    </div>
+    
+    <hr>
+    
+    <div class='subtitle'>
+        Adding to the fun.
+    </div>
+    <div class='content'>
+        You can also monkey patch ( <a href="http://en.wikipedia.org/wiki/Monkey_patch">link</a> ) the javascript string object
+        but this is generally looked down on in some circles, however, if you need to it is quite easy.
+        
+        <div class='code example2'>
+          genie.monkey_patch();<br><br>
+          var s = "This is a << subject >>, and it is the << index >>".render({<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;'subject':'template', 'index':'second'<br>
+              });<br><br>
+          $("#result_example2").html( s );
+        </div>
+        
+        Result: <div id='result_example2' class='example'></div>
+        <input type=button onclick='run_example(".example2");' value='Try It!'><br><br>
+    </div>
+    
+    <div class='subtitle'>
+        Calling Other Templates
+    </div>
+    
+    <div class='content'>
+        It wouldn't be very useful if you couldn't render other templates too! Keep in mind that in order to use
+        partial templates you will need to use the same genie environment object for both templates. (i'll work on making
+        this easier in the future)
+        <div class='code example3'>
+            var env = new genie.Environment();<br>
+            env.create_template('greeting', "Hello, << name >>");<br>
+            env.create_template('say', 'The proper way to greet someone is "<< partial("greeting", {name:"Graham"}) >>".');
+            <br><br>
+            $('#result_example3').html(env.render('say', {}));
+        </div>
+        Result: <div id='result_example3' class='example'></div>
+        <input type=button onclick='run_example(".example3");' value='Try It!'><br><br>
+    </div>
+    
+    <div class='subtitle'>A Cleaner Way</div>
+    <div class='content'>
+        This can get rather ugly as your templates get bigger, so i like to wrap them in a script tag, I realize this isn't exactly what the script tag was intended for, but it's actually quite handy.<br><br>For Example:
+        <div class='code'>
+            &lt;script type='text/plain' id='mytemplate'&gt;<br>
+                &nbsp;&nbsp;<% if account_balance &lt; 0 %><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&lt;span style='color:red;'&gt;Your account is in arrears!&lt;/span&gt;
+                    <br>
+                &nbsp;&nbsp;<% else %><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Your account is just fine.<br>
+                &nbsp;&nbsp;<% end %><br>
+            &lt;/script&gt;
+            <script type='text/plain' id='mytemplate'>
+            <% if account_balance < 0 %>
+                <span style='color:red;'>Your account is in arrears!</span>
+            <% else %>
+                Your account is just fine.
+            <% end %>
+            </script>
+        </div>
+        Then you can simply compile the template and use it!
+        <div class='code example4'>
+            var env = new genie.Environment();<br>
+            env.create_template('account', $('#mytemplate').html());<br>
+             $('#result_example4').html(env.render('account', {'account_balance':-100.0}));
+        </div>
+        Result: <div id='result_example4' class='example'></div>
+        <input type=button onclick='run_example(".example4");' value='Try It!'><br><br>
+    </div>
+    
+    <div class='subtitle'>
+        The power of an API
+    </div>
+    <div class='content'>
+        The real power of developing your web page/site/app/etc this way is that you end up building an API, rather than a series of pages. It allows the developer to focus on the engineering and the designer to focus on how things look.
+        It allows you to update how your site looks, without making a new server revision, or needing to restart anything, because the only thing that changes are the templates.
+        It allows you to have multiple versions of your website, simply by having multiple versions of your API. It means that you build a RESTful API, which can then be used by any client, be it web, mobile, etc.
+    </div>
+    
+    <div class='subtitle'>
+        But wait, it isn't all tulips and gravy.
+    </div>
+    
+    <div class='content'>
+        You're right of course, it's not all wonderful. It's a different way of looking at things, it requires a complete reworking of how you design your site, how you engineer your solution, and it means that you have to do considerably more error checking on the client.
+        
+        However, your development will closely mirror how MVC works in Desktop environments (like Cocoa on Mac OS X). It means that you can develop APIs along side your web application, and it means that Developers and Designers can work in tandem rather than at odds.
+    </div>
+    
+    <div class='subtitle'>
+        Ok, now lets have some fun.
+    </div>
+    
+    <div class='content'>
+        Lets get into some more complex features of Genie. We've seen some conditionals in the previous example, lets go over the syntax for those.
+            
+        <div class='subtitle'>
+            <% if %>
+        </div>
+        
+        <% if %> works just like you think it would, conditions must be enclosed in () parens just like in javascript. Check out the example below, assuming x = 100.
+        
+        <div class='code'>
+            <% if (10 == 100) %><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;This will never happen.<br>
+            <% end %>
+            <br><br>
+            {# Comment #}
+            <br><br>
+            <% if (10 == 10) %><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;This will always happen.<br>
+            <% end %>
+            <br><br>
+            {# You can also have else clauses and else if clauses #}<br><br>
+            <% if (x > 10) %><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;X is greater than 10.<br>
+            <% else if (x > 100) %><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;Wow, X is greater than 100.<br>
+            <% else if (x > 1000.0) %><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;Wow, x is really big.<br>
+            <% else %><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;Well at least x isnt a million<br>
+            <% end %>
+            
+        </div>
+        
+        <script type='text/plain' id='mytemplate2'>
+            <! var x = 100.0; !>
+            <% if (10 == 100) %>
+                This will never happen.
+            <% end %>
+
+            <% if 10 == 10 %>
+                This will always happen.
+            <% end %>
+
+            <% if (x > 10) %>
+                X is greater than 10.
+            <% else if (x > 100) %>
+                Wow, X is greater than 100.
+            <% else if (x > 1000.0) %>
+                Wow, x is really big.
+            <% else %>
+                Well at least x isnt a million
+            <% end %>
+        </script>
+        
+        
+        <div class='code example5' style='display:none;'>
+            var env = new genie.Environment();<br>
+            env.create_template('ifs', $('#mytemplate2').html());<br>
+             $('#result_example5').html(env.render('ifs', {'x':100.0}));
+        </div>
+        Result: <div id='result_example5' class='example'></div>
+        <input type=button onclick='run_example(".example5");' value='Try It!'><br><br>
+        
+        So that's an if statement, you can always have nested ifs within ifs, but things can get a little tricky so I'd recommend indenting cleanly so you can tell where you are.
+            
+        <div class='subtitle'><% for %></div>
+        
+        Likely the most used part of any language, <% for %> uses a style similar to python: for <b>value</b> in <b>list</b>. It does not however do any unpacking of lists for you (like python or some other languages), so you'll have to make sure you take this into account.
+            
+        <div class='code'>
+            <% for i in [1,2,3,4,5] %><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;The number is << i >>.&lt;br&gt;<br>
+            <% end %>
+        </div>
+        
+        <script type='text/plain' id='example6'>
+            <% for i in [1,2,3,4,5] %>
+                The number is << i >>.<br>
+            <% end %>
+        </script>    
+        
+        <div class='code example6' style='display:none;'>
+            var env = new genie.Environment();<br>
+            env.create_template('ifs', $('#example6').html());<br>
+             $('#result_example6').html(env.render('ifs', {'x':100.0}));
+        </div>
+        Result: <div id='result_example6' class='example'></div>
+        <input type=button onclick='run_example(".example6");' value='Try It!'><br><br>
+
+        <div class='subtitle'>Arbitrary Javascript</div>
+        
+        While some schools of thought go for a more strict MVC I think this should really be more of a guideline, mostly because sometimes you really just need to do something in your template. So you can always just drop into Javascript when you need to, using the <! !> tags.
+        
+        <div class='code'>
+            &lt;!
+               <br>
+&nbsp;&nbsp;&nbsp;&nbsp;var i = Math.round(Math.random() * 1000, 0) % 100; <br>
+&nbsp;&nbsp;&nbsp;&nbsp;var cen = function(value) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return '&lt;center&gt;' + value + "&lt;/center&gt;";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+            !><br><br>
+            
+            Hey, isn't this cool.<br>
+            << cen(1) >><br>
+            << cen(2) >><br>
+        </div>
+    <script type='text/plain' id='example7'>
+        <!
+            var i = Math.round(Math.random() * 1000, 0) % 100; 
+            var cen = function(value) {
+                return '<center>' + value + "</center>";
+            };;
+        !>
+
+        Hey, isnt this cool.
+        << cen(1) >>
+        << cen(2) >>
+    </script>
+    
+    <div class='code example7' style='display:none;'>
+      var env = new genie.Environment();<br>
+      env.create_template('ifs', $('#example7').html());<br>
+      $('#result_example7').html(env.render('ifs', {'x':100.0}));
+    </div>
+    Result: <div id='result_example7' class='example'></div>
+    <input type=button onclick='run_example(".example7");' value='Try It!'><br><br>
+    </div>
+
+
+    <div class='subtitle'>Async Rendering</div>
+    <div class='content'>
+      For all our node friends, and really this applies to all sorts of places, there is a more async version of render that you might like.
+      
+    </div>
+
+    <div>
+      <pre>
+      var t = new Template('This is a test << value >>').async_render({value:'this is the value'}, {
+        on_success: function(result, template) {
+          console.log(result);
+        }, 
+        on_error: function(exception, template) {
+          alert('there is an error in the template: ' + exception);
+        },
+        on_bailout: function(template) {
+          console.log("we stopped rendering for some reason");
+        }
+      });</pre>
+    </div>
+
+    <div class='subtitle'>Staged Passes</div>
+    <div class='content'>
+      This is complicated.
+
+    </div>
+
+    <br><br><br><br><br><br><br><hr>
+    <div class='subtitle'>
+        Try It
+    </div>
+    <div class='content'>
+        Genie is available right now, here: <a href='https://github.com/graham/genie'>https://github.com/graham/genie</a>
+    </div>
+    
+</body>
+
+
+<script type="text/javascript" charset="utf-8">
+
+  $(document).ready( function() {
+    var env = new genie.Environment();
+  });
+
+</script>
+
+
+</html>
