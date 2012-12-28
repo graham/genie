@@ -204,6 +204,15 @@ var genie = ( function() {
             return str_count(s.slice(i+1), c, accum+1);
         }
     };
+    var str_starts_with = function(key, st) {
+        if (key.slice(0, st.length) == st) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+
 
     // Makes the code printouts very pretty ( can't help but keep it )
     var pad = function(count) {
@@ -595,6 +604,7 @@ var genie = ( function() {
         this.object_dict = {};
         this.template_dict = {};
         this.bindable_dict = {};
+        this.escape_dict = {};
 
         this.begin = GENIE_CONTEXT_begin;
         this.end = GENIE_CONTEXT_end;
@@ -784,7 +794,7 @@ var genie = ( function() {
     };
 
     var exports;
-    exports = {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count, 'version':GENIE_VERSION, 'dig_set':dig_set, 'dig_get':dig_get, 'render_body_as_template':render_body_as_template, 'rbt':render_body_as_template};
+    exports = {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count, 'version':GENIE_VERSION, 'dig_set':dig_set, 'dig_get':dig_get, 'render_body_as_template':render_body_as_template, 'rbt':render_body_as_template, 'str_starts_with':str_starts_with};
     if (typeof module !== 'undefined') {
         module.exports = exports;
     }

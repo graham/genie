@@ -3,10 +3,7 @@ var log = null;
 if (exports === undefined) {
     log = console.log;
 } else {
-    var sys = require('sys');
-    log = function(data) {
-    sys.print(data + '\n');
-    }
+    log = console.log;
 }
 
 var Eventable = function() {
@@ -170,3 +167,5 @@ exports.Messageable = Messageable;
 Resourceable = function(resource_name, callback) {
     this.cache = {};
 }
+
+

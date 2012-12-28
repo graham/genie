@@ -14,6 +14,8 @@ Kapture.prototype.initialize = function() {
     this.capture_buffer = [];
     this.capture_final = 'enter';
 
+    this.training_mode = false;
+
     this.documentation = {};
     
     this.keys_dict = {
@@ -21,10 +23,15 @@ Kapture.prototype.initialize = function() {
         "56": "8", "57": "9", "65": "a", "66": "b", "67": "c", "68": "d", "69": "e", "70": "f", 
         "71": "g", "72": "h", "73": "i", "74": "j", "75": "k", "76": "l", "77": "m", "78": "n",
         "79": "o", "80": "p", "81": "q", "82": "r", "83": "s", "84": "t", "85": "u", "86": "v", 
-        "87": "w", "88": "x", "89": "y", "90": "z", "186": ";", "187": "=", "188": ",", "189": "-", 
-        "190": ".", "191": "/", "192": "`", "219": "[", "220": "\\", "221": "]", "222": "'",
-        "229": "q", "9":"tab", "27":"esc", "32":"space", "8":"backspace", "13":"enter", '229':'q',
-        '37':'left', '38':'up', '39':'right', '40':'down',
+        "87": "w", "88": "x", "89": "y", "90": "z", "186": ";", "187": "=", "188": ",", 
+        "189": "-", "190": ".", "191": "/", "192": "`", "219": "[", "220": "\\", "221": "]", 
+        "222": "'", "229": "q", "9":"tab", "27":"esc", "32":"space", "8":"backspace", 
+        "13":"enter", '229':'q', '37':'left', '38':'up', '39':'right', '40':'down',
+        "96":'num0', "97":"num1", "98":"num2", "99":"num3", "100":"num4", "101":"num5",
+        "102":"num6", "103":"num7", "104":"num8", "105":"num9","106":"num*",
+        "12":"numclear", "112":"f1", "113":"f2", "114":"f3", "115":"f4", "116":"f5", "117":"f6",
+        "118":"f7", "119":"f8", "120":"f9", "121":"f10", "122":"f11", "123":"f12", "124":"f13", 
+        "125":"f14", "126":"f15", "127":"f16", "128":"f17", "129":"f18", "130":"f19"
     };
 
     this.modified_dict = {
@@ -65,6 +72,9 @@ Kapture.prototype.initialize = function() {
 };
 
 Kapture.prototype.log = function(message) {
+    if (this.training_mode) {
+        console.log("log - " + message);
+    }
 };
 
 Kapture.prototype.key_event = function(event, type) {
@@ -92,7 +102,12 @@ Kapture.prototype.key_event = function(event, type) {
     var guess = name;
     var full_modifier = modifier;
 
-    console.log(full_modifier);
+    if (name == undefined) {
+        this.log('missing key: ' + event.keyCode);
+    } else {
+        this.log('hit: ' + name);
+    }
+
 
     if (this.command_stack.length && (modifier+guess) != this.cancel_keybinding) {
         full_modifier = this.command_stack.join(' ') + ' ' + modifier;
