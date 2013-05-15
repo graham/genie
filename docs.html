@@ -4,9 +4,8 @@
     var genie_debug = 1;
 </script>
 
-<script type="text/javascript" charset="utf-8" src='js/jquery.js'> </script>
-<script type="text/javascript" charset="utf-8" src='genie.js'></script>
-<script type="text/javascript" charset="utf-8" src='test.js'></script>
+<script type="text/javascript" charset="utf-8" src='http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'> </script>
+<script type="text/javascript" charset="utf-8" src='src/genie.js'></script>
 <link rel="stylesheet" href="js/bootstrap-1.0.0.min.css">
 
 <style type="text/css" media="screen">    
@@ -102,32 +101,32 @@
     }
 
   $(document).ready( function() {                           
-  $("body").bind("click", function(e) {
-    $("ul.menu-dropdown").hide();
-    $('a.menu').parent("li").removeClass("open").children("ul.menu-dropdown").hide();
-  });
+	  $("body").bind("click", function(e) {
+	    $("ul.menu-dropdown").hide();
+	    $('a.menu').parent("li").removeClass("open").children("ul.menu-dropdown").hide();
+	  });
 
-  $("a.menu").click(function(e) {
-    var $target = $(this);
-    var $parent = $target.parent("li");
-    var $siblings = $target.siblings("ul.menu-dropdown");
-    var $parentSiblings = $parent.siblings("li");
-    if ($parent.hasClass("open")) {
-      $parent.removeClass("open");
-      $siblings.hide();
-    } else {
-      $parent.addClass("open");
-      $siblings.show();
-    }
-    $parentSiblings.children("ul.menu-dropdown").hide();
-    $parentSiblings.removeClass("open");
-    return false;
+	  $("a.menu").click(function(e) {
+	    var $target = $(this);
+	    var $parent = $target.parent("li");
+	    var $siblings = $target.siblings("ul.menu-dropdown");
+	    var $parentSiblings = $parent.siblings("li");
+	    if ($parent.hasClass("open")) {
+	      $parent.removeClass("open");
+	      $siblings.hide();
+	    } else {
+	      $parent.addClass("open");
+	      $siblings.show();
+	    }
+	    $parentSiblings.children("ul.menu-dropdown").hide();
+	    $parentSiblings.removeClass("open");
+	    return false;
+	  });
   });
-                           });
 </script>
 
 <body>
-  <div class="topbar-wrapper" style="z-index: 5;">
+  <div class="topbar-wrapper" style="z-index: 5; display:none;">
     <div class="topbar">
       <div class="fill">
         <div class="container">
@@ -147,8 +146,6 @@
               <ul class="menu-dropdown">
                 <li><a href="#">Secondary link</a></li>
                 <li><a href="#">Something else here</a></li>
-                <li class="divider"></li>
-                <li><a href="#">Another link</a></li>
               </ul>
             </li>
           </ul>
@@ -156,8 +153,6 @@
       </div> <!-- /fill -->
     </div> <!-- /topbar -->
   </div> <!-- topbar-wrapper -->
-
-  <BR><BR>
 
     <div class='title'>Genie</div>
     <div class='content'>
@@ -198,7 +193,7 @@
         Then we create a string of text.
         
         <div class='code example1'>
-            var t = "This is a rendered template, by the template engine << name >>.";
+            var t = "This is a rendered template, by the template engine [[ name ]].";
         </div>
         
         Now we render the template:
@@ -223,7 +218,7 @@
         
         <div class='code example2'>
           genie.monkey_patch();<br><br>
-          var s = "This is a << subject >>, and it is the << index >>".render({<br>
+          var s = "This is a [[ subject ]], and it is the [[ index ]]".render({<br>
               &nbsp;&nbsp;&nbsp;&nbsp;'subject':'template', 'index':'second'<br>
               });<br><br>
           $("#result_example2").html( s );
@@ -243,8 +238,8 @@
         this easier in the future)
         <div class='code example3'>
             var env = new genie.Environment();<br>
-            env.create_template('greeting', "Hello, << name >>");<br>
-            env.create_template('say', 'The proper way to greet someone is "<< partial("greeting", {name:"Graham"}) >>".');
+            env.create_template('greeting', "Hello, [[ name ]]");<br>
+            env.create_template('say', 'The proper way to greet someone is "[[ partial("greeting", {name:"Graham"}) ]]".');
             <br><br>
             $('#result_example3').html(env.render('say', {}));
         </div>
@@ -257,19 +252,19 @@
         This can get rather ugly as your templates get bigger, so i like to wrap them in a script tag, I realize this isn't exactly what the script tag was intended for, but it's actually quite handy.<br><br>For Example:
         <div class='code'>
             &lt;script type='text/plain' id='mytemplate'&gt;<br>
-                &nbsp;&nbsp;<% if account_balance &lt; 0 %><br>
+                &nbsp;&nbsp;[% if account_balance &lt; 0 %]<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;&lt;span style='color:red;'&gt;Your account is in arrears!&lt;/span&gt;
                     <br>
-                &nbsp;&nbsp;<% else %><br>
+                &nbsp;&nbsp;[% else %]<br>
                     &nbsp;&nbsp;&nbsp;&nbsp;Your account is just fine.<br>
-                &nbsp;&nbsp;<% end %><br>
+                &nbsp;&nbsp;[% end %]<br>
             &lt;/script&gt;
             <script type='text/plain' id='mytemplate'>
-            <% if account_balance < 0 %>
+            [% if account_balance < 0 %]
                 <span style='color:red;'>Your account is in arrears!</span>
-            <% else %>
+            [% else %]
                 Your account is just fine.
-            <% end %>
+            [% end %]
             </script>
         </div>
         Then you can simply compile the template and use it!
@@ -309,54 +304,54 @@
         Lets get into some more complex features of Genie. We've seen some conditionals in the previous example, lets go over the syntax for those.
             
         <div class='subtitle'>
-            <% if %>
+            [% if %]
         </div>
         
-        <% if %> works just like you think it would, conditions must be enclosed in () parens just like in javascript. Check out the example below, assuming x = 100.
+        [% if %] works just like you think it would, conditions must be enclosed in () parens just like in javascript. Check out the example below, assuming x = 100.
         
         <div class='code'>
-            <% if (10 == 100) %><br>
+            [% if (10 == 100) %]<br>
             &nbsp;&nbsp;&nbsp;&nbsp;This will never happen.<br>
-            <% end %>
+            [% end %]
             <br><br>
             {# Comment #}
             <br><br>
-            <% if (10 == 10) %><br>
+            [% if (10 == 10) %]<br>
             &nbsp;&nbsp;&nbsp;&nbsp;This will always happen.<br>
-            <% end %>
+            [% end %]
             <br><br>
             {# You can also have else clauses and else if clauses #}<br><br>
-            <% if (x > 10) %><br>
+            [% if (x > 10) %]<br>
             &nbsp;&nbsp;&nbsp;&nbsp;X is greater than 10.<br>
-            <% else if (x > 100) %><br>
+            [% else if (x > 100) %]<br>
             &nbsp;&nbsp;&nbsp;&nbsp;Wow, X is greater than 100.<br>
-            <% else if (x > 1000.0) %><br>
+            [% else if (x > 1000.0) %]<br>
             &nbsp;&nbsp;&nbsp;&nbsp;Wow, x is really big.<br>
-            <% else %><br>
+            [% else %]<br>
             &nbsp;&nbsp;&nbsp;&nbsp;Well at least x isnt a million<br>
-            <% end %>
+            [% end %]
             
         </div>
         
         <script type='text/plain' id='mytemplate2'>
-            <! var x = 100.0; !>
-            <% if (10 == 100) %>
+            [! var x = 100.0; !]
+            [% if (10 == 100) %]
                 This will never happen.
-            <% end %>
+            [% end %]
 
-            <% if 10 == 10 %>
+            [% if 10 == 10 %]
                 This will always happen.
-            <% end %>
+            [% end %]
 
-            <% if (x > 10) %>
+            [% if (x > 10) %]
                 X is greater than 10.
-            <% else if (x > 100) %>
+            [% else if (x > 100) %]
                 Wow, X is greater than 100.
-            <% else if (x > 1000.0) %>
+            [% else if (x > 1000.0) %]
                 Wow, x is really big.
-            <% else %>
+            [% else %]
                 Well at least x isnt a million
-            <% end %>
+            [% end %]
         </script>
         
         
@@ -370,20 +365,20 @@
         
         So that's an if statement, you can always have nested ifs within ifs, but things can get a little tricky so I'd recommend indenting cleanly so you can tell where you are.
             
-        <div class='subtitle'><% for %></div>
+        <div class='subtitle'>[% for %]</div>
         
-        Likely the most used part of any language, <% for %> uses a style similar to python: for <b>value</b> in <b>list</b>. It does not however do any unpacking of lists for you (like python or some other languages), so you'll have to make sure you take this into account.
+        Likely the most used part of any language, [% for %] uses a style similar to python: for <b>value</b> in <b>list</b>. It does not however do any unpacking of lists for you (like python or some other languages), so you'll have to make sure you take this into account.
             
         <div class='code'>
-            <% for i in [1,2,3,4,5] %><br>
-            &nbsp;&nbsp;&nbsp;&nbsp;The number is << i >>.&lt;br&gt;<br>
-            <% end %>
+            [% for i in [1,2,3,4,5] %]<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;The number is [[ i ]].&lt;br&gt;<br>
+            [% end %]
         </div>
         
         <script type='text/plain' id='example6'>
-            <% for i in [1,2,3,4,5] %>
-                The number is << i >>.<br>
-            <% end %>
+            [% for i in [1,2,3,4,5] %]
+                The number is [[ i ]].<br>
+            [% end %]
         </script>    
         
         <div class='code example6' style='display:none;'>
@@ -396,7 +391,7 @@
 
         <div class='subtitle'>Arbitrary Javascript</div>
         
-        While some schools of thought go for a more strict MVC I think this should really be more of a guideline, mostly because sometimes you really just need to do something in your template. So you can always just drop into Javascript when you need to, using the <! !> tags.
+        While some schools of thought go for a more strict MVC I think this should really be more of a guideline, mostly because sometimes you really just need to do something in your template. So you can always just drop into Javascript when you need to, using the [! !] tags.
         
         <div class='code'>
             &lt;!
@@ -405,23 +400,23 @@
 &nbsp;&nbsp;&nbsp;&nbsp;var cen = function(value) {<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return '&lt;center&gt;' + value + "&lt;/center&gt;";<br>
 &nbsp;&nbsp;&nbsp;&nbsp;}<br>
-            !><br><br>
+            !]<br><br>
             
             Hey, isn't this cool.<br>
-            << cen(1) >><br>
-            << cen(2) >><br>
+            [[ cen(1) ]]<br>
+            [[ cen(2) ]]<br>
         </div>
     <script type='text/plain' id='example7'>
-        <!
+        [!
             var i = Math.round(Math.random() * 1000, 0) % 100; 
             var cen = function(value) {
                 return '<center>' + value + "</center>";
             };;
-        !>
+        !]
 
         Hey, isnt this cool.
-        << cen(1) >>
-        << cen(2) >>
+        [[ cen(1) ]]
+        [[ cen(2) ]]
     </script>
     
     <div class='code example7' style='display:none;'>
@@ -442,7 +437,7 @@
 
     <div>
       <pre>
-      var t = new Template('This is a test << value >>').async_render({value:'this is the value'}, {
+      var t = new Template('This is a test [[ value ]]').async_render({value:'this is the value'}, {
         on_success: function(result, template) {
           console.log(result);
         }, 
