@@ -432,9 +432,22 @@ var genie = ( function() {
                         depth -= 1;
                         f_code.push( "/* " + line + " */ " + pad(depth) );
                         f_code.push(in_func.pop() + ';\n');
-                    } else if (data.substring(0, 4) == 'else' || data.substring(0, 7) == 'else if') {
+                    } else if (data.substring(0, 7) == 'else if') {
+                        var command = data.substring(0, 7);
+                        var rest = str_trim(data.substring(7));
+                        if (rest[0] == '(') {
+                            bulk = d.substring(1, d.length-1);
+                        }
+                        if (rest[rest.length-1] == ')') {
+                            bulk = d.substring(0, d.length-2);
+                        }
+
                         f_code.push( "/* " + line + " */ " + pad(depth-1) );
-                        f_code.push( "} " + data + " {\n");
+                        f_code.push( "} " + command + " ( " + rest + " ) {\n");
+                    } else if (data.substring(0, 4) == 'else') {
+                        var command = data.substring(0, 4);
+                        f_code.push( "/* " + line + " */ " + pad(depth-1) );
+                        f_code.push( "} " + command + " {\n");
                     }
                 } else if (type == 'variable') {
                     f_code.push( pad(depth) );
