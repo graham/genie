@@ -1,3 +1,19 @@
+/*
+Copyright [2013] [Graham Abbott <graham.abbott@gmail.com>]
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 var genie = ( function() {
     var GENIE_VERSION = "0.3";
     var genie_context_begin;
@@ -292,7 +308,7 @@ var genie = ( function() {
 		    if (data.indexOf(GENIE_CONTEXT_begin) == 0) {
 			f_code.push( "/* " + line + " */ write( " + vardata.substring(1) + " );\n");
                     } else {
-			f_code.push( "/* " + line + " */ write( escape_variable(" + vardata + ", '" + vartype + "') );\n");
+			f_code.push( "/* " + line + " */ write( (typeof (" + vardata + ") != 'undefined') ? escape_variable(" + vardata + ", '" + vartype + "') : undefined_variable('" + vardata + "') );\n");
 		    }
                 } else if (type == 'bindable') {
                     var value = this.environment.bindable_dict[str_trim(data)];
@@ -306,7 +322,7 @@ var genie = ( function() {
                 } else if (type == 'exec-coffee') {
                     f_code.push( "/* " + line + " */ " + CoffeeScript.compile(data));
                 } else if (type == 'notes') {
-                    this.notes.push(data);
+                    this.notes.push(str_trim(data));
                 } else if (type == 'compiler') {
                     // this should have been compiled out, ignore in this case.
                     // pass
@@ -361,6 +377,7 @@ var genie = ( function() {
             var undef_var = function(name) {
                 if (!uv) {
                     console.log("Variable '" + name + "' is not defined, state: " + JSON.stringify(tvars));
+                    return "** " + name + " not defined **";
                 } else if (uv.indexOf('%s') == -1) {
                     return str_trim(uv);
                 } else {
@@ -433,7 +450,7 @@ var genie = ( function() {
 
     Template.prototype.async_render = function(variables, options) {
         var do_nothing = function() {};
-        var undefined_variable = options['undefined_variable'] || do_nothing;
+        var undefined_variable = options['undefined_variable'] || function(varname) { return '**' +  varname + ' not defined **'; };
         var on_success = options['on_success'] || do_nothing;
         var on_error = options['on_error'] || do_nothing;
         var on_bailout = options['on_bailout'] || do_nothing;
@@ -649,6 +666,7 @@ var genie = ( function() {
         document.body.innerHTML = v;
         return v;
     };
+
 
     var exports;
     exports = {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count, 'version':GENIE_VERSION, 'dig_set':dig_set, 'dig_get':dig_get, 'render_body_as_template':render_body_as_template, 'rbt':render_body_as_template, 'str_starts_with':str_starts_with};
