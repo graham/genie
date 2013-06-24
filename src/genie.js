@@ -1,5 +1,6 @@
 /*
-Copyright [2013] [Graham Abbott <graham.abbott@gmail.com>]
+
+Copyright 2013 Graham Abbott graham.abbott@gmail.com
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -12,6 +13,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 */
 
 var genie = ( function() {
@@ -88,6 +90,7 @@ var genie = ( function() {
         this.notes = [];
         this.cur_template_line = 0;
         this.value_only = undefined;
+        this.exposed_values = [];
     };
 
     Template.prototype.find_next_block = function() {
@@ -205,6 +208,7 @@ var genie = ( function() {
         var in_func = [];
         var i = 0;
         var blocks = this.find_next_block();
+        var tempvar_counter = 0;
     
         while(blocks.length > 0) {
             for( i = 0; i < blocks.length; i++ ) {
@@ -308,7 +312,10 @@ var genie = ( function() {
 		    if (data.indexOf(GENIE_CONTEXT_begin) == 0) {
 			f_code.push( "/* " + line + " */ write( " + vardata.substring(1) + " );\n");
                     } else {
-			f_code.push( "/* " + line + " */ write( (typeof (" + vardata + ") != 'undefined') ? escape_variable(" + vardata + ", '" + vartype + "') : undefined_variable('" + vardata + "') );\n");
+                        var tempvar_name = "__tempvar_" + tempvar_counter;
+                        f_code.push( "/* " + line + " */ var " + tempvar_name + " = " + vardata + ";\n");
+                        f_code.push( "/* " + line + " */ if (typeof(" + tempvar_name + ") == \"function\") { write(" + tempvar_name + "());}\n");
+			f_code.push( "/* " + line + " */ else { write( (typeof(" + tempvar_name + ") != 'undefined') ? escape_variable(" + tempvar_name + ", '" + vartype + "') : undefined_variable('" + tempvar_name + "') ); } \n");
 		    }
                 } else if (type == 'bindable') {
                     var value = this.environment.bindable_dict[str_trim(data)];
@@ -339,12 +346,52 @@ var genie = ( function() {
         this.f_code = null;
         */
 
+
+        var preamble = [];
+        if (this.notes) {
+            preamble = this.preamble_notes();
+        }
+
+        preamble = preamble.join(' ');
+        
         var header = "var write = locals.write; var escape_variable = locals.escape_variable;";
         header += "var partial = locals.partial; var bailout = locals.bailout;";
         header += "var _env = locals._env; var _template = locals._template;";
-        this.f_code_render = header + f_code.join('');
+        this.f_code_render = preamble + header + f_code.join('');
+
         console.log(this.f_code_render);
         this.f_code = null;
+    };
+
+    Template.prototype.preamble_notes = function() {
+        var newnotes = [];
+        var preamble = [];
+
+        for(var i = 0; i < this.notes.length; i++) {
+            var obj = str_trim(this.notes[i]);
+            var result = null;
+            if (obj.slice(0, 6) == "expose") {
+                try {
+                    result = JSON.parse(obj.slice(6, obj.length));
+                } catch (err) {
+                    result = null;
+                }
+                if (result) {
+                    if (typeof(result) == "string") {
+                        preamble.push("var " + result + " = v." + result + ";");
+                    } else if (typeof(result) == "object") {
+                        for(var __i = 0; __i < result.length; __i++) {
+                            var result_final = result[__i].replace(' ', '_');
+                            preamble.push("var " + result_final + " = v." + result_final + ";");
+                        }
+                    }
+                }
+            } else {
+                newnotes.push(obj);
+            }
+        }
+        this.notes = newnotes;
+        return preamble;
     };
 
     Template.prototype.pre_render = function(undefined_variable) {
@@ -358,11 +405,7 @@ var genie = ( function() {
         locals['_template'] = this;
         locals['bailout'] = this.bailout;
 
-        if (this.environment) {
-            locals['escape_variable'] = function(data, type) { return this.environment.escape_variable(data, type); };
-        } else {
-            locals['escape_variable'] = function(data, type) { return data; };
-        }
+        locals['escape_variable'] = function(data, type) { return data; };
         
         try {
             var compiled_code = new Function('parent', 'v', 'defaults', 'undefined_variable', 'locals', this.f_code_render);
