@@ -313,6 +313,7 @@ var genie = ( function() {
 			f_code.push( "/* " + line + " */ write( " + vardata.substring(1) + " );\n");
                     } else {
                         var tempvar_name = "__tempvar_" + tempvar_counter;
+                        tempvar_counter++;
                         f_code.push( "/* " + line + " */ var " + tempvar_name + " = " + vardata + ";\n");
                         f_code.push( "/* " + line + " */ if (typeof(" + tempvar_name + ") == \"function\") { write(" + tempvar_name + "());}\n");
 			f_code.push( "/* " + line + " */ else { write( (typeof(" + tempvar_name + ") != 'undefined') ? escape_variable(" + tempvar_name + ", '" + vartype + "') : undefined_variable('" + tempvar_name + "') ); } \n");
