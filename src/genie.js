@@ -447,6 +447,7 @@ var genie = ( function() {
         if (this.final_func == null) {
             this.pre_render(undefined_variable);
         }
+
         try {
             var result = this.final_func(variables, undefined_variable);
             return result;
@@ -601,6 +602,27 @@ var genie = ( function() {
               });
     };
 
+    Environment.prototype.load_templates = function(orig_paths, final_callback) {
+        var env = this;
+        function load_next(paths, callback) {
+            if (paths.length == 0) {
+                callback(env);
+            } else {
+                var template_path = paths.pop();
+                $.get(template_path, 
+                      function(data) {
+                          var spath = template_path.split('/');
+                          var name = spath[spath.length-1];
+                          env.create_template(name, data);
+                          console.log('created template: ' + name + ' (' + data.length + ' bytes)');
+                          load_next(paths, callback);
+                      });
+            }
+
+        };
+        load_next(orig_paths, final_callback);
+    };
+
     Environment.prototype.load_template_dir = function(url, cb) {
         var env = this;
         $.get(url, function(data) {
@@ -710,7 +732,6 @@ var genie = ( function() {
         document.body.innerHTML = v;
         return v;
     };
-
 
     var exports;
     exports = {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count, 'version':GENIE_VERSION, 'dig_set':dig_set, 'dig_get':dig_get, 'render_body_as_template':render_body_as_template, 'rbt':render_body_as_template, 'str_starts_with':str_starts_with};

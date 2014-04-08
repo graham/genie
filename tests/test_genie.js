@@ -1,4 +1,4 @@
-describe("Template", function() {
+describe("Genie Templates", function() {
   var template = null;
 
   beforeEach(function() {

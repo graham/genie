@@ -59,7 +59,7 @@ var ut = (function() {
         this.parent.report(this, FAILED);        
     };
 
-    var ParalellExecution = function(on_success, on_error) {
+    var ParallelExecution = function(on_success, on_error) {
         this.pending = {};
         this.finished = [];
         this.errors = [];
@@ -69,7 +69,7 @@ var ut = (function() {
         this.max_id = 0;
     };
 
-    ParalellExecution.prototype.run = function(items) {
+    ParallelExecution.prototype.run = function(items) {
         var e = this;
         var id = 0;
         for(var i in items) {
@@ -84,7 +84,7 @@ var ut = (function() {
         this.check();
     };
 
-    ParalellExecution.prototype.report = function(tracker, status) {
+    ParallelExecution.prototype.report = function(tracker, status) {
         this.pending[tracker.id] = null;
         if (status == FINISHED) {
             this.finished.push(tracker);
@@ -94,7 +94,7 @@ var ut = (function() {
         this.check();
     };
 
-    ParalellExecution.prototype.check = function() {
+    ParallelExecution.prototype.check = function() {
         if (this.all_started == false) {
             return;
         }
@@ -108,11 +108,10 @@ var ut = (function() {
         }
     };
 
-    var paralell = function(items, success, failure) {
-        var se = new ParalellExecution(success, failure);
+    var parallel = function(items, success, failure) {
+        var se = new ParallelExecution(success, failure);
         se.run(items);
     };
-
 
     var SerialExecution = function(on_success, on_error) {
         this.pending = {};
@@ -193,9 +192,13 @@ var ut = (function() {
 
     var serial = function(asdf, items, success, failure) {
         var se = new SerialExecution(success, failure);
-	se.last_data = asdf();
+        se.last_data = asdf();
         se.run(items);
     };
 
-    return {'Tracker':Tracker, 'serial':serial, 'paralell':paralell, 'do_nothing':do_nothing};
+    var easy = function(func) {
+
+    };
+
+    return {'Tracker':Tracker, 'serial':serial, 'parallel':parallel, 'do_nothing':do_nothing};
 })();
