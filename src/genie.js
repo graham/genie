@@ -360,7 +360,7 @@ var genie = ( function() {
         header += "var _env = locals._env; var _template = locals._template;";
         this.f_code_render = preamble + header + f_code.join('');
 
-        console.log(this.f_code_render);
+        //console.log(this.f_code_render);
         this.f_code = null;
     };
 
@@ -401,7 +401,17 @@ var genie = ( function() {
         var locals = {};
         locals['_env'] = this.environment;
         locals['____output'] = [];
-        locals['partial'] = function(name, d) { return locals['_env'].get_template(name).render(d); };
+
+        locals['partial'] = function(name, d) { 
+            var ptemp = locals['_env'].get_template(name);
+            if (ptemp == undefined) {
+                console.log("ERROR: Template " + name + " not found.");
+                return "TEMPLATE_NOT_FOUND: " + name;
+            } else {
+                return locals['_env'].get_template(name).render(d); 
+            }
+        };
+
         locals['write'] = function(ddd) { locals['____output'].push(ddd); };
         locals['_template'] = this;
         locals['bailout'] = this.bailout;
@@ -608,41 +618,58 @@ var genie = ( function() {
             if (paths.length == 0) {
                 callback(env);
             } else {
-                var template_path = paths.pop();
-                $.get(template_path, 
+                var template_name = paths.pop();
+                $.get(template_name, 
                       function(data) {
-                          var spath = template_path.split('/');
-                          var name = spath[spath.length-1];
-                          env.create_template(name, data);
+                          env.create_template(template_name, data);
                           console.log('created template: ' + name + ' (' + data.length + ' bytes)');
                           load_next(paths, callback);
-                      });
+                      }).fail( function() {load_next(paths, callback)} );
             }
 
         };
         load_next(orig_paths, final_callback);
     };
 
+    Environment.prototype.auto_load = function(callback) {
+        var env = this;
+        var template_names = [];
+        $('.genie-template').each( function(index, item) {
+                template_names.push($(item).attr('data-genie-template'));
+        });
+        
+        env.load_templates(template_names, function() {
+                $('.genie-template').each( function(index, item) {
+                        var template_name = $(item).attr('data-genie-template');
+                        var result = env.render(template_name, {});
+                        $(item).html(result);
+                    });
+                if (callback) {
+                    callback();
+                }
+            });
+    };
+
     Environment.prototype.load_template_dir = function(url, cb) {
         var env = this;
         $.get(url, function(data) {
-            data = JSON.parse(data);
-            var items = [];
-            for(var name in data) {
-                var obj = data[name];
-                var load = function(o) {
-                    return function(t) { 
-                        env.load_template(url + o, o.split('.')[0], t);
+                data = JSON.parse(data);
+                var items = [];
+                for(var name in data) {
+                    var obj = data[name];
+                    var load = function(o) {
+                        return function(t) { 
+                            env.load_template(url + o, o.split('.')[0], t);
+                        }
                     }
+                    items.push( load(obj) ); 
                 }
-                items.push( load(obj) ); 
-            }
-            ut.serial(function() { return; }, items, cb);
-        });
+                ut.serial(function() { return; }, items, cb);
+            });
     };
-
+    
     var main_environment = new Environment();
-
+    
     var fs = function( s, args, value_only ) {
         var t = new Template(s);
         t.value_only = value_only;
@@ -680,17 +707,17 @@ var genie = ( function() {
         if (settings['di']) {
             split_key = settings['di'];
         }
-            
-	if (key.indexOf(split_key) == -1) {
-	    return obj[key];
-	} else {
-	    var cur = key.split(split_key, 1);
-	    var rest = key.split(split_key).slice(1).join(split_key);
-	    obj = obj[cur];
-	    return this.dig_get(obj, rest);
-	}
+        
+        if (key.indexOf(split_key) == -1) {
+            return obj[key];
+        } else {
+            var cur = key.split(split_key, 1);
+            var rest = key.split(split_key).slice(1).join(split_key);
+            obj = obj[cur];
+            return this.dig_get(obj, rest);
+        }
     };
-
+    
     var dig_set = function(obj, key, value, settings) {
         var split_key = "/";
         var def = function() { return new Object(); };
@@ -707,21 +734,21 @@ var genie = ( function() {
         if (key[key.length-1] == split_key) {
             key = key.slice(0, key.length-1);
         }
-
-	if (key.indexOf(split_key) == -1) {
-	    obj[key] = value;
+        
+        if (key.indexOf(split_key) == -1) {
+            obj[key] = value;
             return [obj, key];
-	} else {
-	    var cur = key.split(split_key, 1);
-	    var rest = key.split(split_key).slice(1).join(split_key);
-	    var newb = obj[cur];
-	    if (newb == undefined) {
-		obj[cur] = def();
-		newb = obj[cur];
-	    }
-
-	    return this.dig_set(newb, rest, value);
-	}
+        } else {
+            var cur = key.split(split_key, 1);
+            var rest = key.split(split_key).slice(1).join(split_key);
+            var newb = obj[cur];
+            if (newb == undefined) {
+                obj[cur] = def();
+                newb = obj[cur];
+            }
+            
+            return this.dig_set(newb, rest, value);
+        }
     }; 
     
     var unpack_packed_hash = function(data) {
