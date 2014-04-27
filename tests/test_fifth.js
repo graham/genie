@@ -53,4 +53,29 @@ describe("Fifth Runtime", function() {
                 env.execute('"custom message" "event_123" publish');
                 expect(env.peek()).toEqual([1,2,3]);
             });
+
+        it("Should properly handle quoting in order to allow for map", function() {
+                var env = new Fifth.Environment();
+                env.execute("[1,2,3,4,5] `1 +` map");
+                expect(env.peek()).toEqual([2,3,4,5,6]);
+            });
+
+        it("Should properly handle quoting in order to allow for map (double)", function() {
+                var env = new Fifth.Environment();
+                env.execute("[1,2,3,4,5] `2 *` map");
+                expect(env.peek()).toEqual([2,4,6,8,10]);
+            });
+
+        it("Should have filter.", function() {
+                var env = new Fifth.Environment();
+                env.execute("[1,1,0,1] `1 + 2 ==` filter");
+                expect(env.peek()).toEqual([1,1,1]);
+            });
+
+        it("Should have foldl.", function() {
+                var env = new Fifth.Environment();
+                env.execute("[1,2,3,9] 1 `+` foldl");
+                expect(env.peek()).toEqual(16);
+                console.log(env.peek());
+            });
     });

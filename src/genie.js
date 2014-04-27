@@ -17,6 +17,7 @@ limitations under the License.
 */
 
 var genie = ( function() {
+    var UNIQUE_TIME = "" + new Date().getMilliseconds();
     var GENIE_VERSION = "0.3";
     var genie_context_begin;
     var genie_context_end;
@@ -602,7 +603,7 @@ var genie = ( function() {
 
     Environment.prototype.load_template = function(url, name, cb) {
         var env = this;
-        $.get(url, 
+        $.get(url + "?_ts=" + UNIQUE_TIME, 
               function(data) {
                   env.create_template(name, data);
                   console.log('created template: ' + name + ' (' + data.length + ' bytes)');
@@ -619,7 +620,7 @@ var genie = ( function() {
                 callback(env);
             } else {
                 var template_name = paths.pop();
-                $.get(template_name, 
+                $.get(template_name + "?_ts=" + UNIQUE_TIME,
                       function(data) {
                           env.create_template(template_name, data);
                           console.log('created template: ' + name + ' (' + data.length + ' bytes)');

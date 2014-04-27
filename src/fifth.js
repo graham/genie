@@ -9,8 +9,118 @@
 /  
 */
 
+var FifthLib = (function() {
+        var d = {};
+        
+        d['alert'] = function(e, s) {
+            console.log("Stack: " + JSON.stringify(e.stack));
+            console.log("Vars: " + JSON.stringify(e.vars));
+        };
+        
+        d['+'] = function(e, stack) {
+            var a = stack.pop();
+            var b = stack.pop();
+            stack.push(b + a);
+        };
+
+        d['-'] = function(e, stack) {
+            var a = stack.pop();
+            var b = stack.pop();
+            stack.push(a - b);
+        };
+
+        d['*'] = function(e, stack) {
+            var a = stack.pop();
+            var b = stack.pop();
+            stack.push(a * b);
+        };
+        
+        d['dup'] = function(e, stack) {
+            stack.push(e.peek());
+        };
+
+        d['=='] = function(e, stack) {
+            var a = stack.pop();
+            var b = stack.pop();
+            stack.push(a == b);
+        }
+
+        d['!='] = function(e, stack) {
+            var a = stack.pop();
+            var b = stack.pop();
+            stack.push(a != b);
+        }
+
+        d['map'] = function(e, stack) {
+            var f = stack.pop();
+            var l = stack.pop();
+            var result = [];
+
+            if (f[0] != '`') {
+                throw "NOT A VALID FUNC: " + f
+            }
+
+            f = f.slice(1);
+
+            for(var i = 0; i < l.length; i++) {
+                var value = e.execute_anon([l[i]], f);
+                result.push(value[0]);
+            }
+            stack.push(result);
+        };
+
+        d['filter'] = function(e, stack) {
+            var f = stack.pop();
+            var l = stack.pop();
+            var result = [];
+
+            if (f[0] != '`') {
+                throw "NOT A VALID FUNC: " + f
+            }
+
+            f = f.slice(1);
+
+            for(var i = 0; i < l.length; i++) {
+                var value = e.execute_anon([l[i]], f);
+                if (value) {
+                    result.push(l[i]);
+                }
+            }
+            stack.push(result);
+        };
+
+        d['foldl'] = function(e, stack) {
+            var f = stack.pop();
+            var accum = stack.pop();
+            var l = stack.pop();
+            var result = [];
+
+            if (f[0] != '`') {
+                throw "NOT A VALID FUNC: " + f
+            }
+
+            f = f.slice(1);
+
+            for(var i = 0; i < l.length; i++) {
+                var value = e.execute_anon([accum, l[i]], f);
+                accum = value[0];
+            }
+            stack.push(accum);
+        };
+        
+        d['echo'] = function(e, stack) {
+            console.log(stack.pop());
+        };
+
+        d['pop'] = function(e, stack) {
+            stack.pop();
+        };
+
+        return d;
+    })()
+
 var Fifth = (function()  {
-        var token_chars = ["'", '"'];
+        var token_chars = ["'", '"', '`', '|'];
         var special_chars = ["!", "@", "#"];
 
         var is_digit = function(t) {
@@ -35,28 +145,7 @@ var Fifth = (function()  {
             this.vars = {};
             this.functions = {};
             this.stack = [];
-            
-            this.functions['alert'] = function(e) {
-                console.log("Stack: " + JSON.stringify(e.stack));
-                console.log("Vars: " + JSON.stringify(e.vars));
-            };
-
-            this.functions['+'] = function(e) {
-                var a = e.stack.pop();
-                var b = e.stack.pop();
-                e.stack.push(b + a);
-            };
-
-            this.functions['append'] = function(e) {
-                var argument = e.stack.pop();
-                var var_name = e.stack.pop();
-                this.vars[var_name].push(argument);
-            };
-
-            this.functions['hset'] = function(e) {
-                var key = e.stack.pop();
-                var value = e.stack.pop();
-            };
+            this.functions = FifthLib;
         };
 
         Environment.prototype.peek = function() {
@@ -64,6 +153,14 @@ var Fifth = (function()  {
                 return null;
             } else {
                 return this.stack[this.stack.length-1];
+            }
+        };
+
+        Environment.prototype.pop = function() {
+            if (this.stack.length == 0) {
+                return null;
+            } else {
+                return this.stack.pop();
             }
         };
 
@@ -95,6 +192,16 @@ var Fifth = (function()  {
             }
         };
 
+        Environment.prototype.handle_special = function(c, token) {
+            var env = this;
+            if (c == '`') {
+                return '`' + token;
+            } else if (c == '|') {
+                return '|' + token;
+            }
+            return token;
+        };
+
         Environment.prototype.parse = function(text) {
             var tokens = [];
             var current_token = [];
@@ -120,6 +227,7 @@ var Fifth = (function()  {
                     if (c == quotestack[quotestack.length-1]) {
                         quotestack.pop();
                         var value = current_token.join('');
+                        value = this.handle_special(c, value);
                         tokens.push(value);
                         current_token = [];
                     } else {
@@ -136,27 +244,51 @@ var Fifth = (function()  {
             return tokens;            
         };
 
-        Environment.prototype.execute_one = function(single_item) {
-            if (typeof(single_item) == "function") {
-                single_item(this);
-            } else {
-                this.stack.push(single_item);
-            }
-        };
-
         Environment.prototype.execute = function(text) {
             var code = this.parse(text);
             for(var i = 0; i < code.length; i++) {
-                this.execute_one(code[i]);
+                var item = code[i];
+                if (typeof(item) == "function") {
+                    item(this, this.stack);
+                } else {
+                    this.stack.push(item);
+                }
             }
+        };
+
+        Environment.prototype.execute_anon = function(prep, text) {
+            var code = this.parse(text);
+            for(var i = 0; i < code.length; i++) {
+                var item = code[i];
+                if (typeof(item) == "function") {
+                    item(this, prep);
+                } else {
+                    prep.push(item);
+                }
+            }
+            return prep;
         };
 
         Environment.prototype.register = function(key, func) {
             this.functions[key] = func;
         };
 
+        var performance_test = function(env) {
+            var end = null;
+            var start = (new Date).getTime();
+
+            for( var i = 0; i < 10000; i++ ) {
+                env.execute("1 1 + pop")
+                env.execute("[1,2,3,9] 1 `+` foldl pop");
+                env.execute("[1,2,3,4,5] `2 *` map pop");
+            }
+            end = (new Date).getTime();
+
+            return end - start;
+        };
+
         return {
-            'Environment':Environment
+            'Environment':Environment, performance_test:performance_test
         };
 
             
