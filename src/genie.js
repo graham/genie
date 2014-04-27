@@ -17,7 +17,7 @@ limitations under the License.
 */
 
 var genie = ( function() {
-    var UNIQUE_TIME = "" + new Date().getMilliseconds();
+    var UNIQUE_TIME = "" + new Date().getTime();
     var GENIE_VERSION = "0.3";
     var genie_context_begin;
     var genie_context_end;
