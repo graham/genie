@@ -340,15 +340,6 @@ var genie = ( function() {
             blocks = this.find_next_block();
         }
 
-        /*
-        var header = "var __exposed_vars = []; for (var a in v) { if (v.hasOwnProperty(a)) { __exposed_vars.push(a); } }";
-        header += " with(v) { \n"; // this is the first time i've seen 'with' used and felt it was a good thing.
-        this.f_code = f_code;
-        this.f_code_render = "with(locals) {\n with(v) {\n" + this.f_code.join('') + "}}";
-        this.f_code = null;
-        */
-
-
         var preamble = [];
         if (this.notes) {
             preamble = this.preamble_notes();
