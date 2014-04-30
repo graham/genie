@@ -61,6 +61,7 @@ Kapture.prototype.initialize = function() {
     this.commands = {};
     this.passive_commands = {};
     this.non_passive_commands = {};
+    this.anyevent_commands = [];
     this.pushes = {};
     this.cancel_keybinding = 'control-g';
 
@@ -221,6 +222,13 @@ Kapture.prototype.key_event = function(event, type) {
         event.preventDefault();
     }
     last_guess = modifier + name;
+
+    if (this.anyevent_commands.length) {
+        for(var i = 0; i < this.anyevent_commands.length; i++) {
+          var f = this.anyevent_commands[i];
+          f(this);
+        }
+    }
     
     if (something_was_called) {
         return true;
@@ -270,6 +278,10 @@ Kapture.prototype.add_non_passive_command = function(key, func, doc) {
     }
     this.non_passive_commands[key].push(func);
     this.documentation[key] = doc;
+};
+
+Kapture.prototype.anyevent_command = function(func, doc) {
+    this.anyevent_commands.push(func);
 };
 
 Kapture.prototype.on_push = function(key) {
