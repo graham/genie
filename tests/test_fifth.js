@@ -66,16 +66,9 @@ describe("Fifth Runtime", function() {
                 expect(env.peek()).toEqual([2,4,6,8,10]);
             });
 
-        it("Should have filter.", function() {
-                var env = new Fifth.Environment();
-                env.execute("[1,1,0,1] `1 + 2 ==` filter");
-                expect(env.peek()).toEqual([1,1,1]);
-            });
-
         it("Should have foldl.", function() {
                 var env = new Fifth.Environment();
                 env.execute("[1,2,3,9] 1 `+` foldl");
                 expect(env.peek()).toEqual(16);
-                console.log(env.peek());
             });
     });
