@@ -1,10 +1,61 @@
+var log = function() {
+  var r = []
+  for( var i = 0; i < arguments.length; i++) {
+    r.push(arguments[i]);
+  }
+  console.log( r);
+};
+
 var str_trim = function(s) { return s.replace(/^\s+|\s+$/g, "").replace(/^[\n|\r]+|[\n|\r]+$/g, ""); };
+
+var wrap_func = function(fn) {
+  return function(scope, args) {
+    args = Scheme.evaluate(args, scope);
+    return fn(scope, args);
+  };
+}
 
 var SchemeLib = (function() {
   var d = {};
-  
-  return d
-})();
+
+  d['let'] = function(scope, args) {
+    var child = new Scheme.Scope({parent:scope});
+    var defs = args[0];
+    var code = args[1];
+
+    for(var i=0; i<defs.length; i++) {
+      var obj = defs[i];
+      (function(def) {
+        child.data[def[0]] = def[1];
+      })(obj);
+    }
+
+    return Scheme.evaluate(code, child);
+  };
+
+  d['setf'] = function(scope, args) {
+    console.log('SCOPE');
+    scope.set(args[0], Scheme.evaluate(args[1], scope));
+    console.log(scope);
+  }
+
+  d['alert'] = function(scope, args) {
+    args = Scheme.evaluate(args, scope);
+    alert("" + JSON.stringify(args));
+    return [];
+  };
+
+  d['+'] = function(scope, args) {
+    args = Scheme.evaluate(args, scope);
+    var sum = 0;
+    for(var i=0; i < args.length; i++) {
+      sum += args[i];
+    }
+    return sum;
+  };
+
+  return d;
+});
 
 var Scheme = (function() {
   var parse = function(text) {
@@ -18,7 +69,6 @@ var Scheme = (function() {
     
     for(var i=0; i < input_ll; i++) {
       var c = text[i];
-      console.log(c);
       
       if (in_string) {
         if (c == '"') {
@@ -29,7 +79,6 @@ var Scheme = (function() {
         } else {
           current_token.push(c);
         }
-
       } else if (in_comment) {
         if (c == '\n') {
           in_comment = false;
@@ -65,15 +114,85 @@ var Scheme = (function() {
         }
 
       }
-      console.log('token: ' + current_token);
-      console.log('expr: ' + current_expr);
-      console.log('estck: ' + expr_stack);
     } // for
 
     return current_expr;
   }
 
-  var execute = function(code, env) {};
+  var execute = function(code, lib, scope) {
+    if (lib == undefined) {
+      lib = SchemeLib();
+    }
+    if (scope == undefined) {
+      scope = new Scope();
+    }
+
+    var ast = parse(code);
+    var linked = link(ast, lib, scope);
+    return evaluate(linked, scope);
+  };
+
+  var link = function(ast, lib, scope) {
+    var is_digit = function(t) {
+      if (t >= '0' && t <= '9') {
+        return true;
+      } else {
+        return false;
+      }
+    };
+    
+    var root = [];
+
+    for(var i=0; i < ast.length; i++) {
+      var obj = ast[i];
+      (function(item) {
+        if (item.constructor == [].constructor) {
+          // we assume it's another ast to consume.
+          var node = link( item, lib, scope );
+          root.push(node);
+        } else if (item.constructor == ''.constructor) {
+          if (lib[item] != undefined) {
+            root.push(lib[item]);
+          } else if (scope.get(item) && scope.get(item) instanceof Function) {
+            root.push(wrap_func(scope.get(item)));
+          } else if (is_digit(item[0])) {
+            root.push(parseFloat(item));
+          } else {
+            root.push(item);
+          }
+        } else {
+          console.log("Unknown type");
+        }
+      })(obj);
+    }
+    
+    return root;
+  };
+  
+  var evaluate = function(linked, scope) {
+    if (linked instanceof Array) {
+      if (linked[0] instanceof Function) {
+        return linked[0].apply(null, [scope,linked.slice(1)]);
+      } else {
+        var result = [];
+        for(var i=0; i < linked.length; i++) {
+          result.push(evaluate(linked[i], scope));
+        }
+        return result;
+      }
+    } else {
+      if (linked.constructor == ''.constructor) {
+        if (linked[0] == '"') {
+          return linked.slice(1, linked.length-1);
+        } else {
+          return scope.get(linked);
+        }
+      } else {
+        return linked;
+      }
+    }
+  };
+    
 
   var Scope = function(options) {
     if (options == undefined) {
@@ -93,19 +212,11 @@ var Scheme = (function() {
     }
   };
 
-  Scope.prototype.push = function() {
-    
-  };
-
-  Scope.prototype.pop = function() {
-
-  };
-
   Scope.prototype.get = function(key) {
-    if (this.data[key] != undefined) {
+    if (this.data[key] !== undefined) {
       return this.data[key];
     } else {
-      if (this.parent_scope == undefined) {
+      if (this.parent_scope === undefined) {
         return undefined;
       } else {
         return this.parent_scope.get(key);
@@ -114,24 +225,45 @@ var Scheme = (function() {
   };
 
   Scope.prototype.set = function(key, value) {
-    if (this.data[key] != undefined) {
+    if (this.data[key] !== undefined) {
       this.data[key] = value;
     } else {
-      if (this.parent_scope == undefined) {
+      if (this.parent_scope === undefined) {
         this.data[key] = value;
       } else {
-        this.parent_scope.set(key, value);
+        if (this.parent_scope.test(key) == true) {
+          this.parent_scope.set(key, value);
+        } else {
+          this.data[key] = value;
+        }
       }
     }
   };
 
-  var Environment = function() {
-    
+  Scope.prototype.execute = function(code, lib) {
+    if (lib == undefined) {
+      lib = SchemeLib();
+    }
+    return execute(code, lib, this);
+  };
+
+  Scope.prototype.test = function(key) {
+    if (this.data[key] !== undefined) {
+      return true;
+    } else {
+      if (this.parent_scope === undefined) {
+        return false;
+      } else {
+        return this.parent_scope.test(key);
+      }
+    }
   };
 
   return {
     'Scope':Scope,
-    'Environment':Environment,
-    'parse':parse
+    'parse':parse,
+    'link':link,
+    'execute':execute,
+    'evaluate':evaluate
   };
 })();

@@ -290,6 +290,4 @@ var Fifth = (function()  {
         return {
             'Environment':Environment, performance_test:performance_test
         };
-
-            
     })();
