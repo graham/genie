@@ -41,7 +41,7 @@ var ut = (function() {
             if (args == undefined) {
                 this.callback(this);
             } else {
-                this.callback(this, args);
+                this.callback.apply(null, [this].concat(args));
             }
         } catch (e) {
             console.log(e);
@@ -114,6 +114,7 @@ var ut = (function() {
     };
 
     var SerialExecution = function(on_success, on_error) {
+        this.init = null;
         this.pending = {};
         this.finished = [];
         this.errors = [];
@@ -190,9 +191,9 @@ var ut = (function() {
         }
     };
 
-    var serial = function(asdf, items, success, failure) {
+    var serial = function(init, items, success, failure) {
         var se = new SerialExecution(success, failure);
-        se.last_data = asdf();
+        se.init = init;
         se.run(items);
     };
 

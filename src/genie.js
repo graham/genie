@@ -575,15 +575,19 @@ var genie = ( function() {
         return t.render(vars, undef_var);
     };
 
-    Environment.prototype.render = function(name, vars, undef_var) {
-        if (vars === undefined) {
-            vars = {};
-        }
-        var t = this.template_dict[name];
-        var result = t.render(vars, undef_var);
-	return result;
-    };
-
+  Environment.prototype.render = function(name, vars, undef_var) {
+    if (vars === undefined) {
+      vars = {};
+    }
+    var t = this.template_dict[name];
+    if (t === undefined) {
+      console.log("Template " + name + " not found.");
+      return '';
+    } else {
+      return t.render(vars, undef_var);
+    }
+  };
+    
     Environment.prototype.set_obj = function(name, obj) {
         this.object_dict[name] = obj;
     };
