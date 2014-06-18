@@ -1,4 +1,4 @@
-var Promise = (function() {
+var GeniePromise = (function() {
     var pass = function() {};
 
     var GeniePromise = function(options) {
