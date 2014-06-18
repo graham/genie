@@ -1,7 +1,7 @@
 var Promise = (function() {
     var pass = function() {};
 
-    var GeniePromise = function() {
+    var GeniePromise = function(options) {
         this.data = {};
 
         this.flag_next = false;
@@ -10,6 +10,7 @@ var Promise = (function() {
         this.call_index = 0;
         this.is_loop = false;
         this.stopped = false;
+        this.last_arg = undefined;
     };
 
     GeniePromise.prototype.set = function(key, value) {
@@ -54,13 +55,12 @@ var Promise = (function() {
             result = success(this);
         } catch (e) {
             console.log("Error: " + e);
-            failure(this, e);
+            if (failure) {
+                failure(this, e);
+            } else {
+                console.log(e);
+            }
             result = null;
-        }
-        
-        if (this.flag_next) {
-            var p = this;
-            setTimeout(function() { p.call_next(); }, 1);
         }
     };
 
@@ -68,13 +68,15 @@ var Promise = (function() {
         var p = this;
         this.call_queue.push( [ function() { 
             setTimeout( function() {
+                console.log("boop: " + timeout);
                 p.call_next();
             }, timeout);
-        }, pass()] );
+        }, pass] );
         return this;
     };
 
-    GeniePromise.prototype.next = function() {
+    GeniePromise.prototype.next = function(i) {
+        this.last_arg = i;
         var p = this;
         setTimeout(function() { p.call_next(); }, 1);
     };
@@ -94,6 +96,16 @@ var Promise = (function() {
     
     GeniePromise.prototype.stop = function() {
         this.stopped = true;
+    };
+
+    GeniePromise.prototype.map = function(f, l) {
+        for(var i = 0; i < l.length; i++) {
+            this.then(function(p) { f(l[i], p); });
+        }
+    };
+
+    GeniePromise.prototype.fold = function() {
+        
     };
 
     return GeniePromise;

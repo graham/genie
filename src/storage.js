@@ -102,7 +102,11 @@ var storage_engine = (function() {
         var l = [];
         for (var i in this.storage) {
             if (i.slice(0, this.prefix.length) == this.prefix) {
-                l.push(i.slice(this.prefix.length+1));
+                if (this.prefix) {
+                    l.push(i.slice(this.prefix.length+1));
+                } else {
+                    l.push(i.slice(this.prefix.length));
+                }
             }
         }
         return l;
