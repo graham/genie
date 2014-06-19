@@ -29,7 +29,6 @@ var storage_engine = (function() {
         } else {
             this.storage = localStorage;
         }
-
     };
 
     StorageEngine.prototype.set = function(key, value) {
