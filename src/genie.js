@@ -757,9 +757,25 @@ var genie = ( function() {
     };
 
     var exports;
-    exports = {'Template':Template, 'Environment':Environment, 'monkey_patch':monkey_patch, 'main_environment':main_environment, 'fs':fs, 'str_count':str_count, 'version':GENIE_VERSION, 'dig_set':dig_set, 'dig_get':dig_get, 'render_body_as_template':render_body_as_template, 'rbt':render_body_as_template, 'str_starts_with':str_starts_with};
+
+    exports = {
+        'Template':Template, 
+        'Environment':Environment, 
+        'monkey_patch':monkey_patch, 
+        'main_environment':main_environment, 
+        'fs':fs, 
+        'str_count':str_count, 
+        'version':GENIE_VERSION, 
+        'dig_set':dig_set, 
+        'dig_get':dig_get, 
+        'render_body_as_template':render_body_as_template, 
+        'rbt':render_body_as_template, 
+        'str_starts_with':str_starts_with
+    };
+
     if (typeof module !== 'undefined') {
         module.exports = exports;
     }
+
     return exports;
 })();
