@@ -628,6 +628,9 @@ var genie = ( function() {
     };
 
     Environment.prototype.auto_load = function(callback) {
+        // this sucks because it requires jquery, should figure out how to
+        // make that not a dependency.
+        
         var env = this;
         var template_names = [];
         $('.genie-template').each( function(index, item) {
@@ -647,6 +650,9 @@ var genie = ( function() {
     };
 
     Environment.prototype.load_template_dir = function(url, cb) {
+        // this sucks because it requires jquery, should figure out how to
+        // make that not a dependency.
+        
         var env = this;
         $.get(url, function(data) {
                 data = JSON.parse(data);
