@@ -52,7 +52,7 @@ var GeniePromise = (function() {
         var failure = current[1];
 
         try {
-            result = success.apply(this, this.last_arg);
+            result = success.apply(this, [this].concat(this.last_arg));
         } catch (e) {
             console.log("Error: " + e);
             if (failure) {
