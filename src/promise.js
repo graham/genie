@@ -52,7 +52,7 @@ var GeniePromise = (function() {
         var failure = current[1];
 
         try {
-            result = success(this);
+            result = success.apply(this, this.last_arg);
         } catch (e) {
             console.log("Error: " + e);
             if (failure) {
@@ -75,14 +75,14 @@ var GeniePromise = (function() {
         return this;
     };
 
-    GeniePromise.prototype.next = function(i) {
-        this.last_arg = i;
+    GeniePromise.prototype.next = function() {
+        this.last_arg = arguments;
         var p = this;
         setTimeout(function() { p.call_next(); }, 1);
     };
     
     GeniePromise.prototype.run = function() {
-        this.stopped = false;
+        this.se;
         this.call_index = 0;
         this.next();
         return this;
