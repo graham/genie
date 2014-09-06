@@ -777,9 +777,10 @@ var genie = ( function() {
         'str_starts_with':str_starts_with
     };
 
-    if (typeof module !== 'undefined') {
-        module.exports = exports;
-    }
-
     return exports;
 })();
+
+if (typeof module !== 'undefined') {
+    module.exports.genie = genie;
+}
+
