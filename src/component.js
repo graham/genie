@@ -167,7 +167,11 @@ var mvc = (function() {
     });
 
     var GCComponent = Component.extend({
-        init: function(url, state, target) {
+        init: function(props) {
+            var url = props['url'];
+            var target = props['target'];
+            var state = props['state'] || {};
+
             this._super(state);
             this.__data__.resources = [];
             this.__data__.env = new genie.Environment();
