@@ -64,6 +64,9 @@ var Class = (function(){
    
     return Class;
   };
+  
+  return this.Class;
+
 })();
 
 if (typeof module !== 'undefined') {

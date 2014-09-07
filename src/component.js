@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 var mvc = (function() {
-    
     var safe_append_to_key = function(list, key, value) {
         if (list[key] == undefined) {
             list[key] = [value];
@@ -24,51 +23,104 @@ var mvc = (function() {
         }
     }
 
-    var Component = function() {
-        this.__data__ = {};
-        this.__data__.event_listeners = {};
-    };
+    var Component = Class.extend({
+        init: function(state) {
+            this.__data__ = {};
+            this.__data__.event_listeners = {};
+            this.__data__.state = state || {};
+        },
+
+        // This shouldn't be over ridden by subclasses.
+        load: function() { },
+
+        get: function(key) {
+            return this.__data__.state[key];
+        },
     
-    Component.prototype.init = function() {};
-    Component.prototype.on_load = function() {};
-    Component.prototype.will_show = function() {};
-    Component.prototype.did_show = function() {};
-    Component.prototype.will_hide = function() {};
-    Component.prototype.did_hide = function() {};
+        set: function(key, value) {
+            this.fire('state_will_change', {'key':key});
+            this.__data__.state[key] = value;
+            this.fire('state_did_change', {'key':key});
+        },
+    
+        on: function(type, callback) {
+            safe_append_to_key(this.__data__.event_listeners, type, callback);
+        },
 
-    Component.prototype.on = function(type, callback) {
-        safe_append_to_key(this.__data__.event_listeners, type, callback);
-    };
+        off: function(key) {
+            delete this.__data__.event_listeners[key];
+        },
 
-    Component.prototype.off = function() {
-        
-    };
-
-    Component.prototype.fire = function(type, args) {
-        if (args == undefined) {
-            args = {};
-        }
-
-        var target = this.__data__.event_listeners[type];
-        if (target !== undefined) {
-            for(var i=0; i < target.length; i++) {
-                var cb = target[i];
-                cb(args);
+        fire: function(type, args) {
+            if (args == undefined) {
+                args = {};
             }
-            return true;
-        } else {
-            return false;
+            
+            var target = this.__data__.event_listeners[type];
+            if (target !== undefined) {
+                for(var i=0; i < target.length; i++) {
+                    var cb = target[i];
+                    try {
+                        cb(args);
+                    } catch (e) {
+                        console.log(e);
+                        console.log("error for event '" + type + "' -> ");
+                        console.log(cb);
+                    }
+                }
+                return true;
+            } else {
+                return false;
+            }
+        },
+
+        reload: function() {}
+
+    });
+
+    var DOMComponent = Component.extend({
+        init: function(target_dom_element, template, state) {
+            this._super(state);
+
+            // this should be the raw dom element, not a wrapped jquery one.
+            this.__data__.target_dom_element = target_dom_element;
+            
+            // this should be a genie template object, or anything 
+            // that responds to obj.render({});
+            this.__data__.template = template;
+        },
+
+        load: function() {
+            this.__data__.target_dom_element.innerHTML = this.__render_template__();
+            setTimeout((function(t) { t.fire('ready'); })(this), 1);
+        },
+
+        reload: function() {
+            this.__data__.target_dom_element.innerHTML = this.__render_template__();
+            setTimeout((function(t) { t.fire('did_reload'); })(this), 1);
+        },
+
+        __render_template__: function() {
+            return this.__data__.template.render(this.__data__.state);
         }
-    };
-    
-    Component.prototype.reload = function() {};
-    Component.prototype.extend = function() {};
+    });
+
+    // Genie Component - Prefix
+    // A counter for your page, that will count ever second.
+    var GCCounter = DOMComponent.extend({
+        tick: function() {
+            var t = this;
+            var secs = this.get('seconds');
+            this.set('seconds', secs + 1);
+            setTimeout(function() { 
+                t.tick();
+            }, 1000);
+        }
+    });
 
     return {
-        "Component":Component
+        "Component":Component,
+        "DOMComponent":DOMComponent,
+        "GCCounter":GCCounter
     };
 })();
-
-if (typeof(module) !== undefined) {
-    module.exports.mvc = mvc;
-}
