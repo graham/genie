@@ -91,6 +91,21 @@ var mvc = (function() {
             this.__data__.state[key] = value;
             this.fire('state_did_change', {'key':key});
         },
+
+        require_vars: function(l) {
+            var hit = false;
+            for(var i=0; i < l.length; i++) {
+                if (this.get(l[i]) == undefined) {
+                    console.log("MISSING VAR: " + l[i]);
+                    hit = true;
+                }
+            }
+            if (hit) {
+                return false;
+            } else {
+                return true;
+            }
+        },
     
         on: function(type, callback) {
             safe_append_to_key(this.__data__.event_listeners, type, callback);
