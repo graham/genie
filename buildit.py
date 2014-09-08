@@ -2,9 +2,12 @@
 
 import os
 
-s = open('src/subclass.js').read()
+#s = open('src/subclass.js').read()
+#c = open('src/component.js').read()
+
+s = ''
 g = open('src/genie.js').read()
-c = open('src/component.js').read()
+c = ''
 
 start = '''
 var geniemvc = (function() {
