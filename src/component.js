@@ -65,6 +65,7 @@ var mvc = (function() {
         } else {
             list[key].push(value);
         }
+        return list;
     }
 
     var Component = Class.extend({
@@ -108,7 +109,7 @@ var mvc = (function() {
         },
     
         on: function(type, callback) {
-            safe_append_to_key(this.__data__.event_listeners, type, callback);
+            this.__data__.event_listeners = safe_append_to_key(this.__data__.event_listeners, type, callback);
         },
 
         off: function(key) {
@@ -121,6 +122,7 @@ var mvc = (function() {
             }
             
             var target = this.__data__.event_listeners[type];
+            
             if (target !== undefined) {
                 for(var i=0; i < target.length; i++) {
                     var cb = target[i];
@@ -218,8 +220,7 @@ var mvc = (function() {
                 for(var i=0; i < scripts.length; i++) {
                     eval(scripts[i])(comp);
                 }
-
-                comp.fire('ready');
+                comp.delay_fire('ready');
             });
         },
 
@@ -239,28 +240,12 @@ var mvc = (function() {
             target.innerHTML = content;
             this.delay_fire('did_reload');
         }
-        
-    });
-
-    // Genie Component - Prefix
-    // A counter for your page, that will count ever second.
-    var GCCounter = DOMComponent.extend({
-        tick: function(ms) {
-            var sleep = ms || 1000;
-            var t = this;
-            var secs = this.get('ticks');
-            this.set('ticks', secs + 1);
-            setTimeout(function() { 
-                t.tick(sleep);
-            }, sleep);
-        }
     });
 
     return {
-        "Component":Component,
-        "DOMComponent":DOMComponent,
-        "GCCounter":GCCounter,
-        "GCComponent":GCComponent
+        "Component":     Component,
+        "DOMComponent":  DOMComponent,
+        "GCComponent":   GCComponent
     };
 })();
 
