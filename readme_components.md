@@ -88,7 +88,37 @@ First, from the perspective of the small developer, these components give you th
 
 Second, within a larger organization (where things like design and architecture might be _actually_ organized) this provides developers to move quickly, because the backend of a component could change, and as long as the interface stays the same their pages will work.
 
+Third, CSS/HTML packages like Bootstrap are great, but they can't encapsulate functionality with their components in the same way. Building a large library of these components (like Bootstrap, or even as an extension to it) would provide developers all over the world with easy access to pre-built components (that they could then skin themselves).
+
 With GenieComponents you bring the power that has been available to software developers on desktops (and almost every OO language ever created) to your web applications, and unlike applications like React and AngularJS almost no pre/post processing is required.
+
+## How it works
+
+Every Genie Component extends a root class of __Component__ or __GCComponent__ (which itself is a subclass of __Component__).
+
+GCComponent supports a little more functionality out of the box, but nothing that a decent javascript engineer can't recreate in a couple minutes.
+
+One of the core focuses of such a system is that it should work with your style, with your stack and shouldn't get in your way. This is something that I didn't like about React/Angular I felt like it required me to work in a completely different way, and especially when encorporating my work into an already existing project, starting over with a new process can be very difficult.
+
+Every Component object has the following variables:
+
+ 1. Target DOM Element -> Where everything the Component controls ends up.
+ 1. Event Listeners -> anyone who has registered to be notified of an event.
+ 1. State -> A javascript hash {} that contains the state of the component.
+
+And thats it, nothing too fancy. A couple methods are provided as well:
+
+ - `set_target(dom_obj)` -> Sets the target dom element.
+ - `get(key)` / `set(key, value)` -> get/set for state vars (fires state events).
+ - `on(evt, callback)` / `off(evt)` -> Listen for events (or remove them).
+ - `fire(evt, args)` -> Fire an event of your choice.  - `wait(callback, ms)` -> simple timeout (with local bind)
+ - and a couple more...
+
+GCComponent does the download and resource management for you, as well as `load()` and `reload()`.
+
+I'd exect that some developers would want to manage this themselves (GCComponent uses jQuery). By redefining the root subclass you can change out the middleware and your components will still work.
+
+Replacing GCComponent with your own is easy, as of right now it's only 60 lines of simple javascript.
 
 ..
 -----
