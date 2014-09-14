@@ -1,15 +1,10 @@
-<requires>
-  <item>jquery</item>
-</requires>
-
 <script>
  component.on('ready', function() {
-     this.require_vars(['id']);
+     this.chats = [];
  });
 
  component.methods({
      add_message: function(chat, side, icon, message) {
-         console.log('add_message');
      },
      
      end_message: function() {
@@ -17,16 +12,29 @@
      }
  });
 
- 
-
 </script>
 
 <template id='root'>
-      <div class='chat_[[v.side]]'>
-        <div class='chat_icon'><img src='[[v.icon]]'></div>
-        <div class='chat_bubble chat_message'>[[v.message]]</div>
-        <div class='clear'> </div>
+  <div class='chat_window'>
+    <div id='content'>Loading...</div>
+    <div class='chat_log'>
+      <input type="textfield" class="chat_input">
+      <div class='toggle'>
+        <div class='left'>
+          <a href='#' class='who'>who?</a>
+        </div>
+        <a href='#' class='right'>done</a>
       </div>
+    </div>
+  </div>
+</template>
+
+<template id='message'>
+  <div class='chat_[[v.side]]'>
+    <div class='chat_icon'><img src='[[v.icon]]'></div>
+    <div class='chat_bubble chat_message'>[[v.message]]</div>
+    <div class='clear'> </div>
+  </div>
 </template>
 
 <style>

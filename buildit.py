@@ -2,15 +2,12 @@
 
 import os
 
-#s = open('src/subclass.js').read()
-#c = open('src/component.js').read()
-
-s = ''
+s = open('src/subclass.js').read()
+c = open('src/component.js').read()
 g = open('src/genie.js').read()
-c = ''
 
 start = '''
-var geniemvc = (function() {
+var genie = (function() {
     var module = {};
     module.exports = {};
 

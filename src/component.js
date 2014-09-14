@@ -29,7 +29,7 @@ limitations under the License.
 		     this.load();
 		 });
 
-		 component.on('loaded', function() {
+		 component.on('did_load', function() {
 		     this.tick(100);
 		 });
 
@@ -66,22 +66,22 @@ var mvc = (function() {
             list[key].push(value);
         }
         return list;
-    }
+    };
 
-    var Component = Class.extend({
-        init: function(state) {
+    var formap = function(fun, dict) {
+        for (var key in dict) {
+            if (dict.hasOwnProperty(key)) {
+                fun(key, dict[key]);
+            }
+        }
+    };
+
+    var Component = Class({
+        initialize: function(state) {
             this.__data__ = {};
-            this.__data__.target_dom_element = null;
             this.__data__.event_listeners = {};
             this.__data__.state = state || {};
         },
-
-        set_target: function(dom_element) {
-            this.__data__.target_dom_element = dom_element;
-        },
-
-        // This shouldn't be over ridden by subclasses.
-        load: function() { },
 
         get: function(key) {
             return this.__data__.state[key];
@@ -109,7 +109,7 @@ var mvc = (function() {
         },
     
         on: function(type, callback) {
-            this.__data__.event_listeners = safe_append_to_key(this.__data__.event_listeners, type, callback);
+            safe_append_to_key(this.__data__.event_listeners, type, callback);
         },
 
         off: function(key) {
@@ -150,46 +150,16 @@ var mvc = (function() {
 
         wait: function(cb, ts) {
             setTimeout((function(t,c) { return (function() { c.apply(t, []); }); })(this,cb), ts);
-        },
-
-        reload: function() {}
-
-    });
-
-    var DOMComponent = Component.extend({
-        init: function(target_dom_element, template, state) {
-            this._super(state);
-
-            // this should be the raw dom element, not a wrapped jquery one.
-            this.__data__.target_dom_element = target_dom_element;
-            
-            // this should be a genie template object, or anything 
-            // that responds to obj.render({});
-            this.__data__.template = template;
-        },
-
-        load: function() {
-            this.__data__.target_dom_element.innerHTML = this.__render_template__();
-            this.delay_fire('loaded');
-        },
-
-        reload: function() {
-            this.__data__.target_dom_element.innerHTML = this.__render_template__();
-            this.delay_fire('did_reload');
-        },
-
-        __render_template__: function() {
-            return this.__data__.template.render(this.__data__.state);
         }
     });
 
-    var GCComponent = Component.extend({
-        init: function(props) {
+    var GCComponent = Class(Component, {
+        initialize: function(props) {
             var url = props['url'];
             var target = props['target'];
             var state = props['state'] || {};
-
-            this._super(state);
+            
+            this.$super('initialize', state);
             this.__data__.resources = [];
             this.__data__.env = new genie.Environment();
 
@@ -205,11 +175,15 @@ var mvc = (function() {
                 d.innerHTML = data;
                 for(var i=0; i < d.children.length; i++) {
                     var child = d.children[i];
-                    if (child.tagName == "STYLE") {
+                    if (child.tagName == "STYLE" || child.tagName == "LINK") {
                         comp.__data__.resources.push(child);
                     } else if (child.tagName == "SCRIPT") {
-                        var new_script = "(function(component) { " + child.innerText + " })";
-                        scripts.push(new_script);
+                        if (child.src) {
+                            comp.__data__.resources.push(child);
+                        } else {
+                            var new_script = "(function(component) { " + child.innerHTML + " })";
+                            scripts.push(new_script);
+                        }
                     } else if (child.tagName == "TEMPLATE") {
                         comp.__data__.env.create_template(child.id, child.innerHTML);
                     } else {
@@ -224,29 +198,58 @@ var mvc = (function() {
             });
         },
 
+        set_target: function(target) {
+            this._target = target;
+        },
+
         load: function() {
             for(var i=0; i < this.__data__.resources.length; i++) {
-                document.body.appendChild(this.__data__.resources[i]);
+                var obj = this.__data__.resources[i];
+                console.log(obj.tagName);
+                if (obj.tagName == 'SCRIPT') {
+                    var d = document.createElement('script');
+                    d.src = obj.src;
+                    document.head.appendChild(d);
+                } else {
+                    document.head.appendChild(obj);
+                }
             }
-            var target = this.__data__.target_dom_element;
+            var target = this._target;
             var content = this.__data__.env.render('root', this.__data__.state);
             target.innerHTML = content;
-            this.delay_fire('loaded');
+            this.delay_fire('did_load');
         },
 
         reload: function() {
-            var target = this.__data__.target_dom_element;
+            var target = this._target;
             var content = this.__data__.env.render('root', this.__data__.state);
             target.innerHTML = content;
-            this.delay_fire('did_reload');
+            this.fire('did_reload');
+        },
+
+        render: function(template_name, d) {
+            var y = {};
+            formap(function(k, v) {
+                y[k] = v;
+            }, this.__data__.state);
+            if (d) {
+                formap(function(k, v) {
+                    y[k] = v;
+                }, d);
+            }
+            var content = this.__data__.env.render(template_name, y);
+            return content;
         }
     });
 
     return {
         "Component":     Component,
-        "DOMComponent":  DOMComponent,
         "GCComponent":   GCComponent
     };
 })();
 
-
+if (typeof module !== 'undefined') {
+    module.exports.mvc = mvc;
+    module.exports.Component = mvc.Component;
+    module.exports.GCComponent = mvc.GCComponent;
+}
