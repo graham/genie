@@ -185,6 +185,10 @@ var mvc = (function() {
                             scripts.push(new_script);
                         }
                     } else if (child.tagName == "TEMPLATE") {
+                        if (!child.id) {
+                            console.log("No id for template, Ill call it root and hope.");
+                            child.id = 'root';
+                        }
                         comp.__data__.env.create_template(child.id, child.innerHTML);
                     } else {
                         console.log("Unsupported node '" + child.tagName + "'in Component: " + url);
