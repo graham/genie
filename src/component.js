@@ -261,13 +261,15 @@ var mvc = (function() {
                         child.id = 'root';
                     }
                     comp.__data__.env.create_template(child.id, child.innerHTML);
-                } else if (child.tagName == "require") {
+                } else if (child.tagName == "REQUIRE") {
                     for(var j=0; j < child.children.length; j++) {
                         var required_resource = child.children[j];
-                        
+                        comp.__data__.resources.push(required_resource);
+                        // Here would be the right place to ensure resources are not
+                        // double added, however, ResourceManager isn't done yet.
                     }
                 } else {
-                    console.log("Unsupported node '" + child.tagName + "'in Component: " + url);
+                    console.log("Unsupported node '" + child.tagName + "'in Component: " + child);
                 }
             }
             
