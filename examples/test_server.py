@@ -15,10 +15,10 @@ def steal_stack_trace():
         sys.stderr = safe_stderr
     return s.getvalue()
 
-def jafar_ok(data):
+def genie_ok(data):
     return json.dumps([1, data])
 
-def jafar_error(data, trace=None):
+def genie_error(data, trace=None):
     if DEBUG:
         return json.dumps([0, data, trace])
     else:
@@ -49,14 +49,14 @@ def apilist():
 def index():
     return open('index.html').read()
 
-@route('/jafar.js')
+@route('/genie.js')
 def thelib():
     response.content_type = "text/javascript"
-    return open('jafar.js').read()
+    return open('genie.js').read()
 
 @route('/asdf', method="POST")
 def asdf():
-    return jafar_ok(list(range(0, 10)))
+    return genie_ok(list(range(0, 10)))
 
 @route('/incr', method="POST")
 def incr():
@@ -65,10 +65,10 @@ def incr():
         num = int(request.forms.get("num") or 1)
         new_num = disk_value + num
         write_num(new_num)
-        return jafar_ok(new_num)
+        return genie_ok(new_num)
     except:
         trace = steal_stack_trace()
-        return jafar_error(disk_value, trace)
+        return genie_error(disk_value, trace)
 
 @route('/decr', method="POST")
 def decr():
@@ -77,13 +77,13 @@ def decr():
         num = int(request.forms.get("num") or 1)
         new_num = disk_value - num
         write_num(new_num)
-        return jafar_ok(new_num)
+        return genie_ok(new_num)
     except:
         trace = steal_stack_trace()
-        return jafar_error(disk_value, trace)
+        return genie_error(disk_value, trace)
 
 @route('/get')
 def get():
-    return jafar_ok(get_num())
+    return genie_ok(get_num())
 
 run(host='localhost', port=8080, reload=True)
