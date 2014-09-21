@@ -5,7 +5,7 @@ import os
 s = open('src/subclass.js').read()
 c = open('src/component.js').read()
 g = open('src/genie.js').read()
-g = open('src/route.js').read()
+r = open('src/route.js').read()
 
 start = '''
 var genie = (function() {
@@ -25,7 +25,7 @@ except:
     pass
 
 f = open('build/genie.compiled.js', 'w')
-for i in (start, s, g, c, end):
+for i in (start, s, g, c, r, end):
     f.write(i)
     f.write('\n')
 
