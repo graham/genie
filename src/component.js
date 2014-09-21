@@ -76,6 +76,10 @@ var mvc = (function() {
         }
     };
 
+    var startswith = function(first, second) {
+        return first.slice(0, second.length) == second;
+    };
+
     var Component = Class({
         initialize: function(state) {
             this.__data__ = {};
@@ -158,7 +162,8 @@ var mvc = (function() {
             var url = props['url'];
             var target = props['target'];
             var state = props['state'] || {};
-            
+            var smart_load = props['smart_load'] || false;
+
             this.$super('initialize', state);
             this.__data__.resources = [];
             this.__data__.env = new genie.Environment();
@@ -167,49 +172,69 @@ var mvc = (function() {
                 this.set_target(target);
             }
 
+            var cache_name = 'gc_component_cache_' + url;
+
+            if (smart_load && (localStorage.getItem(cache_name) !== null)) {
+                console.log('cache hit: ' + url);
+                this.load_from_content(localStorage.getItem(cache_name));
+            } else {
+                console.log('loading url: ' + url);
+                var comp = this;
+                $.get(url, function(data) {
+                    if (smart_load) { 
+                        localStorage.setItem(cache_name, data); 
+                    }
+                    comp.load_from_content(data);
+                });
+            }
+        },
+
+        load_from_content: function(data) {
             var comp = this;
             var scripts = [];
 
-            $.get(url, function(data) {
-                var d = document.createElement('div');
-                d.innerHTML = data;
-                for(var i=0; i < d.children.length; i++) {
-                    var child = d.children[i];
-                    if (child.tagName == "STYLE" || child.tagName == "LINK") {
+            var d = document.createElement('div');
+            d.innerHTML = data;
+            for(var i=0; i < d.children.length; i++) {
+                var child = d.children[i];
+                if (child.tagName == "STYLE" || child.tagName == "LINK") {
+                    comp.__data__.resources.push(child);
+                } else if (child.tagName == "SCRIPT") {
+                    if (child.src) {
                         comp.__data__.resources.push(child);
-                    } else if (child.tagName == "SCRIPT") {
-                        if (child.src) {
-                            comp.__data__.resources.push(child);
-                        } else {
-                            var new_script = "(function(component) { " + child.innerHTML + " })";
-                            scripts.push(new_script);
-                        }
-                    } else if (child.tagName == "TEMPLATE") {
-                        if (!child.id) {
-                            console.log("No id for template, Ill call it root and hope.");
-                            child.id = 'root';
-                        }
-                        comp.__data__.env.create_template(child.id, child.innerHTML);
                     } else {
-                        console.log("Unsupported node '" + child.tagName + "'in Component: " + url);
+                        var new_script = "(function(component) { " + child.innerHTML + " })";
+                        scripts.push(new_script);
                     }
+                } else if (child.tagName == "TEMPLATE") {
+                    if (!child.id) {
+                        console.log("No id for template, Ill call it root and hope.");
+                        child.id = 'root';
+                    }
+                    comp.__data__.env.create_template(child.id, child.innerHTML);
+                } else {
+                    console.log("Unsupported node '" + child.tagName + "'in Component: " + url);
                 }
-
-                for(var i=0; i < scripts.length; i++) {
-                    eval(scripts[i])(comp);
-                }
-                comp.delay_fire('ready');
-            });
+            }
+            
+            for(var i=0; i < scripts.length; i++) {
+                eval(scripts[i])(comp);
+            }
+            comp.delay_fire('ready');
         },
 
+        /* I need to make sure that i'm getting the basic dom object */
         set_target: function(target) {
-            this._target = target;
+            if (target.jquery) {
+                this._target = target[0];
+            } else {
+                this._target = target;
+            }
         },
 
         load: function() {
             for(var i=0; i < this.__data__.resources.length; i++) {
                 var obj = this.__data__.resources[i];
-                console.log(obj.tagName);
                 if (obj.tagName == 'SCRIPT') {
                     var d = document.createElement('script');
                     d.src = obj.src;
@@ -246,9 +271,20 @@ var mvc = (function() {
         }
     });
 
+    // a helper function to clear the cache of templates.
+    var clear_gc_cache = function() {
+        var prefix = 'gc_component_cache_';
+        formap(function(key, value) {
+            if (startswith(key, prefix)) {
+                localStorage.removeItem(key);
+            }
+        }, localStorage);
+    };
+
     return {
         "Component":     Component,
-        "GCComponent":   GCComponent
+        "GCComponent":   GCComponent,
+        "clear_cache":   clear_gc_cache
     };
 })();
 

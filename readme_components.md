@@ -120,6 +120,14 @@ I'd exect that some developers would want to manage this themselves (GCComponent
 
 Replacing GCComponent with your own is easy, as of right now it's only 60 lines of simple javascript.
 
+## Further Reflections
+
+There's a talk [here](https://www.youtube.com/watch?v=u6RFyVN9sNg), given by Yehuda Katz about how Ember.js does these sorts of things. It's a decent talk, but he runs into issues while creating his demo app that are exactly why I don't think Genie Components shouldn't be too complex.
+ 
+ > To be clear, these are issues I have with Ember, Yehuda is a pretty cool dude.
+ 
+
+
 ..
 -----
 
