@@ -84,6 +84,9 @@ var mvc = (function() {
         this.loaded_resources = {};
     };
 
+    ResourceTracker.prototype.load_resource = function(type, resource) {
+    };
+
     var Component = Class({
         initialize: function(state) {
             this.__data__ = {};
