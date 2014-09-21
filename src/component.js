@@ -80,6 +80,10 @@ var mvc = (function() {
         return first.slice(0, second.length) == second;
     };
 
+    var ResourceTracker = function() {
+        this.loaded_resources = {};
+    };
+
     var Component = Class({
         initialize: function(state) {
             this.__data__ = {};
@@ -116,8 +120,42 @@ var mvc = (function() {
             safe_append_to_key(this.__data__.event_listeners, type, callback);
         },
 
-        off: function(key) {
-            delete this.__data__.event_listeners[key];
+        once: function(type, callback) {
+            var comp = this;
+            var inside = function() {
+                callback(arguments);
+                comp.off(type, inside);
+            };
+            safe_append_to_key(this.__data__.event_listeners, type, inside);
+        },
+
+        off: function(key, cb) {
+            if (cb == undefined) {
+                delete this.__data__.event_listeners[key];
+            } else {
+                var dict = this.__data__.event_listeners;
+                if (key == null) {
+                    for (var k in dict) {
+                        if (dict.hasOwnProperty(k)) {
+                            var len = dict[k].length;
+                            var index = dict[k].indexOf(cb);
+                            if (index != -1) {
+                                dict[k] = dict[k].slice(0, index).concat(dict[k].slice(index+1, len));
+                            }
+                            
+                        }
+                    }
+                } else {
+                    if (dict[key] !== undefined) {
+                        var len = dict[key].length
+                        var index = dict[key].indexOf(cb);
+                        if (index != -1) {
+                            dict[key] = dict[key].slice(0, index).concat(dict[key].slice(index+1, len));
+                        }
+                    }
+                }
+                this.__data__.event_listeners = dict;
+            }
         },
 
         fire: function(type, args) {
@@ -257,15 +295,20 @@ var mvc = (function() {
         },
 
         render: function(template_name, d) {
-            var y = {};
+            var y = {
+                'component':this
+            };
+
             formap(function(k, v) {
                 y[k] = v;
             }, this.__data__.state);
+
             if (d) {
                 formap(function(k, v) {
                     y[k] = v;
                 }, d);
             }
+
             var content = this.__data__.env.render(template_name, y);
             return content;
         }
