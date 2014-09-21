@@ -312,6 +312,11 @@ var mvc = (function() {
             this.fire('did_reload');
         },
 
+        unload: function() {
+            this._target = null;
+            // should probably unload resources here.
+        },
+
         render: function(template_name, d) {
             var y = {
                 'component':this
