@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <script src="jquery.js"></script>
+    <script src="src/subclass.js"></script>
+    <script src="src/genie.js"></script>
+    <script src="src/component.js"></script>
+
+    <script type='text/javascript'>
+      var gc;
+      $(document).ready(function() {
+         mvc.clear_cache();
+         var target = document.getElementById('test');
+         gc = new mvc.GCComponent({
+             url:'component/chat/counter.txt',
+             target:target,
+             smart_load: true
+         });
+      });
+    </script>
+    
+  </head>
+  
+  <body>
+    <div id='test'></div>
+    <div id='chat_1'></div>
+    <div id='chat_2'></div>
+  </body>
+
+</html>
