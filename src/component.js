@@ -16,45 +16,45 @@ limitations under the License.
 
 /* Example Component
 
-		<style type='text/css'> 
-		 #counter { 
-		   font-size: 50px;
-		 }
-		</style> 
+	<style type='text/css'> 
+	 #counter { 
+	   font-size: 50px;
+	 }
+	</style> 
 
-		<script type='text/javascript'>
-		 component.on('ready', function() {
-		     this.set('running', true);
-		     this.set('ticks', 0);
-		     this.load();
-		 });
+	<script type='text/javascript'>
+	 component.on('ready', function() {
+	     this.set('running', true);
+	     this.set('ticks', 0);
+	     this.load();
+	 });
 
-		 component.on('did_load', function() {
-		     this.tick(100);
-		 });
+	 component.on('did_load', function() {
+	     this.tick(100);
+	 });
 
-		 component.methods({
-		     tick: function(ms) {
-		         var sleep = ms || 1000;
-		         this.reload();
-		         this.wait(function() {
-		             var secs = this.get('ticks');
-		             this.set('ticks', secs+1);
-		             this.tick(sleep);
-		         }, sleep);
-		     }     
-		 });
-		</script>
+	 component.methods({
+	     tick: function(ms) {
+	         var sleep = ms || 1000;
+	         this.reload();
+	         this.wait(function() {
+	             var secs = this.get('ticks');
+	             this.set('ticks', secs+1);
+	             this.tick(sleep);
+	         }, sleep);
+	     }     
+	 });
+	</script>
 
-		<template type='text/template' id='root'>
-		  <div id='counter'>
-		    [% if v.ticks == 1 %]
-		      [[v.ticks]] second has passed.
-		    [% else %] 
-		      [[v.ticks]] seconds have passed.
-		    [% end %]
-		  </div>
-		</template> 
+	<template type='text/template' id='root'>
+	  <div id='counter'>
+	    [% if v.ticks == 1 %]
+	      [[v.ticks]] second has passed.
+	    [% else %] 
+	      [[v.ticks]] seconds have passed.
+	    [% end %]
+	  </div>
+	</template> 
 
 */
 
@@ -84,8 +84,16 @@ var mvc = (function() {
         this.loaded_resources = {};
     };
 
-    ResourceTracker.prototype.load_resource = function(type, resource) {
+    ResourceTracker.prototype.load_resource = function(key, resource) {
+        if (this.loaded_resources[key] != undefined) {
+            document.append(resource);
+            this.loaded_resources[key] = 1;
+        } else {
+            this.loaded_resources[key] += 1;
+        }
     };
+
+    var global_resource_tracker = new ResourceTracker();
 
     var Component = Class({
         initialize: function(state) {
@@ -253,6 +261,11 @@ var mvc = (function() {
                         child.id = 'root';
                     }
                     comp.__data__.env.create_template(child.id, child.innerHTML);
+                } else if (child.tagName == "require") {
+                    for(var j=0; j < child.children.length; j++) {
+                        var required_resource = child.children[j];
+                        
+                    }
                 } else {
                     console.log("Unsupported node '" + child.tagName + "'in Component: " + url);
                 }
@@ -330,7 +343,8 @@ var mvc = (function() {
     return {
         "Component":     Component,
         "GCComponent":   GCComponent,
-        "clear_cache":   clear_gc_cache
+        "clear_cache":   clear_gc_cache,
+        "resource":      global_resource_tracker
     };
 })();
 
