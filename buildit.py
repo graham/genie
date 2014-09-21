@@ -5,6 +5,7 @@ import os
 s = open('src/subclass.js').read()
 c = open('src/component.js').read()
 g = open('src/genie.js').read()
+g = open('src/route.js').read()
 
 start = '''
 var genie = (function() {
