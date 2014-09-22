@@ -1003,6 +1003,13 @@ var mvc = (function() {
             this.fire('state_did_change', {'key':key});
         },
 
+        mset: function(props) {
+            var t = this;
+            formap(function(key, value) {
+                t.set(key, value);
+            }, props);
+        },
+
         require_vars: function(l) {
             var hit = false;
             for(var i=0; i < l.length; i++) {
