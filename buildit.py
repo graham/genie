@@ -2,33 +2,43 @@
 
 import os
 
-s = open('src/subclass.js').read()
-c = open('src/component.js').read()
-g = open('src/genie.js').read()
-r = open('src/route.js').read()
+def create_file():
+    s = open('src/subclass.js').read()
+    c = open('src/component.js').read()
+    g = open('src/genie.js').read()
+    r = open('src/route.js').read()
 
-start = '''
+    start = '''
 var genie = (function() {
-    var module = {};
-    module.exports = {};
-
+var module = {};
+module.exports = {};
+    
 '''
 
-end = '''
+    end = '''
     return module.exports;
 })();
 '''
 
-try:
-    os.mkdir('build')
-except:
-    pass
 
-f = open('build/genie.compiled.js', 'w')
-for i in (start, s, g, c, r, end):
-    f.write(i)
-    f.write('\n')
+    content = []
 
-f.close()
 
-os.system('cat build/genie.compiled.js | jsmin > build/genie.min.js')
+    for i in (start, s, g, c, r, end):
+        content.append(i)
+        content.append('\n')
+
+    return content
+
+
+if __name__ == '__main__':
+    try:
+        os.mkdir('build')
+    except:
+        pass
+
+    f = open('build/genie.compiled.js', 'w')
+    f.write('\n'.join(create_file()))
+    f.close()
+
+    os.system('cat build/genie.compiled.js | jsmin > build/genie.min.js')
