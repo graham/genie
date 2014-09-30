@@ -40,19 +40,6 @@
              target:target
          });
 
-         var gc2 = new genie.mvc.GCComponent({
-             url:url,
-             target:document.getElementById('test2')
-         });
-
-         gc2.on('did_load', function() {
-             alert('hi');
-         });
-
-
-         modal.close();
-         
-
          window.location.hash = url;
      };
 
