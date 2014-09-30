@@ -40,6 +40,19 @@
              target:target
          });
 
+         var gc2 = new genie.mvc.GCComponent({
+             url:url,
+             target:document.getElementById('test2')
+         });
+
+         gc2.on('did_load', function() {
+             alert('hi');
+         });
+
+
+         modal.close();
+         
+
          window.location.hash = url;
      };
 
@@ -66,8 +79,11 @@
          }
          load_path(url);
      });
+
+     var last = null;
     </script>
     <style>
+
      #chooser {
        margin: 0px;
        position:fixed;
@@ -79,11 +95,26 @@
        text-align: right;
        min-width: 200px;
      }
+
+     #test {
+       margin:auto;
+       min-height: 100px;
+       min-width: 400px;
+     }
+
+     #test2 {
+       padding: 10px;
+       margin:auto;
+       min-height: 100px;
+     }
+
     </style>
   </head>
   
   <body>
     <div id='test'>waiting for load...</div>
+    <br style='clear:both;' />
+    <div id='test2'>waiting for load...</div>
 
     <div id='chooser'>
       <input type=button value='Show' onclick='show_selected_path();'>

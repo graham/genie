@@ -37,7 +37,6 @@ var Class = function() {
                 // if (  isNative(source,objMethods[i])
                 if (typeof source[objMethods[i]] === 'function'
                     &&      source[objMethods[i]].toString().indexOf('[native code]') == -1) {
-                    document.writeln('copying ' + objMethods[i]+'<br>');
                     destination[objMethods[i]] = source[objMethods[i]];
                 }
             }
@@ -50,10 +49,12 @@ var Class = function() {
     },
 
     methods = function(ms) {
+        var slots = [];
         var destination = this;
         var source = ms;
 
         for (var property in source) {
+            slots.push(property);
             destination[property] = source[property];
         }
         //IE 8 Bug: Native Object methods are only accessible directly
@@ -63,10 +64,16 @@ var Class = function() {
                 // if (  isNative(source,objMethods[i])
                 if (typeof source[objMethods[i]] === 'function'
                     &&      source[objMethods[i]].toString().indexOf('[native code]') == -1) {
-                    document.writeln('copying ' + objMethods[i]+'<br>');
+                    slots.push(i);
                     destination[objMethods[i]] = source[objMethods[i]];
                 }
             }
+        }
+
+        if (destination.__slots__) {
+            destination.__slots__ = destination.__slots__.concat(slots);
+        } else {
+            destination.__slots__ = slots;
         }
     };
     
@@ -85,9 +92,14 @@ var Class = function() {
     klass.prototype.constructor = klass;      
     klass.prototype.methods = methods;
     
-    if (!klass.prototype.initialize) klass.prototype.initialize = function(){
-    };         
-    
+    if (!klass.prototype.initialize) {
+        klass.prototype.initialize = function(){
+            this.__inputs__ = [];
+            this.__outputs__ = [];
+            this.__slots__ = [];
+            this.__data__ = {};
+        };         
+    }
     return klass;   
 };
 

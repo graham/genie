@@ -341,6 +341,16 @@ var mvc = (function() {
 
             var content = this.__data__.env.render(template_name, y);
             return content;
+        },
+        modify: function(key, cb) {
+            var data = this.get(key);
+            var result = cb.apply(this, [data]);
+            if (result != undefined) {
+                this.set(key, result);
+            }
+        },
+        find: function(search) {
+            return $(this._target).find(search);
         }
     });
 
