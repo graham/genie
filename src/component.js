@@ -97,6 +97,7 @@ var mvc = (function() {
 
     var Component = Class({
         initialize: function(state) {
+            console.log("Component Initialize.");
             this.__data__ = {};
             this.__data__.event_listeners = {};
             this.__data__.state = state || {};
@@ -107,9 +108,9 @@ var mvc = (function() {
         },
     
         set: function(key, value) {
-            this.fire('state_will_change', {'key':key});
+            this.fire('state_will_change', key);
             this.__data__.state[key] = value;
-            this.fire('state_did_change', {'key':key});
+            this.fire('state_did_change', key)
         },
 
         mset: function(props) {
@@ -178,7 +179,7 @@ var mvc = (function() {
 
         fire: function(type, args) {
             if (args == undefined) {
-                args = {};
+                args = null;
             }
             
             var target = this.__data__.event_listeners[type];
@@ -187,7 +188,7 @@ var mvc = (function() {
                 for(var i=0; i < target.length; i++) {
                     var cb = target[i];
                     try {
-                        cb.apply(this, args);
+                        cb.apply(this, [args]);
                     } catch (e) {
                         console.log(e.message);
                         console.log(e.stack);
@@ -215,14 +216,17 @@ var mvc = (function() {
 
     var GCComponent = Class(Component, {
         initialize: function(props) {
+            console.log("GCComponent Initialize.");
             var url = props['url'];
             var target = props['target'];
             var state = props['state'] || {};
             var smart_load = props['smart_load'] || false;
+            var auto_load = props['auto_load'] || false;
 
-            this.$super('initialize', state);
+            Component.prototype.initialize.apply(this,[state]);
             this.__data__.resources = [];
             this.__data__.env = new genie.Environment();
+            this.__data__.auto_load = auto_load;
 
             if (target) {
                 this.set_target(target);
@@ -259,7 +263,11 @@ var mvc = (function() {
                     if (child.src) {
                         comp.__data__.resources.push(child);
                     } else {
-                        var new_script = "(function(component) { " + child.innerHTML + " })";
+                        var src = child.innerHTML;
+                        if (child.type == 'text/jsx') {
+                            src = JSXTransformer.transform(src).code;
+                        }
+                        var new_script = "(function(component) { " + src + " })";
                         scripts.push(new_script);
                     }
                 } else if (child.tagName == "TEMPLATE") {
@@ -281,9 +289,13 @@ var mvc = (function() {
             }
             
             for(var i=0; i < scripts.length; i++) {
+                console.log(scripts[i]);
                 eval(scripts[i])(comp);
             }
             comp.delay_fire('ready');
+            if (this.__data__.auto_load) {
+                this.load();
+            }
         },
 
         /* I need to make sure that i'm getting the basic dom object */
@@ -296,6 +308,7 @@ var mvc = (function() {
         },
 
         load: function() {
+            this.fire('will_load');
             for(var i=0; i < this.__data__.resources.length; i++) {
                 var obj = this.__data__.resources[i];
                 if (obj.tagName == 'SCRIPT') {
@@ -313,15 +326,18 @@ var mvc = (function() {
         },
 
         reload: function() {
+            this.fire('will_reload');
             var target = this._target;
             var content = this.__data__.env.render('root', this.__data__.state);
             target.innerHTML = content;
-            this.fire('did_reload');
+            this.delay_fire('did_reload');
         },
 
         unload: function() {
+            this.fire('will_unload');
             this._target = null;
             // should probably unload resources here.
+            this.delay_fire('did_unload');
         },
 
         render: function(template_name, d) {
@@ -342,6 +358,7 @@ var mvc = (function() {
             var content = this.__data__.env.render(template_name, y);
             return content;
         },
+
         modify: function(key, cb) {
             var data = this.get(key);
             var result = cb.apply(this, [data]);
@@ -349,9 +366,22 @@ var mvc = (function() {
                 this.set(key, result);
             }
         },
+
         find: function(search) {
             return $(this._target).find(search);
         }
+    });
+
+    var ReactComponent = Class(GCComponent, {
+        wrap: function(r) {
+            this.on('state_did_change', function(key) {
+                var d = {};
+                d[key] = this.__data__.state[key];
+                r.setState(d);
+            });
+        },
+        reload: function() {},
+        render: function() {}
     });
 
     // a helper function to clear the cache of templates.
@@ -367,6 +397,7 @@ var mvc = (function() {
     return {
         "Component":     Component,
         "GCComponent":   GCComponent,
+        "ReactComponent":ReactComponent,
         "clear_cache":   clear_gc_cache,
         "resource":      global_resource_tracker
     };
@@ -376,4 +407,5 @@ if (typeof module !== 'undefined') {
     module.exports.mvc = mvc;
     module.exports.Component = mvc.Component;
     module.exports.GCComponent = mvc.GCComponent;
+    module.exports.clear_cache = mvc.clear_cache;
 }

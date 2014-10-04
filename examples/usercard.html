@@ -1,0 +1,128 @@
+<script>
+ component.on('ready', function() {
+     this.set('menu_visible', false);
+     component.load();
+ });
+
+ component.on('did_load', function() {
+
+     this.set('menu_dom', this.find('.profile > .menu'));
+     this.find('.profile > .image').on('click', function() {
+         component.toggle_menu();
+     });
+
+     this.add_button("http://kairos.site44.com/challenge/bios/bio19.png").on('click', function() {
+         component.toggle_menu();
+         console.log('button 1');
+     });
+
+     this.add_button("http://kairos.site44.com/challenge/bios/bio4.png").on('click', function() {
+         component.toggle_menu();
+         console.log('button 2');
+     });
+
+     this.add_button("http://kairos.site44.com/challenge/bios/bio6.png").on('click', function() {
+         component.toggle_menu();
+         console.log('button 3');
+     });
+
+     this.add_button("http://kairos.site44.com/challenge/bios/bio27.png").on('click', function() {
+         component.toggle_menu();
+         console.log('button 4');
+     });
+ });
+
+ component.methods({
+     toggle_menu: function() {
+         this.modify('menu_visible', function(is_visible) {
+             if (is_visible) {
+                 this.get('menu_dom').css('visibility', 'hidden');
+             } else {
+                 this.get('menu_dom').css('visibility', 'visible');
+             }
+             return !is_visible;
+         });
+     },
+     add_button:function(image, cb) {
+         var b = $(this.render('button_template', {image:image}));
+         
+         this.modify('menu_dom', function(menu) {
+             menu.append(b);
+         });
+
+         return b;
+     }
+ });
+</script>
+
+<template id='root'>
+  <div class='profile'>
+    <div class='image'>
+      <img src="http://kairos.site44.com/challenge/bios/bio22.png" />
+    </div>
+
+    <div class='menu' style='visibility: hidden; float:left;'>
+    </div>
+  </div>
+
+</template>
+
+<template id='button_template'>
+  <div class='button'>
+      <img src="[[ v.image ]]" />
+  </div>    
+</template>
+
+<style>
+ .profile {
+   border-radius: 2px;
+   text-align:    center;
+   width:         64px;
+   height:        64px;
+ }
+
+ .profile > .image {
+   width:         inherit;
+   height:        inherit;
+   border-radius: 1000px;
+   overflow:      hidden;
+   border:        2px solid rgba(0,0,0,0.2);
+ }
+
+ .profile > .image:hover {
+   border:        2px solid rgba(64,96,255,0.6);   
+ }
+
+ .profile > .image > img {
+   width:         inherit;
+   height:        inherit;
+ }
+
+ .profile > .menu {
+   position:         relative;
+   border-radius:    4px;
+   top:             -10px;
+ }
+
+ .profile > .menu > .button {
+   position:         relative;
+   top:              10px;
+   margin-top:       6px;
+   float:            left;
+   width:            64px;
+   height:           64px;
+   border-radius:    1000px;
+   overflow:         hidden;
+   border:           2px solid rgba(0,0,0,0.2);
+ }
+
+ .profile > .menu > .button:hover {
+   border:           2px solid rgba(64,96,255,0.6);   
+ }
+
+ .profile > .menu > .button > img {
+   width:            64px;
+   height:           64px;
+ }
+
+</style>

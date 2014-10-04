@@ -6,9 +6,12 @@
     </script>
     <script src="jquery.js"></script>
     <script src="/genie.compiled.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/react/0.11.2/react.min.js"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/react/0.11.2/JSXTransformer.js"></script>
     <script type='text/javascript'>
      var gc;
-
+     var gc2;
+ 
      var load_selected_path = function() {
          var value = $('#chooser_path').val();
          load_path(value);
@@ -35,9 +38,14 @@
              }
          });
 
-         gc = new genie.mvc.GCComponent({
+         gc = new genie.mvc.ReactComponent({
              url:url,
              target:target
+         });
+
+         gc2 = new genie.mvc.GCComponent({
+             url:url,
+             target:$('#test2')
          });
 
          window.location.hash = url;
