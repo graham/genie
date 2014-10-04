@@ -249,6 +249,11 @@ var mvc = (function() {
             }
         },
 
+        handle_script: function(child) {
+            var src = child.innerHTML;
+            return "(function(component) { " + src + " })";
+        },
+
         load_from_content: function(data) {
             var comp = this;
             var scripts = [];
@@ -263,12 +268,7 @@ var mvc = (function() {
                     if (child.src) {
                         comp.__data__.resources.push(child);
                     } else {
-                        var src = child.innerHTML;
-                        if (child.type == 'text/jsx') {
-                            src = JSXTransformer.transform(src).code;
-                        }
-                        var new_script = "(function(component) { " + src + " })";
-                        scripts.push(new_script);
+                        scripts.push(this.handle_script(child));
                     }
                 } else if (child.tagName == "TEMPLATE") {
                     if (!child.id) {
@@ -298,6 +298,10 @@ var mvc = (function() {
             }
         },
 
+        auto_load: function() {
+            this.__data__.auto_load = true;
+        },
+
         /* I need to make sure that i'm getting the basic dom object */
         set_target: function(target) {
             if (target.jquery) {
@@ -307,8 +311,7 @@ var mvc = (function() {
             }
         },
 
-        load: function() {
-            this.fire('will_load');
+        load_assets: function() {
             for(var i=0; i < this.__data__.resources.length; i++) {
                 var obj = this.__data__.resources[i];
                 if (obj.tagName == 'SCRIPT') {
@@ -319,6 +322,11 @@ var mvc = (function() {
                     document.head.appendChild(obj);
                 }
             }
+        },
+
+        load: function() {
+            this.fire('will_load');
+            this.load_assets();
             var target = this._target;
             var content = this.__data__.env.render('root', this.__data__.state);
             target.innerHTML = content;
@@ -373,15 +381,39 @@ var mvc = (function() {
     });
 
     var ReactComponent = Class(GCComponent, {
+        handle_script: function(child) {
+            var src = child.innerHTML;
+            if (child.type == 'text/jsx') {
+                src = JSXTransformer.transform(src).code;
+            }
+            return "(function(component) { " + src + " })";
+        },
         wrap: function(r) {
-            this.on('state_did_change', function(key) {
+            this.__data__.react_obj = r;
+        },
+        get: function(key) {
+            return this.__data__.react_obj.state[key];
+        },
+        set: function(key, value) {
+                this.fire('state_will_change', key);
                 var d = {};
-                d[key] = this.__data__.state[key];
-                r.setState(d);
-            });
+                d[key] = value;
+                this.__data__.react_obj.setState(d)
+                this.fire('state_did_change', key)
+        },
+        load: function() {
+            this.fire('will_load');
+            this.load_assets();
+            this.delay_fire('did_load');
         },
         reload: function() {},
-        render: function() {}
+        render: function() {},
+        unload: function() {
+            this.fire('will_unload');
+            React.umountComponentAtNode(this._target);
+            // should probably unload resources here.
+            this.delay_fire('did_unload');
+        }
     });
 
     // a helper function to clear the cache of templates.
