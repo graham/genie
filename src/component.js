@@ -97,7 +97,6 @@ var mvc = (function() {
 
     var Component = Class({
         initialize: function(state) {
-            console.log("Component Initialize.");
             this.__data__ = {};
             this.__data__.event_listeners = {};
             this.__data__.state = state || {};
@@ -216,7 +215,6 @@ var mvc = (function() {
 
     var GCComponent = Class(Component, {
         initialize: function(props) {
-            console.log("GCComponent Initialize.");
             var url = props['url'];
             var target = props['target'];
             var state = props['state'] || {};
@@ -289,7 +287,6 @@ var mvc = (function() {
             }
             
             for(var i=0; i < scripts.length; i++) {
-                console.log(scripts[i]);
                 eval(scripts[i])(comp);
             }
             comp.delay_fire('ready');
