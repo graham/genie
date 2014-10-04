@@ -407,7 +407,7 @@ var mvc = (function() {
         render: function() {},
         unload: function() {
             this.fire('will_unload');
-            React.umountComponentAtNode(this._target);
+            React.unmountComponentAtNode(this._target);
             // should probably unload resources here.
             this.delay_fire('did_unload');
         }
