@@ -374,7 +374,11 @@ var mvc = (function() {
 
         find: function(search) {
             return $(this._target).find(search);
+        },
+        view: function() {
+            return this.__data__.env.get_template('root');
         }
+                                        
     });
 
     var ReactComponent = Class(GCComponent, {
@@ -386,16 +390,16 @@ var mvc = (function() {
             return "(function(component) { " + src + " })";
         },
         wrap: function(r) {
-            this.__data__.react_obj = r;
+            this.__data__.react_root = r;
         },
         get: function(key) {
-            return this.__data__.react_obj.state[key];
+            return this.__data__.react_root.state[key];
         },
         set: function(key, value) {
                 this.fire('state_will_change', key);
                 var d = {};
                 d[key] = value;
-                this.__data__.react_obj.setState(d)
+                this.__data__.react_root.setState(d)
                 this.fire('state_did_change', key)
         },
         load: function() {
@@ -403,8 +407,13 @@ var mvc = (function() {
             this.load_assets();
             this.delay_fire('did_load');
         },
+        view: function(name) {
+            return this.__data__.react_root;
+        },
         reload: function() {},
-        render: function() {},
+        render: function() {
+            console.log("why is this render being called.");
+        },
         unload: function() {
             this.fire('will_unload');
             React.unmountComponentAtNode(this._target);
