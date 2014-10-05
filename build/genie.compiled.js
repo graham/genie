@@ -1326,7 +1326,6 @@ var mvc = (function() {
         unload: function() {
             this.fire('will_unload');
             React.unmountComponentAtNode(this._target);
-            // should probably unload resources here.
             this.delay_fire('did_unload');
         }
     });
