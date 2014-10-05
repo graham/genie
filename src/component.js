@@ -231,7 +231,7 @@ var mvc = (function() {
             this.__data__.controllers = controllers;
 
             if (target) {
-                this.set_target(target);
+                this.set_outlet('root', target);
             }
 
             var cache_name = 'gc_component_cache_' + url;
@@ -252,7 +252,11 @@ var mvc = (function() {
         },
 
         set_outlet: function(key, value) {
-            this.__data__.outlets[key] = value;
+            if (value && value.jquery) {
+                this.__data__.outlets[key] = value[0];
+            } else {
+                this.__data__.outlets[key] = value;
+            }
         },
         outlet: function(key) {
             return this.__data__.outlets[key];
@@ -317,15 +321,6 @@ var mvc = (function() {
             this.__data__.auto_load = true;
         },
 
-        /* I need to make sure that i'm getting the basic dom object */
-        set_target: function(target) {
-            if (target.jquery) {
-                this.set_outlet('root', target[0])
-            } else {
-                this.set_outlet('root', target);
-            }
-        },
-
         load_assets: function() {
             for(var i=0; i < this.__data__.resources.length; i++) {
                 var obj = this.__data__.resources[i];
@@ -342,7 +337,7 @@ var mvc = (function() {
         load: function() {
             this.fire('will_load');
             this.load_assets();
-            var target = this.controller('root');
+            var target = this.outlet('root');
             var content = this.__data__.env.render('root', this.__data__.state);
             target.innerHTML = content;
             this.delay_fire('did_load');
@@ -350,7 +345,7 @@ var mvc = (function() {
 
         reload: function() {
             this.fire('will_reload');
-            var target = this.controller('root');
+            var target = this.outlet('root');
             var content = this.__data__.env.render('root', this.__data__.state);
             target.innerHTML = content;
             this.delay_fire('did_reload');
@@ -391,7 +386,7 @@ var mvc = (function() {
         },
 
         find: function(search) {
-            return $(this.controller('root')).find(search);
+            return $(this.outlet('root')).find(search);
         },
     });
 
@@ -432,7 +427,7 @@ var mvc = (function() {
         },
         unload: function() {
             this.fire('will_unload');
-            React.unmountComponentAtNode(this.controller('root'));
+            React.unmountComponentAtNode(this.outlet('root'));
             this.delay_fire('did_unload');
         }
     });
