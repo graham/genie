@@ -1,13 +1,10 @@
 <html>
   <head>
-    <script>
-      var module = {};
-      module.exports = {};
-    </script>
     <script src="jquery.js"></script>
     <script src="/genie.compiled.js"></script>
     <script src="http://fb.me/react-0.11.2.js"></script>
     <script src="http://fb.me/JSXTransformer-0.11.2.js"></script>
+
     <script type='text/javascript'>
      var gc;
      var gc2;
@@ -38,28 +35,34 @@
              }
          });
 
-         gc = new genie.mvc.ReactComponent({
-             url:url,
-             target:target
-         });
-
-         gc2 = new genie.mvc.GCComponent({
-             url:url,
-             target:$('#test2')
-         });
+         if (url.search('react') != -1) {
+             gc = new genie.mvc.ReactComponent({
+                 url:url,
+                 target:target
+             });
+         } else {
+             gc = new genie.mvc.GCComponent({
+                 url:url,
+                 target:target
+             });
+         }
+         gc.set_outlet('test2', $('#test2')[0]);
 
          window.location.hash = url;
      };
 
      var load_list = function() {
-         $.get('build/list.json', function(data) {
+         $.get('/genie_component_library/build/list.json', function(data) {
+             if (typeof data == "string") {
+                 data = JSON.parse(data);
+             }
              for(var i=0; i < data['list'].length; i++) {
                  var o = document.createElement('option');
-                 o.innerHTML = data['list'][i];
-                 o.value = data['list'][i];
+                 o.innerHTML = '/genie_component_library/' + data['list'][i];
+                 o.value = '/genie_component_library/' + data['list'][i];
                  $('#chooser_path').append(o);
              }
-             var url = 'components/misc/counter.txt';
+             var url = '/genie_component_library/components/misc/counter.html';
              if (window.location.hash.length) {
                  url = window.location.hash.slice(1);
              }
@@ -68,15 +71,16 @@
      };
      
      $(document).ready(function() {
+         load_list();
          var url='';
          if (window.location.hash.length) {
              url = window.location.hash.slice(1);
          }
-         load_path(url);
      });
 
      var last = null;
     </script>
+
     <style>
 
      #chooser {
@@ -98,18 +102,21 @@
      }
 
      #test2 {
+       float:right;
        padding: 10px;
        margin:auto;
+       min-width: 400px;
        min-height: 100px;
+       border: 1px solid black;
      }
 
     </style>
   </head>
   
   <body>
+    <div id='test2'>outlet test2</div>
     <div id='test'>waiting for load...</div>
     <br style='clear:both;' />
-    <div id='test2'>waiting for load...</div>
 
     <div id='chooser'>
       <input type=button value='Show' onclick='show_selected_path();'>
