@@ -320,9 +320,9 @@ var mvc = (function() {
         /* I need to make sure that i'm getting the basic dom object */
         set_target: function(target) {
             if (target.jquery) {
-                this.set_outlet('root') = target[0];
+                this.set_outlet('root', target[0])
             } else {
-                this.set_outlet('root') = target;
+                this.set_outlet('root', target);
             }
         },
 

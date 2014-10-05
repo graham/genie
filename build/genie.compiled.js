@@ -1129,11 +1129,15 @@ var mvc = (function() {
             var state = props['state'] || {};
             var smart_load = props['smart_load'] || false;
             var auto_load = props['auto_load'] || false;
+            var outlets = props['outlets'] || {};
+            var controllers = props['controllers'] || {};
 
             Component.prototype.initialize.apply(this,[state]);
             this.__data__.resources = [];
             this.__data__.env = new genie.Environment();
             this.__data__.auto_load = auto_load;
+            this.__data__.outlets = outlets;
+            this.__data__.controllers = controllers;
 
             if (target) {
                 this.set_target(target);
@@ -1154,6 +1158,20 @@ var mvc = (function() {
                     comp.load_from_content(data);
                 });
             }
+        },
+
+        set_outlet: function(key, value) {
+            this.__data__.outlets[key] = value;
+        },
+        outlet: function(key) {
+            return this.__data__.outlets[key];
+        },
+
+        set_controller: function(key, value) {
+            this.__data__.controllers[key] = value;
+        },
+        controller: function(key) {
+            return this.__data__.controllers[key];
         },
 
         handle_script: function(child) {
@@ -1211,9 +1229,9 @@ var mvc = (function() {
         /* I need to make sure that i'm getting the basic dom object */
         set_target: function(target) {
             if (target.jquery) {
-                this._target = target[0];
+                this.set_outlet('root', target[0])
             } else {
-                this._target = target;
+                this.set_outlet('root', target);
             }
         },
 
@@ -1233,7 +1251,7 @@ var mvc = (function() {
         load: function() {
             this.fire('will_load');
             this.load_assets();
-            var target = this._target;
+            var target = this.controller('root');
             var content = this.__data__.env.render('root', this.__data__.state);
             target.innerHTML = content;
             this.delay_fire('did_load');
@@ -1241,7 +1259,7 @@ var mvc = (function() {
 
         reload: function() {
             this.fire('will_reload');
-            var target = this._target;
+            var target = this.controller('root');
             var content = this.__data__.env.render('root', this.__data__.state);
             target.innerHTML = content;
             this.delay_fire('did_reload');
@@ -1249,7 +1267,7 @@ var mvc = (function() {
 
         unload: function() {
             this.fire('will_unload');
-            this._target = null;
+            this.set_outlet('root', null);
             // should probably unload resources here.
             this.delay_fire('did_unload');
         },
@@ -1282,15 +1300,15 @@ var mvc = (function() {
         },
 
         find: function(search) {
-            return $(this._target).find(search);
+            return $(this.controller('root')).find(search);
         },
-        view: function() {
-            return this.__data__.env.get_template('root');
-        }
-                                        
     });
 
     var ReactComponent = Class(GCComponent, {
+        initialize: function(props) {
+            GCComponent.prototype.initialize.apply(this, [props]);
+            this.__data__.react_objs = {};
+        },
         handle_script: function(child) {
             var src = child.innerHTML;
             if (child.type == 'text/jsx') {
@@ -1298,26 +1316,24 @@ var mvc = (function() {
             }
             return "(function(component) { " + src + " })";
         },
+
         wrap: function(r) {
-            this.__data__.react_root = r;
+            this.__data__.controllers['root'] = r;
         },
         get: function(key) {
-            return this.__data__.react_root.state[key];
+            return this.__data__.controllers['root'].state[key];
         },
         set: function(key, value) {
-                this.fire('state_will_change', key);
-                var d = {};
-                d[key] = value;
-                this.__data__.react_root.setState(d)
-                this.fire('state_did_change', key)
+            this.fire('state_will_change', key);
+            var d = {};
+            d[key] = value;
+            this.__data__.controllers['root'].setState(d)
+            this.fire('state_did_change', key)
         },
         load: function() {
             this.fire('will_load');
             this.load_assets();
             this.delay_fire('did_load');
-        },
-        view: function(name) {
-            return this.__data__.react_root;
         },
         reload: function() {},
         render: function() {
@@ -1325,7 +1341,7 @@ var mvc = (function() {
         },
         unload: function() {
             this.fire('will_unload');
-            React.unmountComponentAtNode(this._target);
+            React.unmountComponentAtNode(this.controller('root'));
             this.delay_fire('did_unload');
         }
     });
