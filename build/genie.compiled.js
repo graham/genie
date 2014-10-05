@@ -1246,28 +1246,27 @@ var mvc = (function() {
         load: function() {
             this.fire('will_load');
             this.load_assets();
-            var target = this.outlet('root');
-            var content = this.__data__.env.render('root', this.__data__.state);
-            target.innerHTML = content;
+            this.render();
             this.delay_fire('did_load');
         },
 
         reload: function() {
             this.fire('will_reload');
-            var target = this.outlet('root');
-            var content = this.__data__.env.render('root', this.__data__.state);
-            target.innerHTML = content;
+            this.render();
             this.delay_fire('did_reload');
         },
 
         unload: function() {
             this.fire('will_unload');
             this.set_outlet('root', null);
-            // should probably unload resources here.
             this.delay_fire('did_unload');
         },
 
-        render: function(template_name, d) {
+        render: function() {
+            this.outlet('root').innerHTML = this.render_template('root', {});
+        },
+        
+        render_template: function(template_name, d) {
             var y = {
                 'component':this
             };
@@ -1311,10 +1310,6 @@ var mvc = (function() {
             }
             return "(function(component) { " + src + " })";
         },
-
-        wrap: function(r) {
-            this.__data__.controllers['root'] = r;
-        },
         get: function(key) {
             return this.__data__.controllers['root'].state[key];
         },
@@ -1325,19 +1320,21 @@ var mvc = (function() {
             this.__data__.controllers['root'].setState(d)
             this.fire('state_did_change', key)
         },
-        load: function() {
-            this.fire('will_load');
-            this.load_assets();
-            this.delay_fire('did_load');
-        },
         reload: function() {},
         render: function() {
-            console.log("why is this render being called.");
+            if (this.__data__.env.get_template('root') != undefined) {
+                GCComponent.prototype.render.apply(this, []);
+            }
         },
         unload: function() {
             this.fire('will_unload');
             React.unmountComponentAtNode(this.outlet('root'));
             this.delay_fire('did_unload');
+        },
+        latch: function(reactClass, divSearch, uid) {
+            var outlet = this.find(divSearch)[0];
+            var ReactObject = React.renderComponent(reactClass, outlet);
+            this.set_controller(uid, ReactObject);
         }
     });
 
