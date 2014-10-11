@@ -1,7 +1,7 @@
 
 var genie = (function() {
-var module = {};
-module.exports = {};
+var genie_module = {};
+genie_module.exports = {};
     
 
 
@@ -111,8 +111,8 @@ var Class = function() {
     return klass;   
 };
 
-if (typeof module !== 'undefined') {
-    module.exports.Class = Class;
+if (typeof genie_module !== 'undefined') {
+    genie_module.exports.Class = Class;
 }
 
 
@@ -161,12 +161,13 @@ var genie = ( function() {
     var str_trim = function(s) { return s.replace(/^\s+|\s+$/g, "").replace(/^[\n|\r]+|[\n|\r]+$/g, ""); };
 
     var str_trimr = function(s) { return s.replace(/\s+$/g, "").replace(/[\n|\r]+$/g, ""); };
-    var str_trimr_spaces = function(s) { return s.replace(/[ |\t]+$/g, "") };
-    var str_trimr_one = function(s)    { return s.replace(/\n[ |\t]*/g, "") };
+    var str_trimr_spaces = function(s) { return s.replace(/[ |\t]+$/g, ""); };
+    var str_trimr_one = function(s)    { return s.replace(/\n[ |\t]*/g, ""); };
 
     var str_triml = function(s) { return s.replace(/^\s+/g, "").replace(/^[\n|\r]+/g, ""); };
-    var str_triml_spaces = function(s) { return s.replace(/^[ |\t]+/g, "") };
-    var str_triml_one = function(s)    { return s.replace(/^[ |\t]*\n/g, "") };
+    var str_triml_spaces = function(s) { return s.replace(/^[ |\t]+/g, ""); };
+    var str_triml_one = function(s)    { return s.replace(/^[ |\t]*\n/g, ""); };
+    var safe_str = function(s)         { return JSON.stringify(s); };
 
     var str_count = function(s, c, accum) {
         if (accum == undefined) {
@@ -427,21 +428,21 @@ var genie = ( function() {
                         vartype = str_trim(temp[1]);
                     }
 
-		    if (data.indexOf(GENIE_CONTEXT_begin) == 0) {
-			f_code.push( "/* " + line + " */ write( " + vardata.substring(1) + " );\n");
+		            if (data.indexOf(GENIE_CONTEXT_begin) == 0) {
+			            f_code.push( "/* " + line + " */ write( " + vardata.substring(1) + " );\n");
                     } else {
                         var tempvar_name = "__tempvar_" + tempvar_counter;
                         tempvar_counter++;
                         f_code.push( "/* " + line + " */ var " + tempvar_name + " = " + vardata + ";\n");
                         f_code.push( "/* " + line + " */ if (typeof(" + tempvar_name + ") == \"function\") { write(" + tempvar_name + "());}\n");
-			f_code.push( "/* " + line + " */ else { write( (typeof(" + tempvar_name + ") != 'undefined') ? escape_variable(" + tempvar_name + ", '" + vartype + "') : undefined_variable('" + tempvar_name + "') ); } \n");
-		    }
+			            f_code.push( "/* " + line + " */ else { write( (typeof(" + tempvar_name + ") != 'undefined') ? escape_variable(" + tempvar_name + ", '" + vartype + "') : undefined_variable(" + JSON.stringify(vardata) + ") ); } \n");
+		            }
                 } else if (type == 'bindable') {
                     var value = this.environment.bindable_dict[str_trim(data)];
                     if (value === undefined) {
                         value = '';
                     }
-        
+                    
                     f_code.push( "/* " + line + " */ write( \"<span class='genie_" + this.environment.id + "_value_update_" + str_trim(data) + "'>\" + " + data + " + \"</span>\" );\n" );
                 } else if (type == 'exec') {
                     f_code.push( "/* " + line + " */ " + data);
@@ -539,7 +540,7 @@ var genie = ( function() {
 
             var undef_var = function(name) {
                 if (!uv) {
-                    console.log("Variable '" + name + "' is not defined, state: " + JSON.stringify(tvars));
+                    console.log("Variable '" + name + "' is not defined, state: " + tvars);
                     return "** " + name + " not defined **";
                 } else if (uv.indexOf('%s') == -1) {
                     return str_trim(uv);
@@ -899,10 +900,10 @@ var genie = ( function() {
     return exports;
 })();
 
-if (typeof module !== 'undefined') {
-    module.exports.genie = genie;
-    module.exports.Template = genie.Template;
-    module.exports.Environment = genie.Environment;    
+if (typeof genie_module !== 'undefined') {
+    genie_module.exports.genie = genie;
+    genie_module.exports.Template = genie.Template;
+    genie_module.exports.Environment = genie.Environment;    
 }
 
 
@@ -1263,7 +1264,11 @@ var mvc = (function() {
         },
 
         render: function() {
-            this.outlet('root').innerHTML = this.render_template('root', {});
+            if (this.outlet('root') != undefined) {
+                this.outlet('root').innerHTML = this.render_template('root', {});
+            } else {
+                console.log("you have not set a root outlet.");
+            }
         },
         
         render_template: function(template_name, d) {
@@ -1358,10 +1363,10 @@ var mvc = (function() {
 })();
 
 if (typeof module !== 'undefined') {
-    module.exports.mvc = mvc;
-    module.exports.Component = mvc.Component;
-    module.exports.GCComponent = mvc.GCComponent;
-    module.exports.clear_cache = mvc.clear_cache;
+    genie_module.exports.mvc = mvc;
+    genie_module.exports.Component = mvc.Component;
+    genie_module.exports.GCComponent = mvc.GCComponent;
+    genie_module.exports.clear_cache = mvc.clear_cache;
 }
 
 
@@ -1376,14 +1381,14 @@ var route = (function() {
     };
 })();
 
-if (typeof module !== 'undefined') {
-    module.exports.route = route;
+if (typeof genie_module !== 'undefined') {
+    genie_module.exports.route = route;
 }
 
 
 
 
-    return module.exports;
+    return genie_module.exports;
 })();
 
 
