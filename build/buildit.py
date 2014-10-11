@@ -42,3 +42,7 @@ if __name__ == '__main__':
     f.close()
 
     os.system('cat build/genie.compiled.js | jsmin > build/genie.min.js')
+
+    print '\tcreated build/genie.compiled.js...'
+    print '\tcreated build/genie.min.js...'
+    print ''
