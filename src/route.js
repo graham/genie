@@ -8,6 +8,6 @@ var route = (function() {
     };
 })();
 
-if (typeof module !== 'undefined') {
-    module.exports.route = route;
+if (typeof genie_module !== 'undefined') {
+    genie_module.exports.route = route;
 }

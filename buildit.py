@@ -10,13 +10,13 @@ def create_file():
 
     start = '''
 var genie = (function() {
-var module = {};
-module.exports = {};
+var genie_module = {};
+genie_module.exports = {};
     
 '''
 
     end = '''
-    return module.exports;
+    return genie_module.exports;
 })();
 '''
 

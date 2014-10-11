@@ -453,8 +453,8 @@ var mvc = (function() {
 })();
 
 if (typeof module !== 'undefined') {
-    module.exports.mvc = mvc;
-    module.exports.Component = mvc.Component;
-    module.exports.GCComponent = mvc.GCComponent;
-    module.exports.clear_cache = mvc.clear_cache;
+    genie_module.exports.mvc = mvc;
+    genie_module.exports.Component = mvc.Component;
+    genie_module.exports.GCComponent = mvc.GCComponent;
+    genie_module.exports.clear_cache = mvc.clear_cache;
 }

@@ -781,8 +781,8 @@ var genie = ( function() {
     return exports;
 })();
 
-if (typeof module !== 'undefined') {
-    module.exports.genie = genie;
-    module.exports.Template = genie.Template;
-    module.exports.Environment = genie.Environment;    
+if (typeof genie_module !== 'undefined') {
+    genie_module.exports.genie = genie;
+    genie_module.exports.Template = genie.Template;
+    genie_module.exports.Environment = genie.Environment;    
 }

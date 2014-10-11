@@ -103,6 +103,6 @@ var Class = function() {
     return klass;   
 };
 
-if (typeof module !== 'undefined') {
-    module.exports.Class = Class;
+if (typeof genie_module !== 'undefined') {
+    genie_module.exports.Class = Class;
 }
