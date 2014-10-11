@@ -452,7 +452,7 @@ var mvc = (function() {
     };
 })();
 
-if (typeof module !== 'undefined') {
+if (typeof genie_module !== 'undefined') {
     genie_module.exports.mvc = mvc;
     genie_module.exports.Component = mvc.Component;
     genie_module.exports.GCComponent = mvc.GCComponent;
