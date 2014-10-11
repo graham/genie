@@ -354,7 +354,11 @@ var mvc = (function() {
         },
 
         render: function() {
-            this.outlet('root').innerHTML = this.render_template('root', {});
+            if (this.outlet('root') != undefined) {
+                this.outlet('root').innerHTML = this.render_template('root', {});
+            } else {
+                console.log("you have not set a root outlet.");
+            }
         },
         
         render_template: function(template_name, d) {
