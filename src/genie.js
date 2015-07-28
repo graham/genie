@@ -35,7 +35,7 @@ var genie = ( function() {
 
     GENIE_CONTEXT_lookup[GENIE_CONTEXT_begin] = "variable";
     GENIE_CONTEXT_lookup[GENIE_CONTEXT_end] = "variable";
-    
+
     var genie_environ_count = 0;
 
     // I'm not really proud of this sort of monkey patching, but it's somewhat required here.
@@ -116,10 +116,10 @@ var genie = ( function() {
             cmd_lookup = {};
             cmd_lookup[this.value_only] = "variable";
         }
-    
+
         var start = this.string.indexOf(begin_char);
         var next_char = start+1;
-    
+
         if (start == -1) {
             var s = this.string;
             this.string = '';
@@ -133,12 +133,12 @@ var genie = ( function() {
                 return blocks;
             }
         }
-    
+
         var before_block = this.string.substring(0, start);
         var after_block = this.string.substring(start+1);
 
         this.cur_template_line += str_count(before_block, '\n');
-        blocks.push( ['text', before_block, this.cur_template_line] ); 
+        blocks.push( ['text', before_block, this.cur_template_line] );
 
         var start_char = after_block[0];
         var type = cmd_lookup[start_char];
@@ -176,7 +176,7 @@ var genie = ( function() {
         } else if (block[0] == '|') {
             block = block.substring(1);
         }
-    
+
         //post inner operator.
         if (block[block.length-1] == '|') {
             block = block.substring(0, block.length-1);
@@ -188,7 +188,7 @@ var genie = ( function() {
             block = block.substring(0, block.length-1);
             after_block = str_triml(after_block);
         }
-        
+
         this.cur_template_line += str_count(block, '\n');
         blocks.push( [type, block, this.cur_template_line] );
 
@@ -209,14 +209,14 @@ var genie = ( function() {
         var i = 0;
         var blocks = this.find_next_block();
         var tempvar_counter = 0;
-    
+
         while(blocks.length > 0) {
             for( i = 0; i < blocks.length; i++ ) {
                 var obj = blocks[i];
                 var type = obj[0];
                 var data = obj[1];
                 var line = obj[2];
-        
+
                 if (type == 'text') {
                     f_code.push( "/* " + line + " */ " + pad(depth) );
                     f_code.push("write(" + JSON.stringify(data) + ");\n" );
@@ -248,26 +248,26 @@ var genie = ( function() {
                         if (d[0] == '(') {
                             bulk = d.substring(1, d.length-2);
                         }
-                
+
                         var value_name = bulk.substring(0, bulk.indexOf(' in '));
                         var rest = bulk.substring(bulk.indexOf(' in ') + 4);
-                
+
                         var cvar = '_count_' + counter_count;
                         counter_count += 1;
                         f_code.push( "\n/* " + line + " */ for( var " + value_name + " in " + rest + " ) {" );
                         f_code.push( "\n/* " + line + " */ " + pad(depth) );
                         in_func.push('}');
-                        depth += 1;                
+                        depth += 1;
                     } else if (data.substring(0, 3) == 'for') {
                         var d = str_trim(data.substring(3));
                         var bulk = d;
                         if (d[0] == '(') {
                             bulk = d.substring(1, d.length-2);
                         }
-                
+
                         var value_name = bulk.substring(0, bulk.indexOf(' in '));
                         var rest = bulk.substring(bulk.indexOf(' in ') + 4);
-                
+
                         var cvar = '_count_' + counter_count;
                         counter_count += 1;
                         f_code.push( "\n/* " + line + " */ for( var " + cvar + " = 0; " + cvar + " < " + rest + ".length; " + cvar + "++ ) {" );
@@ -309,21 +309,21 @@ var genie = ( function() {
                         vartype = str_trim(temp[1]);
                     }
 
-		            if (data.indexOf(GENIE_CONTEXT_begin) == 0) {
-			            f_code.push( "/* " + line + " */ write( " + vardata.substring(1) + " );\n");
+                    if (data.indexOf(GENIE_CONTEXT_begin) == 0) {
+                        f_code.push( "/* " + line + " */ write( " + vardata.substring(1) + " );\n");
                     } else {
                         var tempvar_name = "__tempvar_" + tempvar_counter;
                         tempvar_counter++;
                         f_code.push( "/* " + line + " */ var " + tempvar_name + " = " + vardata + ";\n");
                         f_code.push( "/* " + line + " */ if (typeof(" + tempvar_name + ") == \"function\") { write(" + tempvar_name + "());}\n");
-			            f_code.push( "/* " + line + " */ else { write( (typeof(" + tempvar_name + ") != 'undefined') ? escape_variable(" + tempvar_name + ", '" + vartype + "') : undefined_variable(" + JSON.stringify(vardata) + ") ); } \n");
-		            }
+                        f_code.push( "/* " + line + " */ else { write( (typeof(" + tempvar_name + ") != 'undefined') ? escape_variable(" + tempvar_name + ", '" + vartype + "') : undefined_variable(" + JSON.stringify(vardata) + ") ); } \n");
+                    }
                 } else if (type == 'bindable') {
                     var value = this.environment.bindable_dict[str_trim(data)];
                     if (value === undefined) {
                         value = '';
                     }
-                    
+
                     f_code.push( "/* " + line + " */ write( \"<span class='genie_" + this.environment.id + "_value_update_" + str_trim(data) + "'>\" + " + data + " + \"</span>\" );\n" );
                 } else if (type == 'exec') {
                     f_code.push( "/* " + line + " */ " + data);
@@ -345,7 +345,7 @@ var genie = ( function() {
         }
 
         preamble = preamble.join(' ');
-        
+
         var header = "var write = locals.write; var escape_variable = locals.escape_variable;";
         header += "var partial = locals.partial; var bailout = locals.bailout;";
         header += "var _env = locals._env; var _template = locals._template;";
@@ -393,13 +393,13 @@ var genie = ( function() {
         locals['_env'] = this.environment;
         locals['____output'] = [];
 
-        locals['partial'] = function(name, d) { 
+        locals['partial'] = function(name, d) {
             var ptemp = locals['_env'].get_template(name);
             if (ptemp == undefined) {
                 console.log("ERROR: Template " + name + " not found.");
                 return "TEMPLATE_NOT_FOUND: " + name;
             } else {
-                return locals['_env'].get_template(name).render(d); 
+                return locals['_env'].get_template(name).render(d);
             }
         };
 
@@ -408,7 +408,7 @@ var genie = ( function() {
         locals['bailout'] = this.bailout;
 
         locals['escape_variable'] = function(data, type) { return data; };
-        
+
         try {
             var compiled_code = new Function('parent', 'v', 'defaults', 'undefined_variable', 'locals', this.f_code_render);
         } catch (e) {
@@ -476,13 +476,13 @@ var genie = ( function() {
             var line_number = parseInt(str_trim(line.slice(2, line.indexOf('*/'))));
             var error_lines = [];
 
-            if (line_number > 0) { 
+            if (line_number > 0) {
                 error_lines.push(" line " + (line_number) + ": " + os_by_line[line_number-1]);
             }
 
             error_lines.push(" line " + (line_number+1) + ": " + os_by_line[line_number]);
 
-            if (line_number < os_by_line.length-1) { 
+            if (line_number < os_by_line.length-1) {
                 error_lines.push(" line " + (line_number+2) + ": " + os_by_line[line_number+1]);
             }
 
@@ -535,7 +535,7 @@ var genie = ( function() {
     };
 
     Environment.prototype.template_list = function() {
-        l = []; 
+        l = [];
         for( var i in this.template_dict ) {
             l.push(i);
         }
@@ -586,7 +586,7 @@ var genie = ( function() {
       return t.render(vars, undef_var);
     }
   };
-    
+
     Environment.prototype.set_obj = function(name, obj) {
         this.object_dict[name] = obj;
     };
@@ -597,7 +597,7 @@ var genie = ( function() {
 
     Environment.prototype.load_template = function(url, name, cb) {
         var env = this;
-        $.get(url + "?_ts=" + UNIQUE_TIME, 
+        $.get(url + "?_ts=" + UNIQUE_TIME,
               function(data) {
                   env.create_template(name, data);
                   console.log('created template: ' + name + ' (' + data.length + ' bytes)');
@@ -629,13 +629,13 @@ var genie = ( function() {
     Environment.prototype.auto_load = function(callback) {
         // this sucks because it requires jquery, should figure out how to
         // make that not a dependency.
-        
+
         var env = this;
         var template_names = [];
         $('.genie-template').each( function(index, item) {
                 template_names.push($(item).attr('data-genie-template'));
         });
-        
+
         env.load_templates(template_names, function() {
                 $('.genie-template').each( function(index, item) {
                         var template_name = $(item).attr('data-genie-template');
@@ -651,7 +651,7 @@ var genie = ( function() {
     Environment.prototype.load_template_dir = function(url, cb) {
         // this sucks because it requires jquery, should figure out how to
         // make that not a dependency.
-        
+
         var env = this;
         $.get(url, function(data) {
                 data = JSON.parse(data);
@@ -659,18 +659,18 @@ var genie = ( function() {
                 for(var name in data) {
                     var obj = data[name];
                     var load = function(o) {
-                        return function(t) { 
+                        return function(t) {
                             env.load_template(url + o, o.split('.')[0], t);
                         }
                     }
-                    items.push( load(obj) ); 
+                    items.push( load(obj) );
                 }
                 ut.serial(function() { return; }, items, cb);
             });
     };
-    
+
     var main_environment = new Environment();
-    
+
     var fs = function( s, args, value_only ) {
         var t = new Template(s);
         t.value_only = value_only;
@@ -708,7 +708,7 @@ var genie = ( function() {
         if (settings['di']) {
             split_key = settings['di'];
         }
-        
+
         if (key.indexOf(split_key) == -1) {
             return obj[key];
         } else {
@@ -718,7 +718,7 @@ var genie = ( function() {
             return this.dig_get(obj, rest);
         }
     };
-    
+
     var dig_set = function(obj, key, value, settings) {
         var split_key = "/";
         var def = function() { return new Object(); };
@@ -735,7 +735,7 @@ var genie = ( function() {
         if (key[key.length-1] == split_key) {
             key = key.slice(0, key.length-1);
         }
-        
+
         if (key.indexOf(split_key) == -1) {
             obj[key] = value;
             return [obj, key];
@@ -747,11 +747,11 @@ var genie = ( function() {
                 obj[cur] = def();
                 newb = obj[cur];
             }
-            
+
             return this.dig_set(newb, rest, value);
         }
-    }; 
-    
+    };
+
     var unpack_packed_hash = function(data) {
     };
 
@@ -764,17 +764,17 @@ var genie = ( function() {
     var exports;
 
     exports = {
-        'Template':Template, 
-        'Environment':Environment, 
-        'monkey_patch':monkey_patch, 
-        'main_environment':main_environment, 
-        'fs':fs, 
-        'str_count':str_count, 
-        'version':GENIE_VERSION, 
-        'dig_set':dig_set, 
-        'dig_get':dig_get, 
-        'render_body_as_template':render_body_as_template, 
-        'rbt':render_body_as_template, 
+        'Template':Template,
+        'Environment':Environment,
+        'monkey_patch':monkey_patch,
+        'main_environment':main_environment,
+        'fs':fs,
+        'str_count':str_count,
+        'version':GENIE_VERSION,
+        'dig_set':dig_set,
+        'dig_get':dig_get,
+        'render_body_as_template':render_body_as_template,
+        'rbt':render_body_as_template,
         'str_starts_with':str_starts_with
     };
 
@@ -784,5 +784,5 @@ var genie = ( function() {
 if (typeof genie_module !== 'undefined') {
     genie_module.exports.genie = genie;
     genie_module.exports.Template = genie.Template;
-    genie_module.exports.Environment = genie.Environment;    
+    genie_module.exports.Environment = genie.Environment;
 }
