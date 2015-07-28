@@ -19,7 +19,8 @@ var genie = ( function() {
     var GENIE_VERSION = "0.3";
     var genie_context_begin;
     var genie_context_end;
-
+    var DEBUG = false;
+    
     var GENIE_CONTEXT_begin = eval("genie_context_begin") || "[";
     var GENIE_CONTEXT_end =   eval("genie_context_end")   || "]";
 
@@ -351,7 +352,9 @@ var genie = ( function() {
         header += "var _env = locals._env; var _template = locals._template;";
         this.f_code_render = preamble + header + f_code.join('');
 
-        console.log(this.f_code_render);
+        if (DEBUG) {
+            console.log(this.f_code_render);
+        }
         this.f_code = null;
     };
 
