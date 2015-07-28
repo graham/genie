@@ -314,9 +314,9 @@ var genie = ( function() {
                     } else {
                         var tempvar_name = "__tempvar_" + tempvar_counter;
                         tempvar_counter++;
-                        f_code.push( "/* " + line + " */ var " + tempvar_name + " = " + vardata + ";\n");
+                        f_code.push( "/* " + line + " */ var " + tempvar_name + " = (typeof(" + vardata + ") != 'undefined') ? " + vardata + " : undefined_variable(" + JSON.stringify(vardata) + ");\n" );
                         f_code.push( "/* " + line + " */ if (typeof(" + tempvar_name + ") == \"function\") { write(" + tempvar_name + "());}\n");
-                        f_code.push( "/* " + line + " */ else { write( (typeof(" + tempvar_name + ") != 'undefined') ? escape_variable(" + tempvar_name + ", '" + vartype + "') : undefined_variable(" + JSON.stringify(vardata) + ") ); } \n");
+                        f_code.push( "/* " + line + " */ else { write( " + tempvar_name + " ); }\n");
                     }
                 } else if (type == 'bindable') {
                     var value = this.environment.bindable_dict[str_trim(data)];
@@ -351,7 +351,7 @@ var genie = ( function() {
         header += "var _env = locals._env; var _template = locals._template;";
         this.f_code_render = preamble + header + f_code.join('');
 
-        //console.log(this.f_code_render);
+        console.log(this.f_code_render);
         this.f_code = null;
     };
 
