@@ -206,4 +206,54 @@
 
         (name)
 
- ** I realize there is room to improve here **
+## Environments and the 'main_environment'
+
+For small projects, `new Template` and `genie.fs` are great, but once you start working with larger sets of templates and any large application in general, Genie Environments are here to help.
+
+Environments attempt to solve a number of problems, but we'll focus on two in this document:
+
+1. Keep track of your templates (compile once).
+2. Expose variables to every template you render (global to the environment).
+
+First we'll focus on how you create an environment and populate it with templates and variables,
+
+Once you've called `Environment.create_template(template_name, template_text)` you can then render that template with the following syntax `Environment.render(template_name, variables, undef_var)`.
+
+- `template_name` is a string that refers to a previously created template
+- `variables` should be a dictionary {} with any vars you want to pass in for that render.
+- `undef_var` the string that will be placed in the template if you [[foo]] an undefined variable.
+
+Once you've created your templates you may want some data to be available to all of them, you can do this with `set_obj(key, obj)`.
+
+Generally you should only use `set_obj` when you plan on it being available for the duration of the environment, since there is no clean way to remove the reference (by design).
+
+Let's bring it all together:
+
+    var env = new genie.Environment();
+    env.create_template('test', 'this time: [[inside]] but every time: [[_env.get_obj('the_local')]]');
+    env.set_obj('the_local', 'BANGBANG');
+    var result = env.render_template('test', {'inside':'boop'});
+
+    assertEqual(result == 'this time: boop but every time: BANGBANG');
+
+You'll notice a couple extras here, first `_env` is defined in every template rendered with an environment (so it could also be null). Using `get_obj` is a little difficult, and I'll try to make this cleaner in the future.
+
+You can also use this to update values within the environment, lets try another example:
+
+    var env = new genie.Environment();
+    var enclosed_value = 0;
+
+    env.create_template('test', 'one of many, [[_env.get_obj("get_and_incr")()]]');
+    env.set_obj('get_and_incr', function() { enclosed_value += 1; return enclosed_value; });
+
+    var result = env.render_template('test');
+    assertEqual(result == 'one of many, 1')
+
+    var result = env.render_template('test');
+    assertEqual(result == 'one of many, 2')
+
+    var result = env.render_template('test');
+    assertEqual(result == 'one of many, 3')
+
+Environments do allow for a couple other neat features, but since they are not totally ironed out yet, we'll leave them out of this documentation. :)
+
