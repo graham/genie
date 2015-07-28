@@ -16,45 +16,45 @@ limitations under the License.
 
 /* Example Component
 
-	<style type='text/css'> 
-	 #counter { 
-	   font-size: 50px;
-	 }
-	</style> 
+    <style type='text/css'>
+     #counter {
+       font-size: 50px;
+     }
+    </style>
 
-	<script type='text/javascript'>
-	 component.on('ready', function() {
-	     this.set('running', true);
-	     this.set('ticks', 0);
-	     this.load();
-	 });
+    <script type='text/javascript'>
+     component.on('ready', function() {
+         this.set('running', true);
+         this.set('ticks', 0);
+         this.load();
+     });
 
-	 component.on('did_load', function() {
-	     this.tick(100);
-	 });
+     component.on('did_load', function() {
+         this.tick(100);
+     });
 
-	 component.methods({
-	     tick: function(ms) {
-	         var sleep = ms || 1000;
-	         this.reload();
-	         this.wait(function() {
-	             var secs = this.get('ticks');
-	             this.set('ticks', secs+1);
-	             this.tick(sleep);
-	         }, sleep);
-	     }     
-	 });
-	</script>
+     component.methods({
+         tick: function(ms) {
+             var sleep = ms || 1000;
+             this.reload();
+             this.wait(function() {
+                 var secs = this.get('ticks');
+                 this.set('ticks', secs+1);
+                 this.tick(sleep);
+             }, sleep);
+         }
+     });
+    </script>
 
-	<template type='text/template' id='root'>
-	  <div id='counter'>
-	    [% if v.ticks == 1 %]
-	      [[v.ticks]] second has passed.
-	    [% else %] 
-	      [[v.ticks]] seconds have passed.
-	    [% end %]
-	  </div>
-	</template> 
+    <template type='text/template' id='root'>
+      <div id='counter'>
+        [% if v.ticks == 1 %]
+          [[v.ticks]] second has passed.
+        [% else %]
+          [[v.ticks]] seconds have passed.
+        [% end %]
+      </div>
+    </template>
 
 */
 
@@ -105,7 +105,7 @@ var mvc = (function() {
         get: function(key) {
             return this.__data__.state[key];
         },
-    
+
         set: function(key, value) {
             this.fire('state_will_change', key);
             this.__data__.state[key] = value;
@@ -133,7 +133,7 @@ var mvc = (function() {
                 return true;
             }
         },
-    
+
         on: function(type, callback) {
             safe_append_to_key(this.__data__.event_listeners, type, callback);
         },
@@ -160,7 +160,7 @@ var mvc = (function() {
                             if (index != -1) {
                                 dict[k] = dict[k].slice(0, index).concat(dict[k].slice(index+1, len));
                             }
-                            
+
                         }
                     }
                 } else {
@@ -180,9 +180,9 @@ var mvc = (function() {
             if (args == undefined) {
                 args = null;
             }
-            
+
             var target = this.__data__.event_listeners[type];
-            
+
             if (target !== undefined) {
                 for(var i=0; i < target.length; i++) {
                     var cb = target[i];
@@ -243,8 +243,8 @@ var mvc = (function() {
                 console.log('loading url: ' + url);
                 var comp = this;
                 $.get(url, function(data) {
-                    if (smart_load) { 
-                        localStorage.setItem(cache_name, data); 
+                    if (smart_load) {
+                        localStorage.setItem(cache_name, data);
                     }
                     comp.load_from_content(data);
                 });
@@ -307,7 +307,7 @@ var mvc = (function() {
                     console.log("Unsupported node '" + child.tagName + "'in Component: " + child);
                 }
             }
-            
+
             for(var i=0; i < scripts.length; i++) {
                 eval(scripts[i])(comp);
             }
@@ -360,7 +360,7 @@ var mvc = (function() {
                 console.log("you have not set a root outlet.");
             }
         },
-        
+
         render_template: function(template_name, d) {
             var y = {
                 'component':this

@@ -1,8 +1,8 @@
 // http://www.htmlgoodies.com/html5/javascript/extending-javascript-objects-in-the-classical-inheritance-style.html#fbid=RVDh8wJqRXX
 
-var Class = function() {  
+var Class = function() {
     var parent,
-    the_methods,              
+    the_methods,
     objMethods = [
         'toString'
         ,'valueOf'
@@ -12,8 +12,8 @@ var Class = function() {
         ,'hasOwnProperty'
     ],
 
-    klass = function() { 
-        this.initialize.apply(this, arguments); 
+    klass = function() {
+        this.initialize.apply(this, arguments);
         //copy the properties so that they can be called directly from the child
         //class without $super, i.e., this.name
         var reg = /\(([\s\S]*?)\)/;
@@ -26,7 +26,7 @@ var Class = function() {
         }
     },
 
-    extend = function(destination, source) {   
+    extend = function(destination, source) {
         for (var property in source) {
             destination[property] = source[property];
         }
@@ -41,11 +41,11 @@ var Class = function() {
                 }
             }
         }
-        
+
         destination.$super =  function(method) {
             return this.$parent[method].apply(this, Array.prototype.slice.call(arguments, 1));
         }
-        return destination;  
+        return destination;
     },
 
     methods = function(ms) {
@@ -76,31 +76,31 @@ var Class = function() {
             destination.__slots__ = slots;
         }
     };
-    
-    if (typeof arguments[0] === 'function') {       
-        parent  = arguments[0];       
-        the_methods = arguments[1];     
-    } else {       
-        the_methods = arguments[0];     
-    }     
-    
-    if (parent !== undefined) {       
-        extend(klass.prototype, parent.prototype);       
+
+    if (typeof arguments[0] === 'function') {
+        parent  = arguments[0];
+        the_methods = arguments[1];
+    } else {
+        the_methods = arguments[0];
+    }
+
+    if (parent !== undefined) {
+        extend(klass.prototype, parent.prototype);
         klass.prototype.$parent = parent.prototype;
     }
-    extend(klass.prototype, the_methods);  
-    klass.prototype.constructor = klass;      
+    extend(klass.prototype, the_methods);
+    klass.prototype.constructor = klass;
     klass.prototype.methods = methods;
-    
+
     if (!klass.prototype.initialize) {
         klass.prototype.initialize = function(){
             this.__inputs__ = [];
             this.__outputs__ = [];
             this.__slots__ = [];
             this.__data__ = {};
-        };         
+        };
     }
-    return klass;   
+    return klass;
 };
 
 if (typeof genie_module !== 'undefined') {
