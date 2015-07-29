@@ -9,7 +9,7 @@
      * { padding:0px; margin:0px; }
 
      .parse_error {
-       background-color: rgba(255, 0, 0, 0.1);
+       background-color: rgba(255, 0, 0, 0.1) !important;
      }
 
      textarea {
@@ -23,7 +23,15 @@
        white-space: -pre-wrap;      /* Opera 4-6 */
        white-space: -o-pre-wrap;    /* Opera 7 */
        word-wrap: break-word;       /* Internet Explorer 5.5+ */
-       }
+     }
+
+     #data, #func {
+       font-family: courier;
+     }
+
+     textarea:focus {
+       background-color: rgba(0,0,255,0.05);
+     }
     </style>
   </head>
 
@@ -38,12 +46,10 @@
           <textarea style='width:100%; height: 50%;' id='func'></textarea>
         </td>
         <td width="50%" style='padding:20px;' valign='top'>
-          <div style='white-space: pre-wrap; word-wrap: break-word; width:96%; height:90%; padding: 10px; margin-right:10px; border: 1px solid rgba(0,0,0,0.1); overflow:scroll;' id='render_target'>Rendering...</div>
+          <div style='width:96%; height:90%; padding: 10px; margin-right:10px; border: 1px solid rgba(0,0,0,0.1); overflow:scroll;' id='render_target'>Rendering...</div>
           <input type='radio' name='render_type' id='use_html' CHECKED> Use HTML<br>
           <input type='radio' name='render_type' id='use_plain'> Use Plain Text<br>
-          <input type='radio' name='render_type' id='use_html' disabled> Use Pure HTML<br>
-          <input type='radio' name='render_type' id='use_plain' disabled> Use Markdown
-          
+          <input type='radio' name='render_type' id='use_html_pure'> Use Pure HTML<br>
         </td>
       </tr>
     </table>
@@ -86,8 +92,8 @@
 
        $("#use_html").on('change', function() { attempt_update(); });
        $("#use_plain").on('change', function() { attempt_update(); });
-
-       setInterval(function() { attempt_update(); }, 1000);
+       $("#use_html_pure").on('change', function() { attempt_update(); });
+       setInterval(function() { attempt_update(); }, 500);
 
        loadup();
    });
@@ -101,16 +107,20 @@
        var template = Base64.decode(sp[0]);
        var data = Base64.decode(sp[1]);
        var func = Base64.decode(sp[2]);
-       var is_html = sp[3];
+       var render_type = sp[3];
        
        $("#template").val(template);
        $("#data").val(data);
        $("#func").val(func);
        
-       if (is_html == 'true') {
+       if (render_type == 'true') {
            $("#use_html")[0].checked = true;
-       } else {
+       } else if (render_type == 'use_html') {
+           $("#use_html")[0].checked = true;
+       } else if (render_type == 'use_plain') {
            $("#use_plain")[0].checked = true;
+       } else if (render_type == 'use_html_pure') {
+           $("#use_html_pure")[0].checked = true;
        }
        attempt_update();
    }
@@ -148,15 +158,22 @@
            $("#template").addClass("parse_error");
        }
 
-       if ($("#use_html")[0].checked) {
-           final_result = final_result.replace(/\n/g, "<br />");
-           
+       var render_type = $('input[name=render_type]:checked').attr('id');
+       
+       $("#render_target").html("");
+       
+       if (render_type == 'use_html') {
+           final_result = final_result.replace(/\n/g, '<br \>');
+
            $("#render_target").html(final_result);
-       } else {
-           $("#render_target").html("");
+       } else if (render_type == 'use_plain') {
            var d = document.createElement('pre');
            d.innerText = final_result;
            $("#render_target").append(d);
+       } else if (render_type == 'use_html_pure') {
+           $("#render_target")[0].innerHTML = final_result;
+       } else {
+           //pass
        }
        generate_hash();
    }
@@ -165,9 +182,9 @@
        var template = Base64.encode($("#template").val());
        var data = Base64.encode($("#data").val());
        var func = Base64.encode($("#func").val());
-       var use_html = $("#use_html")[0].checked;
-
-       window.location.hash = template + ':' + data + ':' + func + ':' + use_html;
+       var render_type = $('input[name=render_type]:checked').attr('id');
+       
+       window.location.hash = template + ':' + data + ':' + func + ':' + render_type;
    }
   </script>
     
