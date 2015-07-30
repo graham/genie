@@ -17,7 +17,9 @@
 
     var previous_focus = null;
     
-    var style = 'position: fixed; top: 20%; width: 60%; left: 20%; font-family: serif; margin:auto; background-color: rgba(222, 255, 222, 0.8);'
+    var style = 'position: fixed; top: 20%; width: 60%; left: 20%; font-family: serif; margin:auto; background-color: white; border: 1px solid rgba(0,0,0,0.1);';
+
+    var row_style = 'font-size: 14px; font-family: lato; padding: 4px; padding-left: 10px; border-top: 1px solid rgba(0,0,0,0.1);';
     
     chrome.runtime.onMessage.addListener(
         function(request, sender, sendResponse) {
@@ -42,22 +44,43 @@
                     d.appendChild(ul);
                     document.body.appendChild(d);
                 
-                    form.onsubmit = remove_from_page;
-                    input.onblur = remove_from_page;
-
-                    input.onkeyup = function() {
-                        chrome.runtime.sendMessage({command:"quick-search",
-                                                    query:input.value},
+                    form.onsubmit = function() {
+                        chrome.runtime.sendMessage({command:"render-active-with-template",
+                                                    template_name:input.value},
                                                    function(response) {
-                            console.log(response);
-                            ul.innerHTML = '';
-                            for(var i = 0; i < response.results.length; i++) {
-                                var obj = response.results[i];
+                            if (response.error == undefined) {
+                                remove_from_page();
+                            } else {
+                                ul.innerHTML = '';
                                 var ii = document.createElement('div');
-                                ii.innerHTML = obj;
+                                ii.innerHTML = response.error;
+                                ii.style.cssText=row_style + " background-color: rgba(255, 0, 0, 0.1);";
                                 ul.appendChild(ii);
                             }
                         });
+                        return false;
+                    }
+                    input.onblur = remove_from_page;
+
+                    input.onkeyup = function(event) {
+                        if (event.keyCode == 13) {
+                            form.onsubmit();
+                        } else {
+                            chrome.runtime.sendMessage({command:"quick-search",
+                                                        query:input.value},
+                                                       function(response) {
+                                console.log(response);
+                                ul.innerHTML = '';
+                                for(var i = 0; i < response.results.length; i++) {
+                                    var obj = response.results[i];
+                                    var ii = document.createElement('div');
+                                    ii.innerHTML = obj;
+                                    ii.style.cssText=row_style;
+                                    ul.appendChild(ii);
+                                }
+                            });
+                            return true;
+                        }
                     };
 
                     singleton = [d, input];
@@ -80,12 +103,13 @@
                     alert("You should handle the type: " + activeType);
                 }
             } else if (request.command == 'replace-active-content-with') {
-                var activeType = document.activeElement.type;
+                var target = previous_focus || document.activeElement;
+                var activeType = target.type;
 
                 if (activeType == undefined) {
                     alert("No active editable, passing.");
                 } else if (activeType == 'textarea') {
-                    document.activeElement.value = request.content;
+                    target.value = request.content;
                 } else {
                     alert("You should handle the type: " + activeType);
                 }

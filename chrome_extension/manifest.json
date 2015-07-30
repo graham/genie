@@ -14,7 +14,7 @@
 	  }
 	},
 
-	"background": {"scripts": ["resource/genie.js", "background.js"]},
+	"background": {"scripts": ["resource/jquery.js", "resource/genie.js", "resource/notify.min.js", "background.js"]},
 	"browser_action": {"default_icon": "icon.png",
 	                 "default_popup": "popup.html"},
 	"content_scripts": [{"js": ["content.js"],
