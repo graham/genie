@@ -1,0 +1,36 @@
+{
+	"commands": {
+	  "render-focused-editable": {
+	    "suggested_key": {
+	      "default": "Ctrl+Shift+G"
+	    },
+	    "description": "Render Current Editable."
+	  },
+	  "open-drawer": {
+	    "suggested_key": {
+	      "default": "Ctrl+Shift+Space"
+	    },
+	    "description": "Open Omni Field."
+	  }
+	},
+
+	"background": {"scripts": ["resource/genie.js", "background.js"]},
+	"browser_action": {"default_icon": "icon.png",
+	                 "default_popup": "popup.html"},
+	"content_scripts": [{"js": ["content.js"],
+	                   "matches": ["http://*/*", "https://*/*", "file://*"]}],
+	"content_security_policy": "script-src  'self'  'unsafe-eval';  object-src  'self'",
+	"description": "Genie templates everywhere you go.",
+	"manifest_version": 2,
+	"name": "Genie Chrome Extension",
+	"permissions": ["tabs",
+	              "webNavigation",
+	              "background",
+	              "storage",
+	              "notifications",
+	              "contextMenus",
+	              "*://*/*"],
+	"version": "0.1",
+	"web_accessible_resources": []
+}
+

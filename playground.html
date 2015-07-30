@@ -1,9 +1,9 @@
 <html>
   <head>
-    <script src="http://genie.site44.com/genie.js"> </script>
-    <script src="http://genie.site44.com/jquery.js"> </script>
-    <script src="http://genie.site44.com/base64.js"> </script>
-    <script src="http://genie.site44.com/kapture.js"> </script>
+    <script src="src/genie.js"> </script>
+    <script src="lib/jquery.js"> </script>
+    <script src="lib/base64.js"> </script>
+    <script src="lib/kapture.js"> </script>
 
     <style type='text/css'>
      * { padding:0px; margin:0px; }
@@ -93,7 +93,7 @@
        $("#use_html").on('change', function() { attempt_update(); });
        $("#use_plain").on('change', function() { attempt_update(); });
        $("#use_html_pure").on('change', function() { attempt_update(); });
-       setInterval(function() { attempt_update(); }, 500);
+       //setInterval(function() { attempt_update(); }, 500);
 
        loadup();
    });
