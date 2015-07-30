@@ -178,12 +178,12 @@ var genie = ( function() {
         after_block = after_block.substring(end+1);
 
         // Pre-inner-operator.
-        if (block[0] == '+') {
+        if (block[0] == '-') {
             block = block.substring(1);
             if (blocks[blocks.length-1]) {
                 blocks[blocks.length-1][1] = str_trimr_spaces(blocks[blocks.length-1][1]);
             }
-        } else if (block[0] == '*' || type == "notes") {
+        } else if (block[0] == '=' || type == "notes") {
             block = block.substring(1);
             if (blocks[blocks.length-1]) {
                 blocks[blocks.length-1][1] = str_trimr(blocks[blocks.length-1][1]);
@@ -201,10 +201,10 @@ var genie = ( function() {
         if (block[block.length-1] == '|') {
             block = block.substring(0, block.length-1);
             after_block = str_triml_one(after_block);
-        } else if (block[block.length-1] == '+') {
+        } else if (block[block.length-1] == '-') {
             block = block.substring(0, block.length-1);
             after_block = str_triml_spaces(after_block);
-        } else if (block[block.length-1] == '*') {
+        } else if (block[block.length-1] == '=') {
             block = block.substring(0, block.length-1);
             after_block = str_triml(after_block);
         } else if (block[block.length-1] == '.' || is_auto_slurp(type, block[block.length-1])) {
