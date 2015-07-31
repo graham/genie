@@ -16,8 +16,8 @@
     };
     
     var previous_focus = null;
-    var style = 'position: fixed; top: 20%; width: 60%; left: 20%; font-family: serif; margin:auto; background-color: white; border: 1px solid rgba(0,0,0,0.22);';
-    var row_style = 'font-size: 14px; font-family: lato; padding: 4px; padding-left: 10px; border-top: 1px solid rgba(0,0,0,0.1);';
+    var style = 'margin:0px; padding:0x; position: fixed; top: 20%; width: 60%; left: 20%; font-family: serif; margin:auto; background-color: white; border: 1px solid rgba(0,0,0,0.22);';
+    var row_style = 'padding:0px; margin:0px; font-size: 14px; font-family: lato; padding: 4px; padding-left: 10px; border-top: 1px solid rgba(0,0,0,0.1);';
     var waiting_on_result = false;
     
     chrome.runtime.onMessage.addListener(
@@ -33,7 +33,7 @@
                     var input = document.createElement('input');
                     var ul = document.createElement('div');
                 
-                    input.style.cssText = "width: 100%; padding: 20px; font-size:50px;background:transparent;outline:none;border:0;";
+                    input.style.cssText = "width: 100%; padding: 20px; font-size:50px !important;background:transparent;outline:none;border:0; font-family: lato !important;margin:0px;";
                     input.type = 'textfield';
                 
                     d.appendChild(form);
@@ -89,7 +89,6 @@
                             chrome.runtime.sendMessage({command:"quick-search",
                                                         query:held_input},
                                                        function(response) {
-                                console.log(waiting_on_result);
                                 if (!waiting_on_result) {
                                     ul.innerHTML = '';
                                     for(var i = 0; i < response.results.length; i++) {

@@ -20,6 +20,7 @@ var genie = ( function() {
     var genie_context_begin;
     var genie_context_end;
     var DEBUG = true;
+    var auto_expose = true;
     
     var GENIE_CONTEXT_begin = eval("genie_context_begin") || "[";
     var GENIE_CONTEXT_end =   eval("genie_context_end")   || "]";
@@ -224,12 +225,12 @@ var genie = ( function() {
         throw { type: "bailout", message: "bailout of current template render" };
     };
 
-    Template.prototype.compile = function() {
-        var counter_count = 0;
+    Template.prototype.compile = function(expose_vars) {
+        var i = 0;
         var depth = 0;
         var f_code = [];
         var in_func = [];
-        var i = 0;
+        var counter_count = 0;
         var blocks = this.find_next_block();
         var tempvar_counter = 0;
 

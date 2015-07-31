@@ -257,3 +257,36 @@ You can also use this to update values within the environment, lets try another 
 
 Environments do allow for a couple other neat features, but since they are not totally ironed out yet, we'll leave them out of this documentation. :)
 
+## Blocks and Sub-Templates
+
+Different template engines handle this problem differently, depending on which problems you are trying to solve, what these features provide changes, some problems I'm trying to solve:
+
+- It should be able to build complex templates, that are easy to read (like good code).
+- Keep complexity low.
+
+As a result, blocks are a way for a template writer to quickly build powerful templates, but it prevents them from making templates that are too hard to understand. As a result, `blocks` do not support inheritence and only have access to the scope of the current template render.
+
+Since it's likely none of that made sense, let's jump into a example of a template:
+
+    [% if v.lang == 'en' %]
+      [[ english_block ]]
+    [% else if v.lang == 'jp' %]
+      [[ japanese_block ]]
+    [% else if v.lang == 'es' %]
+      [[ spanish_block ]]
+    [% end %]
+
+    [% block english_block %]
+      Welcome!
+    [% end %]
+
+    [% block japanese_block %]
+      ようこそ
+    [% end %]
+
+    [% block spanish_block %]
+      Bienvenida
+    [% end %]
+
+During template compilation blocks are compiled into local functions to the scope of template, as a result calling them by value results in the content being returned and printed. The prime example blocks are used is in multi-langauge templates, but they can be used in as many locations as you want (the performance hit is minimal).
+
