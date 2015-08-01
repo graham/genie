@@ -1,6 +1,23 @@
-# Genie 
+# Genie
 
-### Javascript Templates that make your wishes come true.
+### Learning Genie
+- [Intro](https://github.com/graham/genie#quick-intro)
+- [Basics](https://github.com/graham/genie#template-language-basics)
+- [Variables](https://github.com/graham/genie#variables)
+- [Conditions](https://github.com/graham/genie#variables)
+- [Javascript](https://github.com/graham/genie#javascript-execution)
+- [Comments](https://github.com/graham/genie#comments)
+- [Notes (compiler defs)](https://github.com/graham/genie#notes)
+- [Data Binding](https://github.com/graham/genie#bindable-not-html-5-data-binding)
+- [Whitespace](https://github.com/graham/genie#cleaning-up-whitespace)
+- [Escaping and Filters](https://github.com/graham/genie#escaping)
+- [Environments and Namespaces](https://github.com/graham/genie#environments-and-the-main_environment)
+- [Blocks and Sub-Templates](https://github.com/graham/genie#blocks-and-sub-templates)
+
+### Errors
+- [Stack Traces](https://github.com/graham/genie#stack-traces-as-of-02)
+- [Error Checking](https://github.com/graham/genie#error-checking)
+
 
 ## Quick Intro
  Genie tries to emulate some of the more popular template libs, most notibly
@@ -155,57 +172,6 @@
    think it's better just to leave it up to the implementer. Check doc.html for more
    concrete examples of how to use this.
 
-## Stack Traces (as of 0.2)
-
-   Genie now supports stack traces. (as demostrated in show_trace.html)
-   Assuming the following template:
-
-     [% if wtf < 0 %]
-       hello world.
-     [% end %]
-
-   You would get a console error (as well as an exception) that looked like:
-
-     Javascript Error => Can't find variable: wtf
-     On template line => 1
-     --------------------
-      line 1:  [% if wtf < 0 %]
-      line 2:      hello world.
-     --------------------
-     
-   It will also work for javascript compilation errors, assuming the following template:
-
-     [% if ]]?>?><><><><>&&&& %]
-       hello world.
-     [% end %]
-
-   Which of course is not correct javascript at all, you would receive the following error:
-
-     Javascript Error => Unexpected token ']]'
-     On template line => 1
-     --------------------
-      line 1:  [% if ]]?>?><><><><>&&&& %]
-      line 2:      hello world.
-     --------------------
-
-   These sorts of exceptions will make you feel more at home with Genie as your template
-   engine.
-
-## Error checking
- Using the normal __[[ name ]]__ syntax will also include some error correction (as well as the type filters above), the normal variable syntax will result in the following:
-
-       typeof(name) != 'undefined') ? 
-       escape_variable(name , 'undefined') : 
-       undefined_variable('name')
-
- However, if you add an additional begin character ( default __[__ ) and the escaping (and filtering) will be removed, thus:
-
-       [[[ name ]]
-
- Will result in:
-
-        (name)
-
 ## Environments and the 'main_environment'
 
 For small projects, `new Template` and `genie.fs` are great, but once you start working with larger sets of templates and any large application in general, Genie Environments are here to help.
@@ -289,4 +255,57 @@ Since it's likely none of that made sense, let's jump into a example of a templa
     [% end %]
 
 During template compilation blocks are compiled into local functions to the scope of template, as a result calling them by value results in the content being returned and printed. The prime example blocks are used is in multi-langauge templates, but they can be used in as many locations as you want (the performance hit is minimal).
+
+# Handling Errors
+
+## Stack Traces (as of 0.2)
+
+   Genie now supports stack traces. (as demostrated in show_trace.html)
+   Assuming the following template:
+
+     [% if wtf < 0 %]
+       hello world.
+     [% end %]
+
+   You would get a console error (as well as an exception) that looked like:
+
+     Javascript Error => Can't find variable: wtf
+     On template line => 1
+     --------------------
+      line 1:  [% if wtf < 0 %]
+      line 2:      hello world.
+     --------------------
+     
+   It will also work for javascript compilation errors, assuming the following template:
+
+     [% if ]]?>?><><><><>&&&& %]
+       hello world.
+     [% end %]
+
+   Which of course is not correct javascript at all, you would receive the following error:
+
+     Javascript Error => Unexpected token ']]'
+     On template line => 1
+     --------------------
+      line 1:  [% if ]]?>?><><><><>&&&& %]
+      line 2:      hello world.
+     --------------------
+
+   These sorts of exceptions will make you feel more at home with Genie as your template
+   engine.
+
+## Error checking
+ Using the normal __[[ name ]]__ syntax will also include some error correction (as well as the type filters above), the normal variable syntax will result in the following:
+
+       typeof(name) != 'undefined') ? 
+       escape_variable(name , 'undefined') : 
+       undefined_variable('name')
+
+ However, if you add an additional begin character ( default __[__ ) and the escaping (and filtering) will be removed, thus:
+
+       [[[ name ]]
+
+ Will result in:
+
+        (name)
 
