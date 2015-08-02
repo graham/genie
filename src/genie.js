@@ -20,7 +20,6 @@ var genie = ( function() {
     var genie_context_begin;
     var genie_context_end;
     var DEBUG = true;
-    var auto_expose = true;
     
     var GENIE_CONTEXT_begin = eval("genie_context_begin") || "[";
     var GENIE_CONTEXT_end =   eval("genie_context_end")   || "]";
@@ -225,7 +224,7 @@ var genie = ( function() {
         throw { type: "bailout", message: "bailout of current template render" };
     };
 
-    Template.prototype.compile = function(expose_vars) {
+    Template.prototype.compile = function(auto_expose_var_list) {
         var i = 0;
         var depth = 0;
         var f_code = [];
@@ -386,6 +385,16 @@ var genie = ( function() {
         var header = "var write = locals.write; var escape_variable = locals.escape_variable;";
         header += "var partial = locals.partial; var bailout = locals.bailout;";
         header += "var _env = locals._env; var _template = locals._template;";
+
+        if (auto_expose_var_list) {
+            console.log("AutoExpose: True");
+            var ae_keys = [];
+            for(var key in auto_expose_var_list) {
+                ae_keys.push("var " + key + " = v." + key + ";");
+            }
+            header += ae_keys.join('\n');
+        }
+        
         this.f_code_render = preamble + header + f_code.join('');
 
         if (DEBUG) {
@@ -425,9 +434,12 @@ var genie = ( function() {
         return preamble;
     };
 
-    Template.prototype.pre_render = function(undefined_variable) {
-        this.compile();
-
+    Template.prototype.pre_render = function(variables, undefined_variable) {
+        if (variables['__auto_expose__']) {
+            this.compile(variables);
+        } else {
+            this.compile();
+        }
         var locals = {};
         locals['_env'] = this.environment;
         locals['____output'] = [];
@@ -485,7 +497,7 @@ var genie = ( function() {
 
     Template.prototype.render = function(variables, undefined_variable) {
         if (this.final_func == null) {
-            this.pre_render(undefined_variable);
+            this.pre_render(variables, undefined_variable);
         }
 
         try {
