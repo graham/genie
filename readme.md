@@ -259,7 +259,7 @@ During template compilation blocks are compiled into local functions to the scop
 
 ## Auto-Exposed Variables
 
-Prior versions of Genie used the javascript "with" keyword, which made it significantly slower. After 0.3 all variables required a "v." in front of them if they were not explicitly exposed. As of 0.6 you can add the following key to your variables dictionary "__auto_expose__" to automatically expose all the variables you pass.
+Prior versions of Genie used the javascript "with" keyword, which made it significantly slower. After 0.3 all variables required a "v." in front of them if they were not explicitly exposed. As of 0.6 you can add the following key to your variables dictionary `__auto_expose__` to automatically expose all the variables you pass.
 
 This does have a performance hit, (it results in your template being recompiled every time you render), but it is likely not noticable if you are only rendering your template a couple times.
 
