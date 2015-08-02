@@ -496,7 +496,7 @@ var genie = ( function() {
     };
 
     Template.prototype.render = function(variables, undefined_variable) {
-        if (this.final_func == null && variables['__auto_expose__'] == undefined) {
+        if (this.final_func == null || variables['__auto_expose__'] != undefined) {
             this.pre_render(variables, undefined_variable);
         }
 

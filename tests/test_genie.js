@@ -55,5 +55,9 @@ describe("Genie Templates", function() {
         template = new genie.Template("one [%((if v.value) ) %]two[%end%] three");
         expect(template.render({"value":true})).toEqual("one two three");
     });
-    
+
+    it("AutoExpose should work.", function() {
+        var template = new genie.Template("[[ name ]]");
+        expect(template.render({'name':'graham', '__auto_expose__':true})).toEqual('graham');
+    });
 });
