@@ -135,10 +135,11 @@ limitations under the License.
 
 var genie = ( function() {
     var UNIQUE_TIME = "" + new Date().getTime();
-    var GENIE_VERSION = "0.3";
+    var GENIE_VERSION = "0.6"; // August 2, 2015
     var genie_context_begin;
     var genie_context_end;
-
+    var DEBUG = true;
+    
     var GENIE_CONTEXT_begin = eval("genie_context_begin") || "[";
     var GENIE_CONTEXT_end =   eval("genie_context_end")   || "]";
 
@@ -162,12 +163,26 @@ var genie = ( function() {
 
     var str_trimr = function(s) { return s.replace(/\s+$/g, "").replace(/[\n|\r]+$/g, ""); };
     var str_trimr_spaces = function(s) { return s.replace(/[ |\t]+$/g, ""); };
+    var str_trimr_newlines = function(s) { return s.replace(/[\n]+$/g, ""); };
+    var str_trimr_newlines_one = function(s) { return s.replace(/[\n]$/g, ""); };
     var str_trimr_one = function(s)    { return s.replace(/\n[ |\t]*/g, ""); };
 
     var str_triml = function(s) { return s.replace(/^\s+/g, "").replace(/^[\n|\r]+/g, ""); };
     var str_triml_spaces = function(s) { return s.replace(/^[ |\t]+/g, ""); };
+    var str_triml_newlines = function(s) { return s.replace(/^[\n]+/g, ""); };
+    var str_triml_newlines_one = function(s) { return s.replace(/^[\n]/g, ""); };        
     var str_triml_one = function(s)    { return s.replace(/^[ |\t]*\n/g, ""); };
     var safe_str = function(s)         { return JSON.stringify(s); };
+
+    var is_auto_slurp = function(type, first_char) {
+        if (first_char != '=' && first_char != '-' && first_char != '|') {
+            if (type == 'condition' || type == 'exec') {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    };
 
     var str_count = function(s, c, accum) {
         if (accum == undefined) {
@@ -201,7 +216,7 @@ var genie = ( function() {
     };
 
     var Template = function(sss) {
-        this.orig_string = sss;
+        this.orig_string = "" + sss;
         this.string = sss;
         this.environment = null;
         this.blocks = [];
@@ -294,6 +309,11 @@ var genie = ( function() {
             }
         } else if (block[0] == '|') {
             block = block.substring(1);
+        } else if (block[0] == '.' || is_auto_slurp(type, block[0])) {
+            block = block.substring(1);
+            if (blocks[blocks.length-1]) {
+                blocks[blocks.length-1][1] = str_trimr_newlines_one(blocks[blocks.length-1][1]);
+            }
         }
 
         //post inner operator.
@@ -306,6 +326,9 @@ var genie = ( function() {
         } else if (block[block.length-1] == '=') {
             block = block.substring(0, block.length-1);
             after_block = str_triml(after_block);
+        } else if (block[block.length-1] == '.' || is_auto_slurp(type, block[block.length-1])) {
+            block = block.substring(0, block.length-1);
+            after_block = str_triml_newlines_one(after_block);
         }
 
         this.cur_template_line += str_count(block, '\n');
@@ -320,12 +343,12 @@ var genie = ( function() {
         throw { type: "bailout", message: "bailout of current template render" };
     };
 
-    Template.prototype.compile = function() {
-        var counter_count = 0;
+    Template.prototype.compile = function(auto_expose_var_list) {
+        var i = 0;
         var depth = 0;
         var f_code = [];
         var in_func = [];
-        var i = 0;
+        var counter_count = 0;
         var blocks = this.find_next_block();
         var tempvar_counter = 0;
 
@@ -381,18 +404,24 @@ var genie = ( function() {
                         var d = str_trim(data.substring(3));
                         var bulk = d;
                         if (d[0] == '(') {
-                            bulk = d.substring(1, d.length-2);
+                            bulk = d.substring(1, d.length-1);
                         }
 
                         var value_name = bulk.substring(0, bulk.indexOf(' in '));
                         var rest = bulk.substring(bulk.indexOf(' in ') + 4);
 
+                        console.log(rest);
+
                         var cvar = '_count_' + counter_count;
                         counter_count += 1;
-                        f_code.push( "\n/* " + line + " */ for( var " + cvar + " = 0; " + cvar + " < " + rest + ".length; " + cvar + "++ ) {" );
-                        f_code.push( "\n/* " + line + " */   var " + value_name + " = " + rest + "[" + cvar + "]; var index=" + cvar + ";");
-                        f_code.push( "\n/* " + line + " */   var rindex = (" + rest + ".length" + " - index) - 1");
-                        f_code.push( "\n/* " + line + " */ " + pad(depth) );
+                        if (value_name.length) {
+                            f_code.push( "\n/* " + line + " */ for( var " + cvar + " = 0; " + cvar + " < " + rest + ".length; " + cvar + "++ ) {" );
+                            f_code.push( "\n/* " + line + " */   var " + value_name + " = " + rest + "[" + cvar + "]; var index=" + cvar + ";");
+                            f_code.push( "\n/* " + line + " */   var rindex = (" + rest + ".length" + " - index) - 1");
+                            f_code.push( "\n/* " + line + " */ " + pad(depth) );
+                        } else {
+                            f_code.push( "\n/* " + line + " */ for(" + bulk +") {\n");
+                        }
                         in_func.push('}');
                         depth += 1;
                     } else if (data == 'end') {
@@ -415,6 +444,13 @@ var genie = ( function() {
                         var command = data.substring(0, 4);
                         f_code.push( "/* " + line + " */ " + pad(depth-1) );
                         f_code.push( "} " + command + " {\n");
+                    } else if (data.substring(0, 5) == 'block') {
+                        var block_name = data.split(' ')[1];
+                        f_code.push( "/* " + line + " */ " + pad(depth-1) );
+                        //f_code.push( "var " + block_name + " = function() {\n" );
+                        f_code.push("function " + block_name + "() {\n" );
+                        depth += 1;
+                        in_func.push('}');
                     }
                 } else if (type == 'variable') {
                     f_code.push( pad(depth) );
@@ -468,9 +504,21 @@ var genie = ( function() {
         var header = "var write = locals.write; var escape_variable = locals.escape_variable;";
         header += "var partial = locals.partial; var bailout = locals.bailout;";
         header += "var _env = locals._env; var _template = locals._template;";
+
+        if (auto_expose_var_list) {
+            console.log("AutoExpose: True");
+            var ae_keys = [];
+            for(var key in auto_expose_var_list) {
+                ae_keys.push("var " + key + " = v." + key + ";");
+            }
+            header += ae_keys.join('\n');
+        }
+        
         this.f_code_render = preamble + header + f_code.join('');
 
-        console.log(this.f_code_render);
+        if (DEBUG) {
+            console.log(this.f_code_render);
+        }
         this.f_code = null;
     };
 
@@ -505,9 +553,15 @@ var genie = ( function() {
         return preamble;
     };
 
-    Template.prototype.pre_render = function(undefined_variable) {
-        this.compile();
-
+    Template.prototype.pre_render = function(variables, undefined_variable) {
+        if (variables['__auto_expose__']) {
+            // Have to reset the string var so that find_next_block works correctly.
+            this.string = "" + this.orig_string;
+            this.compile(variables);
+        } else {
+            this.compile();
+        }
+        
         var locals = {};
         locals['_env'] = this.environment;
         locals['____output'] = [];
@@ -564,8 +618,8 @@ var genie = ( function() {
     };
 
     Template.prototype.render = function(variables, undefined_variable) {
-        if (this.final_func == null) {
-            this.pre_render(undefined_variable);
+        if (this.final_func == null || variables['__auto_expose__'] != undefined) {
+            this.pre_render(variables, undefined_variable);
         }
 
         try {
