@@ -97,7 +97,7 @@ var genie = ( function() {
     };
 
     var Template = function(sss) {
-        this.orig_string = sss;
+        this.orig_string = "" + sss;
         this.string = sss;
         this.environment = null;
         this.blocks = [];
@@ -436,10 +436,13 @@ var genie = ( function() {
 
     Template.prototype.pre_render = function(variables, undefined_variable) {
         if (variables['__auto_expose__']) {
+            // Have to reset the string var so that find_next_block works correctly.
+            this.string = "" + this.orig_string;
             this.compile(variables);
         } else {
             this.compile();
         }
+        
         var locals = {};
         locals['_env'] = this.environment;
         locals['____output'] = [];

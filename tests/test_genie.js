@@ -60,4 +60,19 @@ describe("Genie Templates", function() {
         var template = new genie.Template("[[ name ]]");
         expect(template.render({'name':'graham', '__auto_expose__':true})).toEqual('graham');
     });
+
+    it("AutoExpose forces rerender to ensure it works.", function() {
+        var template = new genie.Template("[[ name ]][% if v.test %][[ one ]][% end %]");
+        expect(template.render({'name':'graham',
+                                '__auto_expose__':true,
+                                'test':false})).toEqual('graham');
+        // Notice that 'one' is missing, so it shouldn't cause an exception on first run.
+
+        expect(template.render({'name':'graham',
+                                '__auto_expose__':true,
+                                'test':true,
+                                'one':'#1'
+                                })).toEqual('graham#1');
+        // This would fail if auto-expose doesn't re-render.
+    });
 });
