@@ -16,7 +16,7 @@ limitations under the License.
 
 var genie = ( function() {
     var UNIQUE_TIME = "" + new Date().getTime();
-    var GENIE_VERSION = "0.5";
+    var GENIE_VERSION = "0.6"; // August 2, 2015
     var genie_context_begin;
     var genie_context_end;
     var DEBUG = true;
@@ -496,7 +496,7 @@ var genie = ( function() {
     };
 
     Template.prototype.render = function(variables, undefined_variable) {
-        if (this.final_func == null) {
+        if (this.final_func == null && variables['__auto_expose__'] == undefined) {
             this.pre_render(variables, undefined_variable);
         }
 
