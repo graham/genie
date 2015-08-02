@@ -13,6 +13,7 @@
 - [Escaping and Filters](https://github.com/graham/genie#escaping)
 - [Environments and Namespaces](https://github.com/graham/genie#environments-and-the-main_environment)
 - [Blocks and Sub-Templates](https://github.com/graham/genie#blocks-and-sub-templates)
+- [Auto-Exposed Variables](https://github.com/graham/genie#auto-exposed-variables)
 
 ### Errors
 - [Stack Traces](https://github.com/graham/genie#stack-traces-as-of-02)
