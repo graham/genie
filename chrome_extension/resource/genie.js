@@ -16,7 +16,7 @@ limitations under the License.
 
 var genie = ( function() {
     var UNIQUE_TIME = "" + new Date().getTime();
-    var GENIE_VERSION = "0.5";
+    var GENIE_VERSION = "0.6"; // August 2, 2015
     var genie_context_begin;
     var genie_context_end;
     var DEBUG = true;
@@ -97,7 +97,7 @@ var genie = ( function() {
     };
 
     var Template = function(sss) {
-        this.orig_string = sss;
+        this.orig_string = "" + sss;
         this.string = sss;
         this.environment = null;
         this.blocks = [];
@@ -178,12 +178,12 @@ var genie = ( function() {
         after_block = after_block.substring(end+1);
 
         // Pre-inner-operator.
-        if (block[0] == '+') {
+        if (block[0] == '-') {
             block = block.substring(1);
             if (blocks[blocks.length-1]) {
                 blocks[blocks.length-1][1] = str_trimr_spaces(blocks[blocks.length-1][1]);
             }
-        } else if (block[0] == '*' || type == "notes") {
+        } else if (block[0] == '=' || type == "notes") {
             block = block.substring(1);
             if (blocks[blocks.length-1]) {
                 blocks[blocks.length-1][1] = str_trimr(blocks[blocks.length-1][1]);
@@ -201,10 +201,10 @@ var genie = ( function() {
         if (block[block.length-1] == '|') {
             block = block.substring(0, block.length-1);
             after_block = str_triml_one(after_block);
-        } else if (block[block.length-1] == '+') {
+        } else if (block[block.length-1] == '-') {
             block = block.substring(0, block.length-1);
             after_block = str_triml_spaces(after_block);
-        } else if (block[block.length-1] == '*') {
+        } else if (block[block.length-1] == '=') {
             block = block.substring(0, block.length-1);
             after_block = str_triml(after_block);
         } else if (block[block.length-1] == '.' || is_auto_slurp(type, block[block.length-1])) {
@@ -224,12 +224,12 @@ var genie = ( function() {
         throw { type: "bailout", message: "bailout of current template render" };
     };
 
-    Template.prototype.compile = function() {
-        var counter_count = 0;
+    Template.prototype.compile = function(auto_expose_var_list) {
+        var i = 0;
         var depth = 0;
         var f_code = [];
         var in_func = [];
-        var i = 0;
+        var counter_count = 0;
         var blocks = this.find_next_block();
         var tempvar_counter = 0;
 
@@ -385,6 +385,16 @@ var genie = ( function() {
         var header = "var write = locals.write; var escape_variable = locals.escape_variable;";
         header += "var partial = locals.partial; var bailout = locals.bailout;";
         header += "var _env = locals._env; var _template = locals._template;";
+
+        if (auto_expose_var_list) {
+            console.log("AutoExpose: True");
+            var ae_keys = [];
+            for(var key in auto_expose_var_list) {
+                ae_keys.push("var " + key + " = v." + key + ";");
+            }
+            header += ae_keys.join('\n');
+        }
+        
         this.f_code_render = preamble + header + f_code.join('');
 
         if (DEBUG) {
@@ -424,9 +434,15 @@ var genie = ( function() {
         return preamble;
     };
 
-    Template.prototype.pre_render = function(undefined_variable) {
-        this.compile();
-
+    Template.prototype.pre_render = function(variables, undefined_variable) {
+        if (variables['__auto_expose__']) {
+            // Have to reset the string var so that find_next_block works correctly.
+            this.string = "" + this.orig_string;
+            this.compile(variables);
+        } else {
+            this.compile();
+        }
+        
         var locals = {};
         locals['_env'] = this.environment;
         locals['____output'] = [];
@@ -483,8 +499,8 @@ var genie = ( function() {
     };
 
     Template.prototype.render = function(variables, undefined_variable) {
-        if (this.final_func == null) {
-            this.pre_render(undefined_variable);
+        if (this.final_func == null || variables['__auto_expose__'] != undefined) {
+            this.pre_render(variables, undefined_variable);
         }
 
         try {

@@ -15,11 +15,10 @@
 	},
 
 	"background": {"scripts": ["resource/jquery.js", "resource/genie.js", "resource/notify.min.js", "background.js"]},
-	"browser_action": {"default_icon": "icon.png",
-	                 "default_popup": "popup.html"},
+	"browser_action": {"default_icon": "icon.png"},
 	"content_scripts": [{"js": ["content.js"],
 	                   "matches": ["http://*/*", "https://*/*", "file://*"]}],
-	"content_security_policy": "script-src  'self'  'unsafe-eval';  object-src  'self'",
+	"content_security_policy": "script-src  'self'  'unsafe-eval';  object-src  'self';",
 	"description": "Genie templates everywhere you go.",
 	"manifest_version": 2,
 	"name": "Genie Chrome Extension",
@@ -31,6 +30,9 @@
 	              "contextMenus",
 	              "*://*/*"],
 	"version": "0.1",
-	"web_accessible_resources": []
+	"web_accessible_resources": [
+        "resource/*",
+        "helper/*"
+    ]
 }
 

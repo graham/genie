@@ -35,7 +35,9 @@ chrome.runtime.onMessage.addListener(
             var result = genie.fs(request.content, {"engine":"Genie 0.5"});
             chrome.tabs.query(search, function(tabs) {
                 chrome.tabs.sendMessage(tabs[0].id, {command:"replace-active-content-with",
-                                                     content:result}, function(response) {
+                                                     content:result,
+                                                     full_replace:true
+                                                     }, function(response) {
                     console.log("sent a result to the main window.");
                 });
             });
@@ -72,6 +74,11 @@ chrome.runtime.onMessage.addListener(
                 }
                 sendResponse({'results':results});
             }
+        } else if (request.command == 'create-or-update-template') {
+            var name = request.name;
+            var data = request.data;
+            genie_env.create_template(name, data);
+            sendResponse({});
         } else {
             var url = "http://github.com/graham/genie";
             chrome.tabs.create({ active:false, url: url });
@@ -94,7 +101,11 @@ chrome.runtime.onMessage.addListener(
                 });
             });
         }
-	});	
+	});
+    
 })();
 
-console.log("Loaded internal");
+chrome.browserAction.onClicked.addListener( function(activeTab) {
+    var newURL = chrome.extension.getURL("/config.html");
+    chrome.tabs.create({ url: newURL });
+});
