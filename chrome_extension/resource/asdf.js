@@ -33,12 +33,42 @@ function path_to_name(path) {
 }
 
 function progress_forward(client) {
+    var file_response = client.readFile('/config.json', function() {
+        var data = JSON.parse(file_response.response);
+        if (data['error'] != undefined) {
+            client.writeFile('/config.json', '{}');
+        }
+    });
+
+    var files = client.readdir('/templates/', function() {
+        var data = JSON.parse(files.response);
+        console.log(data);
+        if (data['is_deleted'] == true || data['error']) {
+            console.log("creating directory");
+            client.mkdir('/templates/', function() {
+                client.writeFile('/templates/test.txt', 'Hello World.', function() {
+                    setTimeout(function() {
+                        progress_forward(client);
+                    }, 1000);
+                });
+            });
+        } else {
+            loadup();
+        }
+    });
+}
+
+
+function loadup() {
+    console.log("Loading up.");
+    
     var config = client.readFile('/config.json', function() {
         $("#config").html(config.response);
     });
 
     var files = client.readdir('/templates/', function() {
         var data = JSON.parse(files.response);
+            
         var paths = [];
         for(var i = 0; i < data.contents.length; i++) {
             var path = data.contents[i].path;
