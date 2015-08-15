@@ -132,6 +132,10 @@ var genie = ( function() {
             cmd_lookup[this.value_only] = "variable";
         }
 
+        if (this.string == undefined) {
+            console.log("It looks like you didn't pass any content into a template, I'm going to bail out.");
+            throw { type: "nocontent", message: "you didnt put any content int he macro" };
+        }
         var start = this.string.indexOf(begin_char);
         var next_char = start+1;
 
