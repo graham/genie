@@ -439,6 +439,9 @@ var genie = ( function() {
     };
 
     Template.prototype.pre_render = function(variables, undefined_variable) {
+        if (variables == undefined) {
+            variables = {};
+        }
         if (variables['__auto_expose__']) {
             // Have to reset the string var so that find_next_block works correctly.
             this.string = "" + this.orig_string;
