@@ -1,8 +1,0 @@
-[
-  ["version", "method", "host", "module", "path", "func_name", "args", "validators"],
-  ["0", "POST", "http://localhost:8080", "", "/asdf", "adsf", {}, {}],
-  ["0", "POST", "http://localhost:8080", "number", "/incr", "incr", {"num":"int"}, {}],
-  ["0", "POST", "http://localhost:8080", "number", "/decr", "decr", {"num":"int"}, {}],
-  ["0", "GET", "http://localhost:8080", "number", "/get", "get", {}, {}]
-]
-  
