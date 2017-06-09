@@ -17,12 +17,11 @@ limitations under the License.
 var genie = ( function() {
     var safe_value_check = function(valuename) {
         if (window && valuename in window) {
-            return true;
+            return window['valuename'];
         }
-        return false;
+        return undefined;
     }
 
-    
     var UNIQUE_TIME = "" + new Date().getTime();
     var GENIE_VERSION = "0.6"; // August 2, 2015
     var genie_context_begin;
