@@ -15,14 +15,22 @@ limitations under the License.
 */
 
 var genie = ( function() {
+    var safe_value_check = function(valuename) {
+        if (window && valuename in window) {
+            return true;
+        }
+        return false;
+    }
+
+    
     var UNIQUE_TIME = "" + new Date().getTime();
     var GENIE_VERSION = "0.6"; // August 2, 2015
     var genie_context_begin;
     var genie_context_end;
     var DEBUG = true;
     
-    var GENIE_CONTEXT_begin = eval("genie_context_begin") || "[";
-    var GENIE_CONTEXT_end =   eval("genie_context_end")   || "]";
+    var GENIE_CONTEXT_begin = safe_value_check("genie_context_begin") || "[";
+    var GENIE_CONTEXT_end =   safe_value_check("genie_context_end")   || "]";
 
     var GENIE_CONTEXT_lookup = {
         "#":"comment",
