@@ -1,8 +1,8 @@
 all:
-    tsc -p tsconfig.json
+	tsc -p tsconfig.json
 
 clean:
-    rm dist/*
+	rm dist/*
 
 dev:
-    tsc -p tsconfig.json --watch
+	tsc -p tsconfig.json --watch

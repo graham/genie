@@ -23,7 +23,7 @@ var genie = ( function() {
     }
 
     var UNIQUE_TIME = "" + new Date().getTime();
-    var GENIE_VERSION = "0.6"; // August 2, 2015
+    var GENIE_VERSION = "0.7"; // June 09, 2016
     var genie_context_begin;
     var genie_context_end;
     var DEBUG = true;
