@@ -230,9 +230,9 @@ var genie = ( function() {
         return blocks;
     };
 
-    Template.prototype.bailout = function() {
+    Template.prototype.bailout = function(payload) {
         /* throw an exception and stop rendering a template */
-        throw { type: "bailout", message: "bailout of current template render" };
+        throw { type: "bailout", message: "bailout of current template render",  "payload": payload};
     };
 
     Template.prototype.compile = function(auto_expose_var_list) {
@@ -522,7 +522,7 @@ var genie = ( function() {
             return result;
         } catch (e) {
             if (e.type == 'bailout') {
-                return null;
+                throw e
             } else {
                 this.stack_trace(e);
             }
