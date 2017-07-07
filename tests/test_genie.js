@@ -75,4 +75,26 @@ describe("Genie Templates", function() {
                                 })).toEqual('graham#1');
         // This would fail if auto-expose doesn't re-render.
     });
+
+    it("Using different open close chars should work.", function() {
+        var env = new genie.Environment()
+        env.begin = "<";
+        env.end = ">";
+
+        var t = env.create_template("test", "Hi, you've used << root.user.used >>");
+
+        var result = t.render(
+            {'__auto_expose__': true,
+             'root':
+             { 'user':
+               {
+                   used: "145.05 TB",
+                   shared: "75.33 TB",
+                   quota: "9,987 TB",
+                   quota_percent: 0.50
+               }
+             }
+            });
+       expect(result).toEqual("Hi, you've used 145.05 TB")
+    });
 });

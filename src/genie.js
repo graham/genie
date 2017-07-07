@@ -23,10 +23,8 @@ var genie = ( function() {
     }
 
     var UNIQUE_TIME = "" + new Date().getTime();
-    var GENIE_VERSION = "0.7"; // June 09, 2016
-    var genie_context_begin;
-    var genie_context_end;
-    var DEBUG = true;
+    var GENIE_VERSION = "0.8"; // July 7, 2017
+    var DEBUG = safe_value_check('DEBUG') || false;
     
     var GENIE_CONTEXT_begin = safe_value_check("genie_context_begin") || "[";
     var GENIE_CONTEXT_end =   safe_value_check("genie_context_end")   || "]";
@@ -125,7 +123,7 @@ var genie = ( function() {
         if (this.environment) {
             begin_char = this.environment.begin;
             end_char = this.environment.end;
-            cmd_lookup = this.environment.lookup;
+            cmd_lookup = this.environment.build_lookup();
         } else {
             begin_char = GENIE_CONTEXT_begin;
             end_char = GENIE_CONTEXT_end;
@@ -244,6 +242,20 @@ var genie = ( function() {
         var blocks = this.find_next_block();
         var tempvar_counter = 0;
 
+        var cmd_lookup;
+        var begin_char;
+        var end_char;
+
+        if (this.environment) {
+            begin_char = this.environment.begin;
+            end_char = this.environment.end;
+            cmd_lookup = this.environment.build_lookup();
+        } else {
+            begin_char = GENIE_CONTEXT_begin;
+            end_char = GENIE_CONTEXT_end;
+            cmd_lookup = GENIE_CONTEXT_lookup;
+        }
+
         while(blocks.length > 0) {
             for( i = 0; i < blocks.length; i++ ) {
                 var obj = blocks[i];
@@ -301,9 +313,6 @@ var genie = ( function() {
 
                         var value_name = bulk.substring(0, bulk.indexOf(' in '));
                         var rest = bulk.substring(bulk.indexOf(' in ') + 4);
-
-                        console.log(rest);
-
                         var cvar = '_count_' + counter_count;
                         counter_count += 1;
                         if (value_name.length) {
@@ -356,7 +365,7 @@ var genie = ( function() {
                         vartype = str_trim(temp[1]);
                     }
 
-                    if (data.indexOf(GENIE_CONTEXT_begin) == 0) {
+                    if (data.indexOf(begin_char) == 0) {
                         f_code.push( "/* " + line + " */ write( " + vardata.substring(1) + " );\n");
                     } else {
                         var tempvar_name = "__tempvar_" + tempvar_counter;
@@ -595,7 +604,23 @@ var genie = ( function() {
 
         this.begin = GENIE_CONTEXT_begin;
         this.end = GENIE_CONTEXT_end;
-        this.lookup = GENIE_CONTEXT_lookup;
+        this.lookup = {};
+
+    }
+
+    Environment.prototype.build_lookup = function() {
+        var keys = Object.keys(GENIE_CONTEXT_lookup);
+        for( var i in keys ) {
+            var key = keys[i];
+            var value = GENIE_CONTEXT_lookup[key];
+            if (value != "variable") {
+                this.lookup[key] = value;
+            }
+        }
+
+        this.lookup[this.begin] = "variable";
+        this.lookup[this.end] = "variable";
+        return this.lookup;
     };
 
     Environment.prototype.escape_variable = function(vardata, vartype) {
