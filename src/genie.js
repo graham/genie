@@ -392,9 +392,7 @@ var genie = ( function() {
 
                     f_code.push( "/* " + line + " */ write( \"<span class='genie_" + this.environment.id + "_value_update_" + str_trim(data) + "'>\" + " + data + " + \"</span>\" );\n" );
                 } else if (type == 'exec') {
-                    f_code.push( "/* " + line + " */ " + data);
-                } else if (type == 'exec-coffee') {
-                    f_code.push( "/* " + line + " */ " + CoffeeScript.compile(data));
+                    f_code.push( "/* " + line + " */ " + data + "\n");
                 } else if (type == 'notes') {
                     this.notes.push(str_trim(data));
                 } else if (type == 'compiler') {
@@ -410,11 +408,11 @@ var genie = ( function() {
             preamble = this.preamble_notes();
         }
 
-        preamble = preamble.join(' ');
+        preamble = preamble.join('\n');
 
-        var header = "var write = locals.write; var escape_variable = locals.escape_variable;";
-        header += "var partial = locals.partial; var bailout = locals.bailout;";
-        header += "var _env = locals._env; var _template = locals._template;";
+        var header = "var write = locals.write; var escape_variable = locals.escape_variable;\n";
+        header += "var partial = locals.partial; var bailout = locals.bailout;\n";
+        header += "var _env = locals._env; var _template = locals._template;\n";
 
         if (auto_expose_var_list) {
             if (DEBUG) {
@@ -426,8 +424,8 @@ var genie = ( function() {
             }
             header += ae_keys.join('\n');
         }
-        
-        this.f_code_render = preamble + header + f_code.join('');
+
+        this.f_code_render = preamble + '\n' + header + '\n' + f_code.join('');
 
         if (DEBUG) {
             console.log(this.f_code_render);
@@ -501,6 +499,7 @@ var genie = ( function() {
         try {
             var compiled_code = new Function('parent', 'v', 'defaults', 'undefined_variable', 'locals', this.f_code_render);
         } catch (e) {
+            console.log(this.f_code_render);
             this.stack_trace(e);
         }
 
@@ -551,7 +550,6 @@ var genie = ( function() {
     };
 
     Template.prototype.stack_trace = function(e) {
-        throw e;
         var line = null;
         if (e.line) {
             line = this.f_code.join('').split('\n')[e.line-3];
