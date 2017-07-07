@@ -16,6 +16,9 @@ limitations under the License.
 
 var genie = ( function() {
     var safe_value_check = function(valuename) {
+        if (typeof(window) == 'undefined') {
+            return undefined;
+        }
         if (window && valuename in window) {
             return window[valuename];
         }
@@ -883,8 +886,8 @@ var genie = ( function() {
     return exports;
 })();
 
-if (typeof genie_module !== 'undefined') {
-    genie_module.exports.genie = genie;
-    genie_module.exports.Template = genie.Template;
-    genie_module.exports.Environment = genie.Environment;
+if (typeof module !== 'undefined') {
+    module.exports.genie = genie;
+    module.exports.Template = genie.Template;
+    module.exports.Environment = genie.Environment;
 }

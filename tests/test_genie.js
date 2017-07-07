@@ -1,7 +1,7 @@
+window.DEBUG = true;
 
 describe("Genie Templates", function() {
     var template = null;
-    window.DEBUG = true;
     
     beforeEach(function() {
         template = new genie.Template('My name is [[v.name]].');
