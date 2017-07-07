@@ -131,4 +131,22 @@ describe("Genie Templates", function() {
         var result = t.render( {'__auto_expose__': true, 'root': {'user': {used: "145.05 TB"}}});
         expect(result).toEqual("Hi, 145.05 TB [$ cool $]")
     });
+
+    it("should work with multiple render steps and different begin/end chars.", function() {
+        var pairs = [ ['[', ']'], ['<', '>'] ];
+
+        var template = "[% if true %][[value1]] <<value2>>[% end %] [] <>";
+
+        for (var i in pairs) {
+            var pair = pairs[i];
+            var env = new genie.Environment();
+            env.begin = pair[0];
+            env.end = pair[1];
+            var t = env.create_template("test", template);
+            var result = t.render({'__auto_expose__': true, 'value1': 10, 'value2': 20})
+            template = result;
+        }
+
+        expect(result).toEqual("10 20 [] <>");
+    });
 });

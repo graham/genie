@@ -24,7 +24,6 @@ var genie = ( function() {
 
     var UNIQUE_TIME = "" + new Date().getTime();
     var GENIE_VERSION = "0.8"; // July 7, 2017
-    var DEBUG = safe_value_check('DEBUG') || true;
     
     var GENIE_CONTEXT_begin = safe_value_check("genie_context_begin") || "[";
     var GENIE_CONTEXT_end =   safe_value_check("genie_context_end")   || "]";
@@ -248,6 +247,7 @@ var genie = ( function() {
         var counter_count = 0;
         var blocks = this.find_next_block();
         var tempvar_counter = 0;
+        var DEBUG = safe_value_check('DEBUG') || false;
 
         var cmd_lookup;
         var begin_char;
@@ -414,7 +414,9 @@ var genie = ( function() {
         header += "var _env = locals._env; var _template = locals._template;";
 
         if (auto_expose_var_list) {
-            console.log("AutoExpose: True");
+            if (DEBUG) {
+                console.log("AutoExpose: True");
+            }
             var ae_keys = [];
             for(var key in auto_expose_var_list) {
                 ae_keys.push("var " + key + " = v." + key + ";");
