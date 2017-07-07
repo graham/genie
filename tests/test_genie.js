@@ -1,5 +1,7 @@
+
 describe("Genie Templates", function() {
     var template = null;
+    window.DEBUG = true;
     
     beforeEach(function() {
         template = new genie.Template('My name is [[v.name]].');
@@ -96,5 +98,37 @@ describe("Genie Templates", function() {
              }
             });
        expect(result).toEqual("Hi, you've used 145.05 TB")
+    });
+
+    it("Empty [] or <> or delimiteropen delimiterclosed shouldnt cause an issue.", function() {
+        var env = new genie.Environment()
+        env.begin = "<";
+        env.end = ">";
+
+        var t = env.create_template("test", "Hi, [] you've <> used << root.user.used >>");
+
+        var result = t.render( {'__auto_expose__': true, 'root': {'user': {used: "145.05 TB"}}});
+        expect(result).toEqual("Hi, [] you've <> used 145.05 TB")
+
+        var env2 = new genie.Environment()
+        env2.begin = "[";
+        env2.end = "]";
+
+        var t2 = env2.create_template("test", "Hi, [] you've <> used [[ root.user.used ]]");
+
+        var result2 = t2.render( {'__auto_expose__': true, 'root': {'user': {used: "145.05 TB"}}});
+        expect(result2).toEqual("Hi, [] you've <> used 145.05 TB")
+        
+    });
+
+    it("Undefined specifiers dont break the parser.", function() {
+        var env = new genie.Environment()
+
+        var t = env.create_template("test", "Hi, [[ root.user.used ]] [$ cool $]");
+
+        // $ doesn't mean anything to genie. so we shouldn't attempt to parse it.
+
+        var result = t.render( {'__auto_expose__': true, 'root': {'user': {used: "145.05 TB"}}});
+        expect(result).toEqual("Hi, 145.05 TB [$ cool $]")
     });
 });

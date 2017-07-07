@@ -17,14 +17,14 @@ limitations under the License.
 var genie = ( function() {
     var safe_value_check = function(valuename) {
         if (window && valuename in window) {
-            return window['valuename'];
+            return window[valuename];
         }
         return undefined;
     }
 
     var UNIQUE_TIME = "" + new Date().getTime();
     var GENIE_VERSION = "0.8"; // July 7, 2017
-    var DEBUG = safe_value_check('DEBUG') || false;
+    var DEBUG = safe_value_check('DEBUG') || true;
     
     var GENIE_CONTEXT_begin = safe_value_check("genie_context_begin") || "[";
     var GENIE_CONTEXT_end =   safe_value_check("genie_context_end")   || "]";
@@ -150,9 +150,7 @@ var genie = ( function() {
             if (s == '') {
                 return [];
             } else {
-                //*
                 this.cur_template_line += str_count(s, '\n');
-                //*
                 blocks.push( ['text', s, this.cur_template_line]);
                 return blocks;
             }
@@ -160,6 +158,15 @@ var genie = ( function() {
 
         var before_block = this.string.substring(0, start);
         var after_block = this.string.substring(start+1);
+
+        // This is a special case where someone is using [[ expr ]] as their template
+        // begin/end, but they also put a [] somewhere in their template.
+        // or they used an identifier that isn't used like, $ or ?
+        if (after_block[0] == end_char || cmd_lookup[after_block[0]] == undefined ) {
+            blocks.push( ['text', before_block + begin_char + after_block[0], this.cur_template_line] );
+            this.string = after_block.slice(1);
+            return blocks;
+        }
 
         this.cur_template_line += str_count(before_block, '\n');
         blocks.push( ['text', before_block, this.cur_template_line] );
