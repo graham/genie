@@ -316,3 +316,30 @@ This does have a performance hit, (it results in your template being recompiled 
 
         (name)
 
+
+## Generated Code
+
+Sometimes when debugging templates, it's easier to see the bug in the generated javascript (and more importantly your tools can parse the javascript). So I added the following method for all templates: `generated_code_as_string()` as well as the `genie_to_js.js` script.
+
+Both should give you the ability to view the generated code in a way that your editor can parse, and you can test/lint/etc.
+
+The `genie_to_js.js` can be run from the command line and accepts std-in until it reaches a EOF.
+
+```bash
+$ echo "hello world [[ v.name ]]" | node genie_to_js.js
+(function(parent, v, defaults, undefined_variable, locals) {
+    var write = locals.write; var escape_variable = locals.escape_variable;
+    var partial = locals.partial; var bailout = locals.bailout;
+    var _env = locals._env; var _template = locals._template;
+    var __auto_expose__ = v.__auto_expose__;
+
+    /* Int indicates line number in template that generated the javascript. */
+    /* 0 */ write("hello world ");
+    /* 0 */ var __tempvar_0 = (typeof( v.name ) != 'undefined') ?  v.name  : undefined_variable(" v.name ");
+    /* 0 */ if (typeof(__tempvar_0) == "function") { write(__tempvar_0());}
+    /* 0 */ else { write( __tempvar_0 ); }
+    /* 1 */ write("\n");
+
+});
+```
+
