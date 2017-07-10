@@ -425,7 +425,10 @@ var genie = ( function() {
             header += ae_keys.join('\n');
         }
 
-        this.f_code_render = preamble + '\n' + header + '\n' + f_code.join('');
+        this.f_code_render = (preamble + '\n' +
+                              header + '\n\n' +
+                              '/* Int indicates line number in template that generated the javascript. */\n' + 
+                              f_code.join(''));
 
         if (DEBUG) {
             console.log(this.f_code_render);
@@ -493,7 +496,6 @@ var genie = ( function() {
         locals['write'] = function(ddd) { locals['____output'].push(ddd); };
         locals['_template'] = this;
         locals['bailout'] = this.bailout;
-
         locals['escape_variable'] = function(data, type) { return data; };
 
         try {
@@ -529,7 +531,17 @@ var genie = ( function() {
             return locals['____output'].join('');
         }
         this.final_func = encased_template;
-        this.f_code_render = null;
+    };
+
+    Template.prototype.generated_code_as_string = function(variables, undefined_variable) {
+        if (this.final_func == null || variables['__auto_expose__'] != undefined) {
+            this.pre_render(variables, undefined_variable);
+        }
+        return (
+            "(function(parent, v, defaults, undefined_variable, locals) {" +
+                this.f_code_render.replace(/\n/g, '\n    ') + "\n" +
+            "});"
+        );
     };
 
     Template.prototype.render = function(variables, undefined_variable) {
