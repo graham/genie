@@ -563,13 +563,15 @@ var genie = ( function() {
 
     Template.prototype.stack_trace = function(e) {
         var line = null;
+
         if (e.line) {
             line = this.f_code.join('').split('\n')[e.line-3];
         } else if (e.lineNumber) {
             line = this.f_code.join('').split('\n')[e.lineNumber-3];
         } else {
-            throw new Error('Your browser sucks: ' + e.message);
+            throw new Error(e.message);
         }
+
         if (line.slice(0, 2) == '/*') {
             var os_by_line = this.orig_string.split('\n');
             var line_number = parseInt(str_trim(line.slice(2, line.indexOf('*/'))));
@@ -742,7 +744,7 @@ var genie = ( function() {
     };
 
     Environment.prototype.auto_load = function(callback) {
-        // this sucks because it requires jquery, should figure out how to
+        // this is unfortunate because it requires jquery, should figure out how to
         // make that not a dependency.
 
         var env = this;
@@ -764,7 +766,7 @@ var genie = ( function() {
     };
 
     Environment.prototype.load_template_dir = function(url, cb) {
-        // this sucks because it requires jquery, should figure out how to
+        // this is unfortunate because it requires jquery, should figure out how to
         // make that not a dependency.
 
         var env = this;
